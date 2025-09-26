@@ -13,22 +13,28 @@ import { getMemorialById, PetMemorial } from '@/lib/firebase-service';
 import { Timestamp } from 'firebase/firestore';
 
 // Helper para converter Timestamp do Firebase para string de data 'YYYY-MM-DD'
-const formatDate = (timestamp: Timestamp | string | undefined): string => {
-  if (!timestamp) return 'Data desconhecida';
-  if (typeof timestamp === 'string') {
-    // Se já for uma string no formato 'YYYY-MM-DD', retorna diretamente
-    if (/^\d{4}-\d{2}-\d{2}$/.test(timestamp)) {
-      return timestamp;
+const formatDate = (dateValue: Timestamp | string | undefined): string => {
+  if (!dateValue) return 'Data desconhecida';
+
+  // Se for uma string (já no formato YYYY-MM-DD do formulário)
+  if (typeof dateValue === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      return dateValue;
     }
-    // Tenta converter de outros formatos de string se necessário
-    const date = new Date(timestamp);
-    if (!isNaN(date.getTime())) {
+    // Tenta converter outros formatos de string, se necessário
+    const date = new Date(dateValue);
+     if (!isNaN(date.getTime())) {
       return date.toISOString().split('T')[0];
     }
     return 'Data inválida';
   }
-  // Converte Timestamp do Firebase
-  return timestamp.toDate().toISOString().split('T')[0];
+  
+  // Se for um Timestamp do Firebase
+  if (dateValue instanceof Timestamp) {
+    return dateValue.toDate().toISOString().split('T')[0];
+  }
+
+  return 'Data inválida';
 };
 
 
