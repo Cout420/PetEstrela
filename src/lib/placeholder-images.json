@@ -1,3 +1,82 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-garden",
+      "description": "A serene memorial garden with sunlight filtering through trees.",
+      "imageUrl": "https://images.unsplash.com/photo-1725399898959-feab9221069e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxtZW1vcmlhbCUyMGdhcmRlbnxlbnwwfHx8fDE3NTg4OTE2ODN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "memorial garden"
+    },
+    {
+      "id": "hero-all-pets",
+      "description": "A group of diverse pets including a dog, cat, and a bird.",
+      "imageUrl": "https://images.unsplash.com/photo-1758447665888-fa82dc5e45ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXRzJTIwZ3JvdXB8ZW58MHx8fHwxNzU4ODkxNjgzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "pets group"
+    },
+    {
+      "id": "hero-building",
+      "description": "The modern and welcoming facade of the Pet Estrela Crematorium building.",
+      "imageUrl": "https://images.unsplash.com/photo-1582647509711-c8aa8a8bda71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtb2Rlcm4lMjBidWlsZGluZ3xlbnwwfHx8fDE3NTg4MTYzMTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern building"
+    },
+    {
+      "id": "section-all-pets",
+      "description": "A happy dog and a cat sitting together in a field.",
+      "imageUrl": "https://images.unsplash.com/photo-1601758177266-bc599de87707?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxkb2clMjBjYXR8ZW58MHx8fHwxNzU4ODE3Nzc0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dog cat"
+    },
+    {
+      "id": "about-mission",
+      "description": "A person gently holding a pet's paw.",
+      "imageUrl": "https://images.unsplash.com/photo-1707896236939-8a27c0ca757b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxob2xkaW5nJTIwcGF3fGVufDB8fHx8MTc1ODg5MTY4M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "holding paw"
+    },
+    {
+      "id": "about-history",
+      "description": "Interior view of the Pet Estrela Crematorium facility, showing a clean and peaceful environment.",
+      "imageUrl": "https://images.unsplash.com/photo-1689825732093-a559779d33c7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjcmVtYXRvcml1bSUyMGludGVyaW9yfGVufDB8fHx8MTc1ODg5MTY4M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "crematorium interior"
+    },
+    {
+      "id": "pet-bento",
+      "description": "A friendly Golden Retriever named Bento.",
+      "imageUrl": "https://images.unsplash.com/photo-1518606091957-4c24907bc6ed?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxnb2xkZW4lMjByZXRyaWV2ZXJ8ZW58MHx8fHwxNzU4ODIxNDE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "golden retriever"
+    },
+    {
+      "id": "pet-luna",
+      "description": "An elegant Siamese cat named Luna.",
+      "imageUrl": "https://images.unsplash.com/photo-1510704652036-67838c2cfab6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzaWFtZXNlJTIwY2F0fGVufDB8fHx8MTc1ODg3NzMyM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "siamese cat"
+    },
+    {
+      "id": "pet-max",
+      "description": "A loyal Labrador named Max.",
+      "imageUrl": "https://images.unsplash.com/photo-1692713456114-798f4e1ba740?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxsYWJyYWRvciUyMGRvZ3xlbnwwfHx8fDE3NTg4OTE2ODN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "labrador dog"
+    },
+    {
+      "id": "pet-mimi",
+      "description": "A fluffy Persian cat named Mimi.",
+      "imageUrl": "https://images.unsplash.com/photo-1660983947114-d893fcf89c7a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzaWFuJTIwY2F0fGVufDB8fHx8MTc1ODg5MTA4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "persian cat"
+    },
+    {
+      "id": "team-carlos",
+      "description": "Portrait of Dr. Carlos Silva, General Director.",
+      "imageUrl": "https://images.unsplash.com/photo-1589386417686-0d34b5903d23?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwcm9mZXNzaW9uYWwlMjBtYW58ZW58MHx8fHwxNzU4Nzk4MTE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "professional man"
+    },
+    {
+      "id": "team-maria",
+      "description": "Portrait of Maria Santos, Service Coordinator.",
+      "imageUrl": "https://images.unsplash.com/photo-1573496527892-904f897eb744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cHJvZmVzc2lvbmFsJTIwd29tYW58ZW58MHx8fHwxNzU4NzkxNTM0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "professional woman"
+    },
+    {
+      "id": "team-joao",
+      "description": "Portrait of João Oliveira, Specialized Technician.",
+      "imageUrl": "https://images.unsplash.com/photo-1631556762764-100577512917?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtYWxlJTIwdGVjaG5pY2lhbnxlbnwwfHx8fDE3NTg4ODUyNzZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "male technician"
+    }
+  ]
 }
