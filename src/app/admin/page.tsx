@@ -7,7 +7,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,9 +16,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { memorialPets as initialPets, teamMembers as initialTeamMembers } from '@/lib/mock-data';
+import { memorialPets as initialPets, teamMembers as initialTeamMembers, plans as initialPlans } from '@/lib/mock-data';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
-import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus } from 'lucide-react';
+import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus, CheckCircle2 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const petSchema = z.object({
@@ -72,6 +72,22 @@ const generalContentSchema = z.object({
 });
 
 type GeneralContent = z.infer<typeof generalContentSchema>;
+
+const planSchema = z.object({
+    name: z.string().min(1, 'Nome do plano é obrigatório.'),
+    price: z.string().min(1, 'Preço é obrigatório.'),
+    description: z.string().min(1, 'Descrição é obrigatória.'),
+    features: z.array(z.string().min(1, 'Característica não pode ser vazia.')).min(1, 'Adicione pelo menos uma característica.'),
+    pricingDetails: z.array(z.string()).optional(),
+    optional: z.string().optional(),
+    isMostChosen: z.boolean(),
+});
+
+const plansPageSchema = z.object({
+    plans: z.array(planSchema)
+});
+
+type PlansPageContent = z.infer<typeof plansPageSchema>;
 
 export default function AdminPage() {
   const router = useRouter();
@@ -130,6 +146,19 @@ export default function AdminPage() {
     }
   });
 
+  const plansForm = useForm<PlansPageContent>({
+    resolver: zodResolver(plansPageSchema),
+    defaultValues: {
+        plans: initialPlans,
+    },
+  });
+
+  const { fields: planFields, append: appendPlan, remove: removePlan } = useFieldArray({
+      control: plansForm.control,
+      name: "plans"
+  });
+
+
   useEffect(() => {
     const storedAboutContent = localStorage.getItem('aboutPageContent');
     if (storedAboutContent) {
@@ -139,7 +168,11 @@ export default function AdminPage() {
     if (storedGeneralContent) {
         generalForm.reset(JSON.parse(storedGeneralContent));
     }
-  }, [aboutForm, generalForm]);
+    const storedPlansContent = localStorage.getItem('plansPageContent');
+    if(storedPlansContent){
+        plansForm.reset(JSON.parse(storedPlansContent));
+    }
+  }, [aboutForm, generalForm, plansForm]);
 
   useEffect(() => {
     if (editingPet) {
@@ -199,6 +232,12 @@ export default function AdminPage() {
     toast({ title: 'Conteúdo geral do site atualizado com sucesso.' });
   };
   
+  const handleSavePlansContent = (data: PlansPageContent) => {
+    localStorage.setItem('plansPageContent', JSON.stringify(data));
+    toast({ title: 'Conteúdo da página de planos atualizado com sucesso.' });
+  };
+
+
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -224,9 +263,10 @@ export default function AdminPage() {
         </header>
 
         <Tabs defaultValue="pets" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="pets"><Users className="mr-2" /> Gerenciar Pets</TabsTrigger>
             <TabsTrigger value="about"><FileText className="mr-2" /> Sobre Nós</TabsTrigger>
+            <TabsTrigger value="plans"><CheckCircle2 className="mr-2" /> Planos</TabsTrigger>
             <TabsTrigger value="general"><Settings className="mr-2" /> Conteúdo Geral</TabsTrigger>
           </TabsList>
           
@@ -317,11 +357,51 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="plans" className="mt-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Editar Página de Planos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Form {...plansForm}>
+                        <form onSubmit={plansForm.handleSubmit(handleSavePlansContent)} className="space-y-8">
+                            {planFields.map((plan, planIndex) => (
+                                <Card key={plan.id} className="p-4 border-primary/20">
+                                    <CardHeader>
+                                        <CardTitle>Plano {planIndex + 1}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                                        <FormField control={plansForm.control} name={`plans.${planIndex}.name`} render={({ field }) => (<FormItem><FormLabel>Nome do Plano</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={plansForm.control} name={`plans.${planIndex}.price`} render={({ field }) => (<FormItem><FormLabel>Preço</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={plansForm.control} name={`plans.${planIndex}.description`} render={({ field }) => (<FormItem className="col-span-2"><FormLabel>Descrição</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem>)} />
+                                        
+                                        <div className='col-span-2'>
+                                            <Label>Características</Label>
+                                            <div className="space-y-2 mt-2">
+                                                {plan.features.map((_, featureIndex) => (
+                                                    <FormField key={featureIndex} control={plansForm.control} name={`plans.${planIndex}.features.${featureIndex}`} render={({ field }) => (
+                                                        <FormItem><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                                    )} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        
+                                        <FormField control={plansForm.control} name={`plans.${planIndex}.optional`} render={({ field }) => (<FormItem className="col-span-2"><FormLabel>Texto Opcional</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    </CardContent>
+                                </Card>
+                            ))}
+                            <Button type="submit"><Save className="mr-2" /> Salvar Planos</Button>
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="general" className="mt-6">
              <Card>
               <CardHeader>
                 <CardTitle>Editar Conteúdo Geral</CardTitle>
-                 <DialogDescription>Altere as informações de contato e links que aparecem em todo o site.</DialogDescription>
+                 <CardDescription>Altere as informações de contato e links que aparecem em todo o site.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...generalForm}>
@@ -451,8 +531,5 @@ export default function AdminPage() {
     </div>
   );
 }
-    
-
-    
 
     

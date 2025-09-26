@@ -125,6 +125,53 @@ export const teamMembers = [
     },
 ]
 
+export const plans = [
+  {
+    name: 'Essência',
+    price: 'A partir de R$280',
+    description: 'A despedida essencial, com dignidade e respeito.',
+    features: [
+      'Cremação coletiva',
+      'Certificado de cremação digital',
+      'Atendimento 24 horas',
+      'Remoção do animal',
+    ],
+    pricingDetails: [
+        '🐱 Gatos – R$ 280,00',
+        '🐶 Cães – R$ 450,00',
+    ],
+    optional: 'Opcional: Plantio de árvore em memorial (+R$ 98,00)',
+    isMostChosen: false,
+  },
+  {
+    name: 'Harmonia',
+    price: 'R$ 960,00',
+    description: 'A homenagem mais completa, com lembranças especiais.',
+    features: [
+      'Cremação coletiva em compartimento separado',
+      'Porta-retrato com a foto do pet',
+      'Quadro com a impressão da patinha',
+      'Plantio de árvore com QR Code do memorial',
+      'Urna padrão para cinzas',
+      'Certificado de cremação impresso',
+    ],
+    isMostChosen: true,
+  },
+  {
+    name: 'Eternus',
+    price: 'R$ 1.190,00',
+    description: 'A celebração da vida, com cerimônia e homenagens.',
+    features: [
+      'Todos os itens do Plano Harmonia',
+      'Urna biodegradável ou plantio',
+      'Cartinha de despedida personalizada',
+      'Preparação especial para velório (opcional)',
+      'Acesso a sala de velório',
+    ],
+    isMostChosen: false,
+  },
+];
+
 export const adminStats = {
   totalMemorials: 5280,
   servicesThisMonth: 45,

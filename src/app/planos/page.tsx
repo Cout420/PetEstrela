@@ -5,65 +5,43 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CheckCircle2 } from 'lucide-react';
+import { plans as initialPlansData } from '@/lib/mock-data';
 
-const plans = [
-  {
-    name: 'Essência',
-    price: 'A partir de R$280',
-    description: 'A despedida essencial, com dignidade e respeito.',
-    features: [
-      'Cremação coletiva',
-      'Certificado de cremação digital',
-      'Atendimento 24 horas',
-      'Remoção do animal',
-    ],
-    pricingDetails: [
-        '🐱 Gatos – R$ 280,00',
-        '🐶 Cães – R$ 450,00',
-    ],
-    optional: 'Opcional: Plantio de árvore em memorial (+R$ 98,00)',
-    isMostChosen: false,
-  },
-  {
-    name: 'Harmonia',
-    price: 'R$ 960,00',
-    description: 'A homenagem mais completa, com lembranças especiais.',
-    features: [
-      'Cremação coletiva em compartimento separado',
-      'Porta-retrato com a foto do pet',
-      'Quadro com a impressão da patinha',
-      'Plantio de árvore com QR Code do memorial',
-      'Urna padrão para cinzas',
-      'Certificado de cremação impresso',
-    ],
-    isMostChosen: true,
-  },
-  {
-    name: 'Eternus',
-    price: 'R$ 1.190,00',
-    description: 'A celebração da vida, com cerimônia e homenagens.',
-    features: [
-      'Todos os itens do Plano Harmonia',
-      'Urna biodegradável ou plantio',
-      'Cartinha de despedida personalizada',
-      'Preparação especial para velório (opcional)',
-      'Acesso a sala de velório',
-    ],
-    isMostChosen: false,
-  },
-];
+type Plan = {
+  name: string;
+  price: string;
+  description: string;
+  features: string[];
+  pricingDetails?: string[];
+  optional?: string;
+  isMostChosen: boolean;
+};
+
+type PlansPageContent = {
+  plans: Plan[];
+};
 
 export default function PlansPage() {
-    const [whatsappLink, setWhatsappLink] = useState('https://wa.me/5511942405253?text=${encodeURIComponent(\'Olá! Gostaria de mais informações sobre os planos de cremação.\')}');
-     const [specialistWhatsappLink, setSpecialistWhatsappLink] = useState('https://wa.me/5511942405253?text=${encodeURIComponent(\'Olá! Gostaria de falar com um especialista sobre os planos.\')}');
+    const [content, setContent] = useState<PlansPageContent>({ plans: initialPlansData });
+    const [whatsappLink, setWhatsappLink] = useState('');
+    const [specialistWhatsappLink, setSpecialistWhatsappLink] = useState('');
 
 
     useEffect(() => {
-        const storedContent = localStorage.getItem('generalContent');
-        if (storedContent) {
-            const content = JSON.parse(storedContent);
-            setWhatsappLink(`${content.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de mais informações sobre os planos de cremação.')}`);
-            setSpecialistWhatsappLink(`${content.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os planos.')}`);
+        const storedPlansContent = localStorage.getItem('plansPageContent');
+        if (storedPlansContent) {
+            setContent(JSON.parse(storedPlansContent));
+        }
+
+        const storedGeneralContent = localStorage.getItem('generalContent');
+        if (storedGeneralContent) {
+            const general = JSON.parse(storedGeneralContent);
+            setWhatsappLink(`${general.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de mais informações sobre os planos de cremação.')}`);
+            setSpecialistWhatsappLink(`${general.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os planos.')}`);
+        } else {
+            const defaultLink = 'https://wa.me/5511942405253';
+            setWhatsappLink(`${defaultLink}?text=${encodeURIComponent('Olá! Gostaria de mais informações sobre os planos de cremação.')}`);
+            setSpecialistWhatsappLink(`${defaultLink}?text=${encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os planos.')}`);
         }
     }, []);
 
@@ -81,7 +59,7 @@ export default function PlansPage() {
         </div>
 
         <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3 lg:items-start">
-          {plans.map((plan, index) => (
+          {content.plans.map((plan, index) => (
             <Card
               key={index}
               className={`luxury-card hover-lift animate-slide-up flex flex-col ${plan.isMostChosen ? 'border-2 border-accent shadow-luxury' : ''} ${index === 1 ? 'lg:-translate-y-4' : ''}`}
