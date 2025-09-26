@@ -60,24 +60,29 @@ const MemorialPage = () => {
 
   return (
     <>
-      <div className="relative bg-background py-16 md:py-24 overflow-hidden">
-        <video 
-            autoPlay 
-            loop 
-            muted 
-            playsInline 
-            className="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-20"
-            src="https://i.imgur.com/PnqGjta.mp4"
-        />
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="animate-fade-in text-center">
-            <h1 className="font-headline text-4xl font-bold text-primary md:text-5xl">
-              Memorial Pet Estrela
-            </h1>
-            <div className="mx-auto mt-4 max-w-3xl text-muted-foreground space-y-4 text-base">
-              <p>O Memorial Pet Estrela foi criado como uma forma carinhosa de eternizar a lembrança dos nossos animais que se tornaram estrelinhas. Aqui, cada vida é celebrada através do plantio de uma árvore, que simboliza amor, renovação e memória eterna.</p>
-              <p>Além de homenagear nossos companheiros, este memorial também contribui para o reflorestamento, com mudas frutíferas e nativas, fortalecendo a natureza.</p>
-              <p>As cinzas de cada pet são depositadas junto à muda escolhida e recebem uma identificação única. Por meio do QR Code, é possível consultar essa numeração e acessar as informações sobre o animal e a árvore que guarda sua lembrança.</p>
+      <div className="bg-background py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="animate-fade-in order-2 md:order-1">
+                <h1 className="font-headline text-4xl font-bold text-primary md:text-5xl">
+                Memorial Pet Estrela
+                </h1>
+                <div className="mt-4 max-w-2xl text-muted-foreground space-y-4 text-base">
+                <p>O Memorial Pet Estrela foi criado como uma forma carinhosa de eternizar a lembrança dos nossos animais que se tornaram estrelinhas. Aqui, cada vida é celebrada através do plantio de uma árvore, que simboliza amor, renovação e memória eterna.</p>
+                <p>Além de homenagear nossos companheiros, este memorial também contribui para o reflorestamento, com mudas frutíferas e nativas, fortalecendo a natureza.</p>
+                <p>As cinzas de cada pet são depositadas junto à muda escolhida e recebem uma identificação única. Por meio do QR Code, é possível consultar essa numeração e acessar as informações sobre o animal e a árvore que guarda sua lembrança.</p>
+                </div>
+            </div>
+
+            <div className="relative h-80 md:h-96 w-full order-1 md:order-2 overflow-hidden rounded-lg shadow-soft">
+                <video 
+                    autoPlay 
+                    loop 
+                    muted 
+                    playsInline 
+                    className="absolute top-0 left-0 w-full h-full object-cover z-0"
+                    src="https://i.imgur.com/PnqGjta.mp4"
+                />
             </div>
           </div>
           
