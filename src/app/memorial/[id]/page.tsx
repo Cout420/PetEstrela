@@ -134,7 +134,7 @@ const MemorialDetailPage = () => {
 
                     <Card className="shadow-soft">
                         <CardContent className="p-4 flex flex-col items-center text-center">
-                           <p className='text-sm text-muted-foreground mb-4'>Ou acesse o link direto para compartilhar esta homenagem.</p>
+                           <p className='text-sm text-muted-foreground mb-4'>Ou use o link direto para compartilhar esta homenagem.</p>
                             <Button asChild className="w-full">
                                 <a href={pet.qrCodeUrl} target="_blank" rel="noopener noreferrer">
                                     <ExternalLink className="mr-2 h-4 w-4" />
