@@ -31,10 +31,19 @@ const MemorialPage = () => {
   const [selectedPet, setSelectedPet] = useState<PetMemorial | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [memorialPets, setMemorialPets] = useState<PetMemorial[]>([]);
+  const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/5511942405253?text=${encodeURIComponent(\'Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.\')}' });
 
   useEffect(() => {
     const storedPets = localStorage.getItem('memorialPets');
     setMemorialPets(storedPets ? JSON.parse(storedPets) : initialPets);
+
+    const storedGeneralContent = localStorage.getItem('generalContent');
+    if (storedGeneralContent) {
+        const content = JSON.parse(storedGeneralContent);
+        setGeneralContent({
+            whatsappLink: `${content.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.')}`
+        });
+    }
   }, []);
 
   const formatId = (id: number) => `#${id.toString().padStart(3, '0')}`;
@@ -49,10 +58,6 @@ const MemorialPage = () => {
         formatId(pet.id).includes(searchQuery)
     );
   }, [searchQuery, memorialPets]);
-
-  const whatsappLink = `https://wa.me/5511942405253?text=${encodeURIComponent(
-    'Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.'
-  )}`;
 
   return (
     <>
@@ -83,7 +88,7 @@ const MemorialPage = () => {
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className='animate-scale-in'>
+            <a href={generalContent.whatsappLink} target="_blank" rel="noopener noreferrer" className='animate-scale-in'>
               <Card className="luxury-card hover-lift flex h-full min-h-[380px] flex-col items-center justify-center text-center">
                 <CardHeader>
                   <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
@@ -198,5 +203,7 @@ const MemorialPage = () => {
 };
 
 export default MemorialPage;
+
+    
 
     

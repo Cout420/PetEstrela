@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -51,9 +54,18 @@ const plans = [
 ];
 
 export default function PlansPage() {
-    const whatsappLink = `https://wa.me/5511942405253?text=${encodeURIComponent(
-        'Olá! Gostaria de mais informações sobre os planos de cremação.'
-    )}`;
+    const [whatsappLink, setWhatsappLink] = useState('https://wa.me/5511942405253?text=${encodeURIComponent(\'Olá! Gostaria de mais informações sobre os planos de cremação.\')}');
+     const [specialistWhatsappLink, setSpecialistWhatsappLink] = useState('https://wa.me/5511942405253?text=${encodeURIComponent(\'Olá! Gostaria de falar com um especialista sobre os planos.\')}');
+
+
+    useEffect(() => {
+        const storedContent = localStorage.getItem('generalContent');
+        if (storedContent) {
+            const content = JSON.parse(storedContent);
+            setWhatsappLink(`${content.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de mais informações sobre os planos de cremação.')}`);
+            setSpecialistWhatsappLink(`${content.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os planos.')}`);
+        }
+    }, []);
 
   return (
     <div className="bg-background py-16 md:py-24">
@@ -115,7 +127,7 @@ export default function PlansPage() {
             <h2 className="font-headline text-3xl font-bold">Ainda com dúvidas?</h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground md:text-lg">Nossa equipe de especialistas está pronta para te ajudar a escolher o melhor plano e a personalizar a despedida do seu amigo.</p>
             <Button asChild size="lg" className="btn-whatsapp mt-8">
-                <a href={whatsappLink} target='_blank'>Contate um Especialista</a>
+                <a href={specialistWhatsappLink} target='_blank'>Contate um Especialista</a>
             </Button>
         </div>
 
@@ -123,3 +135,5 @@ export default function PlansPage() {
     </div>
   );
 }
+
+    

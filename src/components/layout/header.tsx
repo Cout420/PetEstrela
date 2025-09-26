@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
@@ -20,6 +20,15 @@ const navLinks = [
 const Header = () => {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [whatsappLink, setWhatsappLink] = useState('https://wa.me/5511942405253');
+
+  useEffect(() => {
+    const storedContent = localStorage.getItem('generalContent');
+    if (storedContent) {
+        const content = JSON.parse(storedContent);
+        setWhatsappLink(content.whatsappLink || 'https://wa.me/5511942405253');
+    }
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -46,7 +55,7 @@ const Header = () => {
             <Link href="/login">Entrar</Link>
           </Button>
           <Button asChild className="btn-whatsapp">
-            <a href="https://wa.me/5511942405253" target="_blank">
+            <a href={whatsappLink} target="_blank">
               Contato
             </a>
           </Button>
@@ -89,7 +98,7 @@ const Header = () => {
                 </nav>
                 <div className="mt-auto">
                    <Button asChild className="btn-whatsapp w-full">
-                    <a href="https://wa.me/5511942405253" target="_blank">
+                    <a href={whatsappLink} target="_blank">
                       Fale Conosco
                     </a>
                   </Button>
@@ -104,3 +113,5 @@ const Header = () => {
 };
 
 export default Header;
+
+    

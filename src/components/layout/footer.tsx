@@ -1,8 +1,34 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Logo from '../logo';
 import { Button } from '../ui/button';
 
+type GeneralContent = {
+  whatsappNumber: string;
+  whatsappLink: string;
+  phone: string;
+  address: string;
+};
+
 const Footer = () => {
+  const [content, setContent] = useState<GeneralContent | null>(null);
+
+  useEffect(() => {
+    const storedContent = localStorage.getItem('generalContent');
+    if (storedContent) {
+      setContent(JSON.parse(storedContent));
+    } else {
+      setContent({
+        whatsappNumber: '11942405253',
+        whatsappLink: 'https://wa.me/5511942405253',
+        phone: '(11) 4240-5253',
+        address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
+      });
+    }
+  }, []);
+
   return (
     <footer className="border-t bg-muted/50">
       <div className="container mx-auto px-4 py-12">
@@ -36,19 +62,21 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div>
-            <h3 className="font-headline text-lg font-semibold">Contato</h3>
-            <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-              <p>Av. Adília Barbosa Neves, 2740, Arujá - SP</p>
-              <p>Telefone: (11) 4240-5253</p>
-              <p>WhatsApp: (11) 94240-5253</p>
+          {content && (
+            <div>
+              <h3 className="font-headline text-lg font-semibold">Contato</h3>
+              <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                <p>{content.address}</p>
+                <p>Telefone: {content.phone}</p>
+                <p>WhatsApp: {content.whatsappNumber}</p>
+              </div>
+               <Button asChild className="btn-whatsapp mt-4">
+                  <a href={content.whatsappLink} target="_blank">
+                      Fale Conosco
+                  </a>
+              </Button>
             </div>
-             <Button asChild className="btn-whatsapp mt-4">
-                <a href="https://wa.me/5511942405253" target="_blank">
-                    Fale Conosco
-                </a>
-            </Button>
-          </div>
+          )}
         </div>
 
         <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
@@ -60,3 +88,5 @@ const Footer = () => {
 };
 
 export default Footer;
+
+    

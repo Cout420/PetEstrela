@@ -42,8 +42,13 @@ type AboutPageContent = {
   historyImageUrl: string;
 };
 
+type GeneralContent = {
+    whatsappLink: string;
+}
+
 export default function AboutPage() {
   const [content, setContent] = useState<AboutPageContent | null>(null);
+  const [generalContent, setGeneralContent] = useState<GeneralContent | null>(null);
 
   useEffect(() => {
     const storedContent = localStorage.getItem('aboutPageContent');
@@ -61,9 +66,19 @@ export default function AboutPage() {
             historyImageUrl: PlaceHolderImages.find((img) => img.id === 'about-history')?.imageUrl ?? '',
         });
     }
+
+    const storedGeneralContent = localStorage.getItem('generalContent');
+    if (storedGeneralContent) {
+      setGeneralContent(JSON.parse(storedGeneralContent));
+    } else {
+        setGeneralContent({
+            whatsappLink: 'https://wa.me/5511942405253'
+        });
+    }
+
   }, []);
 
-  if (!content) {
+  if (!content || !generalContent) {
     return (
         <div className="flex h-screen items-center justify-center">
             <p>Carregando conteúdo...</p>
@@ -97,7 +112,7 @@ export default function AboutPage() {
                 {content.missionDescription}
               </p>
               <Button asChild size="lg" className="btn-whatsapp mt-8">
-                <a href="https://wa.me/5511942405253" target="_blank">Fale Conosco</a>
+                <a href={generalContent.whatsappLink} target="_blank">Fale Conosco</a>
               </Button>
             </div>
             <div className="animate-scale-in relative order-1 h-80 w-full overflow-hidden rounded-lg lg:order-2 lg:h-96">

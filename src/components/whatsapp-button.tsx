@@ -1,10 +1,19 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { Button } from './ui/button';
 
 const WhatsAppButton = () => {
-    const whatsappLink = `https://wa.me/5511942405253?text=${encodeURIComponent(
-        'Olá! Gostaria de mais informações sobre os serviços do Pet Estrela Crematório.'
-    )}`;
+    const [whatsappLink, setWhatsappLink] = useState('https://wa.me/5511942405253');
+
+    useEffect(() => {
+        const storedContent = localStorage.getItem('generalContent');
+        if (storedContent) {
+            const content = JSON.parse(storedContent);
+            setWhatsappLink(content.whatsappLink || 'https://wa.me/5511942405253');
+        }
+    }, []);
 
   return (
     <a
@@ -25,3 +34,5 @@ const WhatsAppButton = () => {
 };
 
 export default WhatsAppButton;
+
+    

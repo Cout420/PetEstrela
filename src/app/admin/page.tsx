@@ -63,6 +63,15 @@ const aboutPageSchema = z.object({
 
 type AboutPageContent = z.infer<typeof aboutPageSchema>;
 
+const generalContentSchema = z.object({
+  whatsappNumber: z.string().min(10, "Número do WhatsApp é obrigatório."),
+  whatsappLink: z.string().url("Link do WhatsApp é obrigatório."),
+  phone: z.string().min(10, "Número de telefone é obrigatório."),
+  address: z.string().min(10, "Endereço é obrigatório."),
+});
+
+type GeneralContent = z.infer<typeof generalContentSchema>;
+
 export default function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -108,13 +117,27 @@ export default function AdminPage() {
         historyImageUrl: PlaceHolderImages.find((img) => img.id === 'about-history')?.imageUrl ?? '',
     }
   });
+  
+    const generalForm = useForm<GeneralContent>({
+    resolver: zodResolver(generalContentSchema),
+    defaultValues: {
+      whatsappNumber: '11942405253',
+      whatsappLink: 'https://wa.me/5511942405253',
+      phone: '(11) 4240-5253',
+      address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
+    }
+  });
 
   useEffect(() => {
     const storedAboutContent = localStorage.getItem('aboutPageContent');
     if (storedAboutContent) {
         aboutForm.reset(JSON.parse(storedAboutContent));
     }
-  }, [aboutForm]);
+     const storedGeneralContent = localStorage.getItem('generalContent');
+    if (storedGeneralContent) {
+        generalForm.reset(JSON.parse(storedGeneralContent));
+    }
+  }, [aboutForm, generalForm]);
 
   useEffect(() => {
     if (editingPet) {
@@ -167,6 +190,11 @@ export default function AdminPage() {
   const handleSaveAboutContent = (data: AboutPageContent) => {
     localStorage.setItem('aboutPageContent', JSON.stringify(data));
     toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
+  };
+
+  const handleSaveGeneralContent = (data: GeneralContent) => {
+    localStorage.setItem('generalContent', JSON.stringify(data));
+    toast({ title: 'Conteúdo geral do site atualizado com sucesso.' });
   };
   
   if (!isAuthenticated) {
@@ -291,9 +319,42 @@ export default function AdminPage() {
              <Card>
               <CardHeader>
                 <CardTitle>Editar Conteúdo Geral</CardTitle>
+                 <DialogDescription>Altere as informações de contato e links que aparecem em todo o site.</DialogDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">Funcionalidade em desenvolvimento.</p>
+                <Form {...generalForm}>
+                  <form onSubmit={generalForm.handleSubmit(handleSaveGeneralContent)} className="space-y-6">
+                    <FormField control={generalForm.control} name="whatsappNumber" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número do WhatsApp (somente números)</FormLabel>
+                        <FormControl><Input placeholder="5511942405253" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                     <FormField control={generalForm.control} name="whatsappLink" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Link do WhatsApp (completo)</FormLabel>
+                        <FormControl><Input placeholder="https://wa.me/5511942405253" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={generalForm.control} name="phone" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone para Contato</FormLabel>
+                        <FormControl><Input placeholder="(11) 4240-5253" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={generalForm.control} name="address" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Endereço Completo</FormLabel>
+                        <FormControl><Textarea rows={3} {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <Button type="submit"><Save className="mr-2" /> Salvar Conteúdo Geral</Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
           </TabsContent>
@@ -381,6 +442,8 @@ export default function AdminPage() {
     </div>
   );
 }
+    
+
     
 
     

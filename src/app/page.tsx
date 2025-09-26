@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -15,9 +18,10 @@ import { testimonials } from '@/lib/mock-data';
 
 const heroSlides = [
   {
-    image: PlaceHolderImages.find((img) => img.id === 'hero-garden'),
-    title: 'Despedida com Dignidade e Respeito',
-    subtitle: 'Honramos a memória do seu pet com todo carinho que ele merece.',
+    image: PlaceHolderImages.find((img) => img.id === 'hero-building'),
+    title: 'Pet Estrela Crematório',
+    subtitle:
+      'Instalações modernas e seguras para cuidar do seu companheiro.',
   },
   {
     image: PlaceHolderImages.find((img) => img.id === 'hero-all-pets'),
@@ -26,10 +30,9 @@ const heroSlides = [
       'Atendemos cães, gatos, aves, cavalos e animais exóticos de todos os portes.',
   },
   {
-    image: PlaceHolderImages.find((img) => img.id === 'hero-building'),
-    title: 'Pet Estrela Crematório',
-    subtitle:
-      'Instalações modernas e seguras para cuidar do seu companheiro.',
+    image: PlaceHolderImages.find((img) => img.id === 'hero-garden'),
+    title: 'Despedida com Dignidade e Respeito',
+    subtitle: 'Honramos a memória do seu pet com todo carinho que ele merece.',
   },
 ];
 
@@ -88,6 +91,15 @@ const allPetsImage = PlaceHolderImages.find(
 );
 
 export default function Home() {
+  const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/5511942405253' });
+
+  useEffect(() => {
+    const storedContent = localStorage.getItem('generalContent');
+    if (storedContent) {
+      setGeneralContent(JSON.parse(storedContent));
+    }
+  }, []);
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -122,7 +134,7 @@ export default function Home() {
                       </p>
                       <div className="animate-fade-in mt-8 flex flex-wrap justify-center gap-4">
                         <Button asChild size="lg" className="btn-whatsapp">
-                          <a href="https://wa.me/5511942405253" target="_blank">
+                          <a href={generalContent.whatsappLink} target="_blank">
                             Entre em Contato
                           </a>
                         </Button>
@@ -230,7 +242,7 @@ export default function Home() {
                 </li>
               </ul>
               <Button asChild size="lg" className="btn-whatsapp mt-8">
-                <a href="https://wa.me/5511942405253" target="_blank">
+                <a href={generalContent.whatsappLink} target="_blank">
                   Saiba Mais
                 </a>
               </Button>
@@ -312,19 +324,18 @@ export default function Home() {
               </p>
               <div className="mt-6 space-y-4 text-muted-foreground">
                 <p>
-                  <strong>Endereço:</strong> Av. Adília Barbosa Neves, 2740,
-                  Centro Industrial, Arujá - SP, CEP: 07432-575
+                  <strong>Endereço:</strong> {generalContent.address || 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575'}
                 </p>
                 <p>
-                  <strong>Telefone:</strong> (11) 4240-5253
+                  <strong>Telefone:</strong> {generalContent.phone || '(11) 4240-5253'}
                 </p>
                 <p>
-                  <strong>WhatsApp:</strong> (11) 94240-5253
+                  <strong>WhatsApp:</strong> {generalContent.whatsappNumber || '11942405253'}
                 </p>
               </div>
               <Button asChild size="lg" className="btn-whatsapp mt-8">
                 <a
-                  href="https://www.google.com/maps/search/?api=1&query=Av.+Adília+Barbosa+Neves,+2740,+Arujá+-+SP"
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(generalContent.address || 'Av. Adília Barbosa Neves, 2740, Arujá - SP')}`}
                   target="_blank"
                 >
                   Abrir no Maps
@@ -349,3 +360,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
