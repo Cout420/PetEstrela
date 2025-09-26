@@ -24,6 +24,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { homePageContent as initialHomePageContent, heroSlides as initialHeroSlides, whyChooseUs as initialWhyChooseUs, cremationProcess as initialCremationProcess, allPetsSection as initialAllPetsSection } from '@/lib/home-content';
 import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
+import { PROD_DOMAIN } from '@/lib/link-service';
 
 const petSchema = z.object({
   id: z.number(),
@@ -311,8 +312,8 @@ export default function AdminPage() {
   const handleSavePet = async (data: PetMemorial) => {
     let updatedPets;
     
-    // Generate short link if it doesn't exist
-    if (!data.qrCodeUrl) {
+    // Generate short link if it doesn't exist or is from a different domain
+    if (!data.qrCodeUrl || !data.qrCodeUrl.startsWith(PROD_DOMAIN)) {
       try {
         const result = await shortenLink({ memorialId: data.id });
         data.qrCodeUrl = result.shortUrl;
@@ -456,7 +457,7 @@ export default function AdminPage() {
                                   <div key={index} className="space-y-2 rounded-md border p-4">
                                       <h4 className="font-semibold">Passo {step.step}</h4>
                                       <FormField control={homeForm.control} name={`cremationProcess.steps.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título do Passo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                      <FormField control={homeForm.control} name={`cremationProcess.steps.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Descrição do Passo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                      <FormField control={homeForm.control} name={`cremationProcess.steps.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Descrição do Passo</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
                                   </div>
                               ))}
                          </CardContent>

@@ -38,7 +38,7 @@ export const memorialPets = [
       { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
       { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
-    qrCodeUrl: 'https://pet-estrela.alt.run/memorial/1'
+    qrCodeUrl: ''
   },
   {
     id: 2,
@@ -61,7 +61,7 @@ export const memorialPets = [
       { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
       { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
-    qrCodeUrl: 'https://pet-estrela.alt.run/memorial/2'
+    qrCodeUrl: ''
   },
   {
     id: 3,
@@ -84,7 +84,7 @@ export const memorialPets = [
       { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
       { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
-    qrCodeUrl: 'https://pet-estrela.alt.run/memorial/3'
+    qrCodeUrl: ''
   },
   {
     id: 4,
@@ -107,7 +107,7 @@ export const memorialPets = [
       { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-max')?.imageUrl || '' },
       { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
-    qrCodeUrl: 'https://pet-estrela.alt.run/memorial/4'
+    qrCodeUrl: ''
   },
 ];
 

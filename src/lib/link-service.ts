@@ -5,7 +5,7 @@
  */
 
 // This should be replaced with the actual production domain of the deployed app.
-const PROD_DOMAIN = 'https://petestrelatest.netlify.app';
+export const PROD_DOMAIN = 'https://petestrelatest.netlify.app';
 
 /**
  * Creates a "shortened" link for a memorial.
