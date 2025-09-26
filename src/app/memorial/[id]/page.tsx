@@ -6,9 +6,10 @@ import Image from 'next/image';
 import qrcode from 'qrcode';
 import { memorialPets as initialPets } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
-import { QrCode, Heart, ArrowLeft } from 'lucide-react';
+import { QrCode, Heart, ArrowLeft, ExternalLink } from 'lucide-react';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
 
 type PetMemorial = {
   id: number;
@@ -124,11 +125,25 @@ const MemorialDetailPage = () => {
                     <p>Sempre em nossos corações</p>
                 </div>
                 {pet.qrCodeUrl && (
-                    <div className="mt-8 flex flex-col items-center gap-4 rounded-lg border bg-muted/50 p-6 shadow-soft">
+                  <div className="space-y-4 mt-8">
+                    <div className="flex flex-col items-center gap-4 rounded-lg border bg-muted/50 p-6 shadow-soft">
                         <h4 className="font-semibold text-center">Acesse esta homenagem a qualquer momento</h4>
                         <canvas ref={qrCodeCanvasRef} />
                         <p className="text-sm text-muted-foreground text-center">Aponte a câmera do seu celular para este QR Code.</p>
                     </div>
+
+                    <Card className="shadow-soft">
+                        <CardContent className="p-4 flex flex-col items-center text-center">
+                           <p className='text-sm text-muted-foreground mb-4'>Ou acesse o link direto para compartilhar esta homenagem.</p>
+                            <Button asChild className="w-full">
+                                <a href={pet.qrCodeUrl} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    Abrir Memorial
+                                </a>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                  </div>
                 )}
             </div>
         </div>
