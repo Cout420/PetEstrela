@@ -112,7 +112,7 @@ const MemorialDetailPage = () => {
                 ))}
             </div>
             <div className='sticky top-24 self-start space-y-8'>
-                <div className="space-y-3 text-base text-foreground bg-white/90 p-6 rounded-lg border shadow-soft">
+                <div className="space-y-3 text-base text-foreground bg-white/20 backdrop-blur-md p-6 rounded-lg border border-white/20 shadow-soft">
                     <p><strong>Raça:</strong> {pet.species}</p>
                     <p><strong>Sexo:</strong> {pet.sexo}</p>
                     <p><strong>Idade:</strong> {pet.age}</p>
@@ -122,7 +122,7 @@ const MemorialDetailPage = () => {
                     <p><strong>Local:</strong> {pet.local}</p>
                 </div>
                 
-                <Card className="bg-white/90 border shadow-soft">
+                <Card className="bg-white/20 backdrop-blur-md border border-white/20 shadow-soft">
                   <CardContent className="p-6">
                     <p className="whitespace-pre-wrap text-base leading-relaxed md:text-lg">
                         {pet.text}
