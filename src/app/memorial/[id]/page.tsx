@@ -10,6 +10,7 @@ import { QrCode, Heart, ArrowLeft, ExternalLink } from 'lucide-react';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
+import { PROD_DOMAIN } from '@/lib/link-service';
 
 type PetMemorial = {
   id: number;
@@ -43,9 +44,13 @@ const MemorialDetailPage = () => {
     }
     const storedPets = localStorage.getItem('memorialPets');
     const pets: PetMemorial[] = storedPets ? JSON.parse(storedPets) : initialPets;
-    const foundPet = pets.find((p) => p.id === petId);
+    let foundPet = pets.find((p) => p.id === petId);
 
     if (foundPet) {
+      // Forcefully correct the qrCodeUrl if it's wrong or missing
+      if (!foundPet.qrCodeUrl || !foundPet.qrCodeUrl.startsWith(PROD_DOMAIN)) {
+        foundPet.qrCodeUrl = `${PROD_DOMAIN}/memorial/${foundPet.id}`;
+      }
       setPet(foundPet);
     }
     setLoading(false);

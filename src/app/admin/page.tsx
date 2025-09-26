@@ -165,7 +165,15 @@ export default function AdminPage() {
     } else {
       setIsAuthenticated(true);
       const storedPets = localStorage.getItem('memorialPets');
-      setPets(storedPets ? JSON.parse(storedPets) : initialPets);
+      const petsData = storedPets ? JSON.parse(storedPets) : initialPets;
+      // Forcefully update QR code URLs if they are from the wrong domain or missing
+      const correctedPets = petsData.map((pet: PetMemorial) => ({
+        ...pet,
+        qrCodeUrl: (!pet.qrCodeUrl || !pet.qrCodeUrl.startsWith(PROD_DOMAIN))
+          ? `${PROD_DOMAIN}/memorial/${pet.id}`
+          : pet.qrCodeUrl
+      }));
+      setPets(correctedPets);
     }
   }, [router]);
   
@@ -312,20 +320,12 @@ export default function AdminPage() {
   const handleSavePet = async (data: PetMemorial) => {
     let updatedPets;
     
-    // Generate short link if it doesn't exist or is from a different domain
-    if (!data.qrCodeUrl || !data.qrCodeUrl.startsWith(PROD_DOMAIN)) {
-      try {
-        const result = await shortenLink({ memorialId: data.id });
-        data.qrCodeUrl = result.shortUrl;
-      } catch (error) {
-        console.error('Failed to shorten link:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Erro ao gerar QR Code',
-          description: 'Não foi possível gerar o link para o QR Code. Tente novamente.',
-        });
-        return;
-      }
+    try {
+      const result = await shortenLink({ memorialId: data.id });
+      data.qrCodeUrl = result.shortUrl;
+    } catch (error) {
+      console.error('Failed to shorten link, falling back to direct URL:', error);
+      data.qrCodeUrl = `${PROD_DOMAIN}/memorial/${data.id}`;
     }
 
     if (editingPet) {
