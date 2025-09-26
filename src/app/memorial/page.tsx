@@ -106,8 +106,7 @@ const MemorialPage = () => {
             </a>
 
             {filteredPets.map((pet) => (
-              <Link key={pet.id} href={`/memorial/${pet.id}`} legacyBehavior>
-                <a className="block animate-scale-in">
+              <Link key={pet.id} href={`/memorial/${pet.id}`} className="block animate-scale-in">
                   <Card
                     className="luxury-card hover-lift cursor-pointer overflow-hidden text-center h-full"
                   >
@@ -137,7 +136,6 @@ const MemorialPage = () => {
                       <Button variant="link">Ver Homenagem</Button>
                     </CardFooter>
                   </Card>
-                </a>
               </Link>
             ))}
           </div>
