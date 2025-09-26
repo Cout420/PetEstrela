@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
@@ -18,9 +18,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { memorialPets as initialPets, teamMembers as initialTeamMembers, plans as initialPlans } from '@/lib/mock-data';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
-import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus, CheckCircle2, HomeIcon } from 'lucide-react';
+import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus, CheckCircle2, HomeIcon, Building2 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { homePageContent as initialHomePageContent, heroSlides as initialHeroSlides, whyChooseUs as initialWhyChooseUs, cremationProcess as initialCremationProcess, allPetsSection as initialAllPetsSection } from '@/lib/home-content';
+import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-content';
 
 const petSchema = z.object({
   id: z.number(),
@@ -96,7 +97,7 @@ const heroSlideSchema = z.object({
     subtitle: z.string().min(1),
 });
 const whyChooseUsItemSchema = z.object({
-    icon: z.string(), // We will handle icon mapping separately
+    icon: z.string(),
     title: z.string().min(1),
     description: z.string().min(1),
 });
@@ -128,6 +129,20 @@ const homePageSchema = z.object({
 });
 
 type HomePageContent = z.infer<typeof homePageSchema>;
+
+const galleryItemSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1, "Título da imagem é obrigatório."),
+  imageUrl: z.string().min(1, "A imagem é obrigatória."),
+});
+
+const ourSpaceSchema = z.object({
+  headerTitle: z.string().min(1, "Título é obrigatório."),
+  headerDescription: z.string().min(1, "Descrição é obrigatória."),
+  gallery: z.array(galleryItemSchema),
+});
+
+type OurSpaceContent = z.infer<typeof ourSpaceSchema>;
 
 export default function AdminPage() {
   const router = useRouter();
@@ -220,6 +235,11 @@ export default function AdminPage() {
     resolver: zodResolver(homePageSchema),
     defaultValues: initialHomePageContent
   });
+
+  const ourSpaceForm = useForm<OurSpaceContent>({
+    resolver: zodResolver(ourSpaceSchema),
+    defaultValues: initialOurSpaceContent
+  });
   
   const { fields: heroSlidesFields, append: appendHeroSlide, remove: removeHeroSlide } = useFieldArray({
       control: homeForm.control, name: "heroSlides"
@@ -230,24 +250,27 @@ export default function AdminPage() {
       name: "plans"
   });
 
+  const { fields: galleryFields, append: appendGallery, remove: removeGallery } = useFieldArray({
+      control: ourSpaceForm.control, name: "gallery"
+  });
+
   useEffect(() => {
     const storedAboutContent = localStorage.getItem('aboutPageContent');
-    if (storedAboutContent) {
-        aboutForm.reset(JSON.parse(storedAboutContent));
-    }
-     const storedGeneralContent = localStorage.getItem('generalContent');
-    if (storedGeneralContent) {
-        generalForm.reset(JSON.parse(storedGeneralContent));
-    }
+    if (storedAboutContent) aboutForm.reset(JSON.parse(storedAboutContent));
+    
+    const storedGeneralContent = localStorage.getItem('generalContent');
+    if (storedGeneralContent) generalForm.reset(JSON.parse(storedGeneralContent));
+
     const storedPlansContent = localStorage.getItem('plansPageContent');
-    if(storedPlansContent){
-        plansForm.reset(JSON.parse(storedPlansContent));
-    }
+    if(storedPlansContent) plansForm.reset(JSON.parse(storedPlansContent));
+
     const storedHomeContent = localStorage.getItem('homePageContent');
-    if (storedHomeContent) {
-        homeForm.reset(JSON.parse(storedHomeContent));
-    }
-  }, [aboutForm, generalForm, plansForm, homeForm]);
+    if (storedHomeContent) homeForm.reset(JSON.parse(storedHomeContent));
+
+    const storedOurSpaceContent = localStorage.getItem('ourSpaceContent');
+    if (storedOurSpaceContent) ourSpaceForm.reset(JSON.parse(storedOurSpaceContent));
+
+  }, [aboutForm, generalForm, plansForm, homeForm, ourSpaceForm]);
 
   useEffect(() => {
     if (editingPet) {
@@ -318,6 +341,10 @@ export default function AdminPage() {
     toast({ title: 'Conteúdo da página de planos atualizado com sucesso.' });
   };
 
+  const handleSaveOurSpaceContent = (data: OurSpaceContent) => {
+    localStorage.setItem('ourSpaceContent', JSON.stringify(data));
+    toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
+  };
 
   if (!isAuthenticated) {
     return (
@@ -344,12 +371,13 @@ export default function AdminPage() {
         </header>
 
         <Tabs defaultValue="pets" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="home"><HomeIcon className="mr-2" /> Home Page</TabsTrigger>
-            <TabsTrigger value="pets"><Users className="mr-2" /> Gerenciar Pets</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="home"><HomeIcon className="mr-2" /> Home</TabsTrigger>
+            <TabsTrigger value="pets"><Users className="mr-2" /> Pets</TabsTrigger>
             <TabsTrigger value="about"><FileText className="mr-2" /> Sobre Nós</TabsTrigger>
+            <TabsTrigger value="space"><Building2 className="mr-2" /> Nosso Espaço</TabsTrigger>
             <TabsTrigger value="plans"><CheckCircle2 className="mr-2" /> Planos</TabsTrigger>
-            <TabsTrigger value="general"><Settings className="mr-2" /> Conteúdo Geral</TabsTrigger>
+            <TabsTrigger value="general"><Settings className="mr-2" /> Geral</TabsTrigger>
           </TabsList>
           
           <TabsContent value="home" className="mt-6">
@@ -367,7 +395,7 @@ export default function AdminPage() {
                             <h4 className="font-semibold">Slide {index + 1}</h4>
                             <FormField control={homeForm.control} name={`heroSlides.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                             <FormField control={homeForm.control} name={`heroSlides.${index}.subtitle`} render={({ field }) => (<FormItem><FormLabel>Subtítulo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                            <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `heroSlides.${index}.imageUrl`, homeForm)} /></FormControl></FormItem>)} />
+                            <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `heroSlides.${index}.imageUrl`, homeForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl></FormItem>)} />
                           </div>
                         ))}
                       </CardContent>
@@ -410,7 +438,7 @@ export default function AdminPage() {
                         <CardContent className="space-y-4">
                             <FormField control={homeForm.control} name="allPetsSection.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                             <FormField control={homeForm.control} name="allPetsSection.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
-                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da Seção</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'allPetsSection.imageUrl', homeForm)} /></FormControl></FormItem>)} />
+                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da Seção</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'allPetsSection.imageUrl', homeForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl></FormItem>)} />
                         </CardContent>
                     </Card>
 
@@ -494,12 +522,12 @@ export default function AdminPage() {
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção Missão</h3>
                             <FormField control={aboutForm.control} name="missionTitle" render={({ field }) => (<FormItem><FormLabel>Título da Missão</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="missionDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da Missão</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da Missão</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'missionImageUrl', aboutForm)} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da Missão</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'missionImageUrl', aboutForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
 
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção História</h3>
                              <FormField control={aboutForm.control} name="historyTitle" render={({ field }) => (<FormItem><FormLabel>Título da História</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="historyDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da História</FormLabel><FormControl><Textarea {...field} rows={4} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={aboutForm.control} name="historyImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da História</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'historyImageUrl', aboutForm)} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="historyImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da História</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'historyImageUrl', aboutForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
 
                             <Button type="submit"><Save className="mr-2" /> Salvar Alterações</Button>
                         </form>
@@ -507,6 +535,38 @@ export default function AdminPage() {
                 </CardContent>
             </Card>
           </TabsContent>
+          
+          <TabsContent value="space" className="mt-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Editar Página "Nosso Espaço"</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Form {...ourSpaceForm}>
+                        <form onSubmit={ourSpaceForm.handleSubmit(handleSaveOurSpaceContent)} className="space-y-6">
+                            <FormField control={ourSpaceForm.control} name="headerTitle" render={({ field }) => (<FormItem><FormLabel>Título Principal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={ourSpaceForm.control} name="headerDescription" render={({ field }) => (<FormItem><FormLabel>Descrição do Cabeçalho</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
+                            
+                            <Card className="p-4">
+                                <CardHeader><CardTitle>Galeria de Imagens</CardTitle></CardHeader>
+                                <CardContent className="space-y-4">
+                                    {galleryFields.map((item, index) => (
+                                        <div key={item.id} className="space-y-2 rounded-md border p-4">
+                                            <h4 className="font-semibold">Imagem {index + 1}</h4>
+                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título da Imagem</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.imageUrl`} render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Arquivo da Imagem</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `gallery.${index}.imageUrl`, ourSpaceForm)} /><Image src={value} alt="Preview" width={100} height={75} className='mt-2 rounded-md object-cover' /></div></FormControl></FormItem>)} />
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+
+                            <Button type="submit"><Save className="mr-2" /> Salvar Página "Nosso Espaço"</Button>
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
+          </TabsContent>
+
 
           <TabsContent value="plans" className="mt-6">
             <Card>
@@ -692,3 +752,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
