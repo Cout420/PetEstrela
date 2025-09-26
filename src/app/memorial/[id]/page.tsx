@@ -93,8 +93,8 @@ const MemorialDetailPage = () => {
             <h1 className="font-headline text-4xl md:text-5xl font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.5)]">
                 Em memória de {pet.name}
             </h1>
-            <p className="text-lg text-gray-200 mt-2">{pet.birthDate} - {pet.passingDate}</p>
-            <span className="font-mono text-xl text-gray-300">{formatId(pet.id)}</span>
+            <p className="text-lg text-gray-200 mt-2 [text-shadow:0_1px_3px_rgba(0,0,0,0.4)]">{pet.birthDate} - {pet.passingDate}</p>
+            <span className="font-mono text-xl text-gray-300 [text-shadow:0_1px_3px_rgba(0,0,0,0.4)]">{formatId(pet.id)}</span>
         </div>
 
         <div className="grid gap-12 pt-4 md:grid-cols-2">
