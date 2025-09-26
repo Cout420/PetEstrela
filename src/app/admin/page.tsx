@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import qrcode from 'qrcode';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
@@ -151,6 +152,8 @@ export default function AdminPage() {
   const [pets, setPets] = useState<PetMemorial[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPet, setEditingPet] = useState<PetMemorial | null>(null);
+  const qrCodeCanvasRef = useRef<HTMLCanvasElement>(null);
+
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('petEstrelaAuth') === 'authenticated';
@@ -162,6 +165,15 @@ export default function AdminPage() {
       setPets(storedPets ? JSON.parse(storedPets) : initialPets);
     }
   }, [router]);
+  
+  useEffect(() => {
+    if (isFormOpen && editingPet && qrCodeCanvasRef.current) {
+      const url = `${window.location.origin}/memorial/${editingPet.id}`;
+      qrcode.toCanvas(qrCodeCanvasRef.current, url, { width: 128, margin: 2 }, (error) => {
+        if (error) console.error("Error generating QR code:", error);
+      });
+    }
+  }, [isFormOpen, editingPet]);
   
   const petForm = useForm<PetMemorial>({
     resolver: zodResolver(petSchema),
@@ -738,6 +750,30 @@ export default function AdminPage() {
                             render={({ fieldState }) => <FormMessage>{fieldState.error?.message}</FormMessage>}
                          />
                     </div>
+                    
+                    {editingPet && (
+                      <div className="space-y-2">
+                        <Label>QR Code do Memorial</Label>
+                        <div className='flex items-center gap-4 rounded-lg border bg-muted/50 p-4'>
+                          <QrCode className="h-16 w-16 text-muted-foreground" />
+                          <div>
+                            <h4 className="font-semibold">QR Code para {editingPet.name}</h4>
+                            <p className="text-sm text-muted-foreground">Aponte a câmera para acessar a página do memorial. Você pode salvar e usar este código em materiais impressos.</p>
+                             <canvas ref={qrCodeCanvasRef} className="mt-2 hidden" />
+                             {qrCodeCanvasRef.current && (
+                               <a 
+                                href={qrCodeCanvasRef.current.toDataURL()} 
+                                download={`qrcode-memorial-${editingPet.id}.png`}
+                                className="text-sm text-primary hover:underline mt-2 inline-block"
+                               >
+                                Baixar QR Code
+                               </a>
+                             )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                 </div>
                 <div className='flex justify-end gap-2 mt-6'>
                     <DialogClose asChild>
@@ -752,5 +788,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

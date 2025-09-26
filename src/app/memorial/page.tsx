@@ -2,12 +2,12 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { memorialPets as initialPets } from '@/lib/mock-data';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, QrCode, Search, Heart } from 'lucide-react';
+import { PlusCircle, Search } from 'lucide-react';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 
 type PetMemorial = {
@@ -28,7 +28,6 @@ type PetMemorial = {
 };
 
 const MemorialPage = () => {
-  const [selectedPet, setSelectedPet] = useState<PetMemorial | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [memorialPets, setMemorialPets] = useState<PetMemorial[]>([]);
   const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/551142405253?text=${encodeURIComponent(\'Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.\')}' });
@@ -107,97 +106,43 @@ const MemorialPage = () => {
             </a>
 
             {filteredPets.map((pet) => (
-              <Card
-                key={pet.id}
-                className="luxury-card hover-lift animate-scale-in cursor-pointer overflow-hidden text-center"
-                onClick={() => setSelectedPet(pet)}
-              >
-                {pet.image && (
-                  <div className="relative h-56 w-full">
-                    <Image
-                      src={pet.image.imageUrl}
-                      alt={pet.image.description}
-                      data-ai-hint={pet.image.imageHint}
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute top-2 right-2 bg-background/80 text-primary font-bold text-sm px-2 py-1 rounded-full">
-                        {formatId(pet.id)}
-                    </div>
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle className="font-headline text-2xl">
-                    {pet.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{pet.species}</p>
-                </CardContent>
-                <CardFooter className="flex justify-center">
-                  <Button variant="link">Ver Homenagem</Button>
-                </CardFooter>
-              </Card>
+              <Link key={pet.id} href={`/memorial/${pet.id}`} legacyBehavior>
+                <a className="block animate-scale-in">
+                  <Card
+                    className="luxury-card hover-lift cursor-pointer overflow-hidden text-center h-full"
+                  >
+                    {pet.image && (
+                      <div className="relative h-56 w-full">
+                        <Image
+                          src={pet.image.imageUrl}
+                          alt={pet.image.description}
+                          data-ai-hint={pet.image.imageHint}
+                          fill
+                          className="object-cover"
+                        />
+                        <div className="absolute top-2 right-2 bg-background/80 text-primary font-bold text-sm px-2 py-1 rounded-full">
+                            {formatId(pet.id)}
+                        </div>
+                      </div>
+                    )}
+                    <CardHeader>
+                      <CardTitle className="font-headline text-2xl">
+                        {pet.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground">{pet.species}</p>
+                    </CardContent>
+                    <CardFooter className="flex justify-center">
+                      <Button variant="link">Ver Homenagem</Button>
+                    </CardFooter>
+                  </Card>
+                </a>
+              </Link>
             ))}
           </div>
         </div>
       </div>
-
-      <Dialog open={!!selectedPet} onOpenChange={() => setSelectedPet(null)}>
-        <DialogContent className="max-w-4xl">
-          {selectedPet && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="font-headline text-3xl text-primary">
-                  Em memória de {selectedPet.name} <span className="font-mono text-xl text-muted-foreground">{formatId(selectedPet.id)}</span>
-                </DialogTitle>
-                <DialogDescription>
-                  {selectedPet.birthDate} - {selectedPet.passingDate}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-8 pt-4 md:grid-cols-2 max-h-[70vh] overflow-y-auto pr-4">
-                <div className="space-y-4">
-                   {selectedPet.images?.map((img, index) => img && (
-                     <div key={index} className="relative aspect-video w-full overflow-hidden rounded-lg">
-                       <Image
-                        src={img.imageUrl}
-                        alt={img.description}
-                        data-ai-hint={img.imageHint}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                   ))}
-                </div>
-                <div>
-                   <div className="space-y-2 text-sm text-foreground bg-muted/30 p-4 rounded-lg border">
-                      <p><strong>Raça:</strong> {selectedPet.species}</p>
-                      <p><strong>Sexo:</strong> {selectedPet.sexo}</p>
-                      <p><strong>Idade:</strong> {selectedPet.age}</p>
-                      <p><strong>Tutores:</strong> {selectedPet.tutores}</p>
-                      <p><strong>Árvore Plantada:</strong> {selectedPet.arvore}</p>
-                      <p><strong>Local:</strong> {selectedPet.local}</p>
-                  </div>
-                  <p className="mt-6 whitespace-pre-wrap text-base leading-relaxed">
-                    {selectedPet.text}
-                  </p>
-                  <div className="mt-4 flex items-center justify-center gap-2 text-lg font-semibold text-primary">
-                      <Heart className="h-5 w-5" />
-                      <p>Sempre em nossos corações</p>
-                  </div>
-                  <div className="mt-6 flex items-center gap-4 rounded-lg border bg-muted/50 p-4">
-                    <QrCode className="h-16 w-16 text-muted-foreground" />
-                    <div>
-                      <h4 className="font-semibold">QR Code Memorial</h4>
-                      <p className="text-sm text-muted-foreground">Aponte a câmera e acesse esta homenagem a qualquer momento.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
