@@ -1,28 +1,48 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { memorialPets } from '@/lib/mock-data';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
-import { PlusCircle, QrCode, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { PlusCircle, QrCode, X, Search, Heart } from 'lucide-react';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 
 type PetMemorial = {
-    id: number;
-    name: string;
-    species: string;
-    age: string;
-    family: string;
-    birthDate: string;
-    passingDate: string;
-    text: string;
-    image?: ImagePlaceholder;
-}
+  id: number;
+  name: string;
+  species: string;
+  sexo: string;
+  age: string;
+  family: string;
+  birthDate: string;
+  passingDate: string;
+  arvore: string;
+  local: string;
+  tutores: string;
+  text: string;
+  image?: ImagePlaceholder;
+  images?: (ImagePlaceholder | undefined)[];
+};
 
 const MemorialPage = () => {
   const [selectedPet, setSelectedPet] = useState<PetMemorial | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const formatId = (id: number) => `#${id.toString().padStart(3, '0')}`;
+
+  const filteredPets = useMemo(() => {
+    if (!searchQuery) {
+      return memorialPets;
+    }
+    return memorialPets.filter(
+      (pet) =>
+        pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        formatId(pet.id).includes(searchQuery)
+    );
+  }, [searchQuery]);
 
   const whatsappLink = `https://wa.me/5511942405253?text=${encodeURIComponent(
     'Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.'
@@ -34,12 +54,26 @@ const MemorialPage = () => {
         <div className="container mx-auto px-4">
           <div className="animate-fade-in text-center">
             <h1 className="font-headline text-4xl font-bold text-primary md:text-5xl">
-              Memorial Digital
+              Memorial Pet Estrela
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-              Um espaço para celebrar o amor e a saudade dos nossos eternos
-              companheiros.
-            </p>
+            <div className="mx-auto mt-4 max-w-3xl text-muted-foreground space-y-4 text-base">
+              <p>O Memorial Pet Estrela foi criado como uma forma carinhosa de eternizar a lembrança dos nossos animais que se tornaram estrelinhas. Aqui, cada vida é celebrada através do plantio de uma árvore, que simboliza amor, renovação e memória eterna.</p>
+              <p>Além de homenagear nossos companheiros, este memorial também contribui para o reflorestamento, com mudas frutíferas e nativas, fortalecendo a natureza.</p>
+              <p>As cinzas de cada pet são depositadas junto à muda escolhida e recebem uma identificação única. Por meio do QR Code, é possível consultar essa numeração e acessar as informações sobre o animal e a árvore que guarda sua lembrança.</p>
+            </div>
+          </div>
+          
+          <div className="mt-12 mb-8 max-w-lg mx-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Pesquisar por nome ou número (ex: #001)"
+                className="w-full pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -61,7 +95,7 @@ const MemorialPage = () => {
               </Card>
             </a>
 
-            {memorialPets.map((pet) => (
+            {filteredPets.map((pet) => (
               <Card
                 key={pet.id}
                 className="luxury-card hover-lift animate-scale-in cursor-pointer overflow-hidden text-center"
@@ -76,6 +110,9 @@ const MemorialPage = () => {
                       fill
                       className="object-cover"
                     />
+                    <div className="absolute top-2 right-2 bg-background/80 text-primary font-bold text-sm px-2 py-1 rounded-full">
+                        {formatId(pet.id)}
+                    </div>
                   </div>
                 )}
                 <CardHeader>
@@ -96,40 +133,47 @@ const MemorialPage = () => {
       </div>
 
       <Dialog open={!!selectedPet} onOpenChange={() => setSelectedPet(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl">
           {selectedPet && (
             <>
               <DialogHeader>
                 <DialogTitle className="font-headline text-3xl text-primary">
-                  Em memória de {selectedPet.name}
+                  Em memória de {selectedPet.name} <span className="font-mono text-xl text-muted-foreground">{formatId(selectedPet.id)}</span>
                 </DialogTitle>
                 <DialogDescription>
                   {selectedPet.birthDate} - {selectedPet.passingDate}
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-8 pt-4 md:grid-cols-2">
-                <div>
-                  {selectedPet.image && (
-                    <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-lg">
+              <div className="grid gap-8 pt-4 md:grid-cols-2 max-h-[70vh] overflow-y-auto pr-4">
+                <div className="space-y-4">
+                   {selectedPet.images?.map((img, index) => img && (
+                     <div key={index} className="relative aspect-video w-full overflow-hidden rounded-lg">
                        <Image
-                        src={selectedPet.image.imageUrl}
-                        alt={selectedPet.image.description}
-                        data-ai-hint={selectedPet.image.imageHint}
+                        src={img.imageUrl}
+                        alt={img.description}
+                        data-ai-hint={img.imageHint}
                         fill
                         className="object-cover"
                       />
                     </div>
-                  )}
-                  <div className="space-y-1 text-sm text-muted-foreground">
-                      <p><strong>Raça:</strong> {selectedPet.species}</p>
-                      <p><strong>Idade:</strong> {selectedPet.age}</p>
-                      <p><strong>Família:</strong> {selectedPet.family}</p>
-                  </div>
+                   ))}
                 </div>
                 <div>
-                   <p className="whitespace-pre-wrap text-base leading-relaxed">
+                   <div className="space-y-2 text-sm text-foreground bg-muted/30 p-4 rounded-lg border">
+                      <p><strong>Raça:</strong> {selectedPet.species}</p>
+                      <p><strong>Sexo:</strong> {selectedPet.sexo}</p>
+                      <p><strong>Idade:</strong> {selectedPet.age}</p>
+                      <p><strong>Tutores:</strong> {selectedPet.tutores}</p>
+                      <p><strong>Árvore Plantada:</strong> {selectedPet.arvore}</p>
+                      <p><strong>Local:</strong> {selectedPet.local}</p>
+                  </div>
+                  <p className="mt-6 whitespace-pre-wrap text-base leading-relaxed">
                     {selectedPet.text}
                   </p>
+                  <div className="mt-4 flex items-center justify-center gap-2 text-lg font-semibold text-primary">
+                      <Heart className="h-5 w-5" />
+                      <p>Sempre em nossos corações</p>
+                  </div>
                   <div className="mt-6 flex items-center gap-4 rounded-lg border bg-muted/50 p-4">
                     <QrCode className="h-16 w-16 text-muted-foreground" />
                     <div>
