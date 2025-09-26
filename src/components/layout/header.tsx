@@ -13,6 +13,7 @@ const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/memorial', label: 'Memorial' },
   { href: '/sobre', label: 'Sobre Nós' },
+  { href: '/nosso-espaco', label: 'Nosso Espaço' },
   { href: '/planos', label: 'Planos' },
 ];
 

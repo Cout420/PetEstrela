@@ -77,6 +77,42 @@
       "description": "Portrait of João Oliveira, Specialized Technician.",
       "imageUrl": "https://images.unsplash.com/photo-1631556762764-100577512917?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtYWxlJTIwdGVjaG5pY2lhbnxlbnwwfHx8fDE3NTg4ODUyNzZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "male technician"
+    },
+    {
+      "id": "space-reception",
+      "description": "Welcoming reception area of the crematorium.",
+      "imageUrl": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1080",
+      "imageHint": "reception area"
+    },
+    {
+      "id": "space-chapel",
+      "description": "A peaceful farewell room (chapel) with comfortable seating.",
+      "imageUrl": "https://images.unsplash.com/photo-1544135798-96fec0874146?q=80&w=1080",
+      "imageHint": "chapel interior"
+    },
+    {
+      "id": "space-crematory",
+      "description": "Modern and clean cremation equipment.",
+      "imageUrl": "https://images.unsplash.com/photo-1616628042457-34c30c793f7c?q=80&w=1080",
+      "imageHint": "cremation equipment"
+    },
+    {
+      "id": "space-garden",
+      "description": "A beautiful memorial garden for scattering ashes.",
+      "imageUrl": "https://images.unsplash.com/photo-1490750967868-88aa4486c946?q=80&w=1080",
+      "imageHint": "memorial garden"
+    },
+    {
+      "id": "space-urns",
+      "description": "A collection of different beautiful pet urns.",
+      "imageUrl": "https://images.unsplash.com/photo-1610231695420-1a7cf735d491?q=80&w=1080",
+      "imageHint": "pet urns"
+    },
+    {
+      "id": "space-facade",
+      "description": "The exterior facade of the Pet Estrela crematorium.",
+      "imageUrl": "https://images.unsplash.com/photo-1568605117036-5fe5e7185743?q=80&w=1080",
+      "imageHint": "building facade"
     }
   ]
 }
