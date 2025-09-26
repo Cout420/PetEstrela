@@ -60,33 +60,30 @@ const MemorialPage = () => {
 
   return (
     <>
-      <div className="bg-background py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="animate-fade-in order-2 md:order-1">
-                <h1 className="font-headline text-4xl font-bold text-primary md:text-5xl">
-                Memorial Pet Estrela
-                </h1>
-                <div className="mt-4 max-w-2xl text-muted-foreground space-y-4 text-base">
+      <section className="relative flex h-[70vh] items-center justify-center text-center text-white">
+        <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            className="absolute top-0 left-0 w-full h-full object-cover z-0"
+            src="https://i.imgur.com/PnqGjta.mp4"
+        />
+        <div className="absolute top-0 left-0 w-full h-full bg-black/50 z-10"></div>
+        <div className="container mx-auto px-4 z-20 animate-fade-in">
+            <h1 className="font-headline text-4xl font-bold md:text-6xl">
+            Memorial Pet Estrela
+            </h1>
+            <div className="mt-4 max-w-3xl mx-auto space-y-4 text-base text-gray-200">
                 <p>O Memorial Pet Estrela foi criado como uma forma carinhosa de eternizar a lembrança dos nossos animais que se tornaram estrelinhas. Aqui, cada vida é celebrada através do plantio de uma árvore, que simboliza amor, renovação e memória eterna.</p>
                 <p>Além de homenagear nossos companheiros, este memorial também contribui para o reflorestamento, com mudas frutíferas e nativas, fortalecendo a natureza.</p>
-                <p>As cinzas de cada pet são depositadas junto à muda escolhida e recebem uma identificação única. Por meio do QR Code, é possível consultar essa numeração e acessar as informações sobre o animal e a árvore que guarda sua lembrança.</p>
-                </div>
             </div>
+        </div>
+      </section>
 
-            <div className="relative w-full order-1 md:order-2 overflow-hidden rounded-lg shadow-soft aspect-video md:aspect-auto self-stretch">
-                <video 
-                    autoPlay 
-                    loop 
-                    muted 
-                    playsInline 
-                    className="absolute top-0 left-0 w-full h-full object-cover z-0"
-                    src="https://i.imgur.com/PnqGjta.mp4"
-                />
-            </div>
-          </div>
-          
-          <div className="mt-12 mb-8 max-w-lg mx-auto">
+      <div className="bg-background py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <div className="max-w-lg mx-auto">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
