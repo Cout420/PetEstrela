@@ -47,7 +47,6 @@ const MemorialDetailPage = () => {
     let foundPet = pets.find((p) => p.id === petId);
 
     if (foundPet) {
-      // Forcefully correct the qrCodeUrl if it's wrong or missing
       if (!foundPet.qrCodeUrl || !foundPet.qrCodeUrl.startsWith(PROD_DOMAIN)) {
         foundPet.qrCodeUrl = `${PROD_DOMAIN}/memorial/${foundPet.id}`;
       }
@@ -79,7 +78,7 @@ const MemorialDetailPage = () => {
   const formatId = (id: number) => `#${id.toString().padStart(3, '0')}`;
 
   return (
-    <div className="bg-background py-12 md:py-24">
+    <div className="bg-background py-12 md:py-24 memorial-bg">
       <div className="container mx-auto px-4">
         <div className="mb-8">
             <Button asChild variant="outline">
