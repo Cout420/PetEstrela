@@ -216,8 +216,8 @@ export default function AdminPage() {
     const generalForm = useForm<GeneralContent>({
     resolver: zodResolver(generalContentSchema),
     defaultValues: {
-      whatsappNumber: '11942405253',
-      whatsappLink: 'https://wa.me/5511942405253',
+      whatsappNumber: '1142405253',
+      whatsappLink: 'https://wa.me/551142405253',
       phone: '(11) 4240-5253',
       address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
       instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
@@ -620,14 +620,14 @@ export default function AdminPage() {
                     <FormField control={generalForm.control} name="whatsappNumber" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Número do WhatsApp (somente números)</FormLabel>
-                        <FormControl><Input placeholder="5511942405253" {...field} /></FormControl>
+                        <FormControl><Input placeholder="551142405253" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                      <FormField control={generalForm.control} name="whatsappLink" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Link do WhatsApp (completo)</FormLabel>
-                        <FormControl><Input placeholder="https://wa.me/5511942405253" {...field} /></FormControl>
+                        <FormControl><Input placeholder="https://wa.me/551142405253" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />

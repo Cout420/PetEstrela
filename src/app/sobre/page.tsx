@@ -72,7 +72,7 @@ export default function AboutPage() {
       setGeneralContent(JSON.parse(storedGeneralContent));
     } else {
         setGeneralContent({
-            whatsappLink: 'https://wa.me/5511942405253'
+            whatsappLink: 'https://wa.me/551142405253'
         });
     }
 
@@ -250,5 +250,3 @@ export default function AboutPage() {
     </>
   );
 }
-
-    

@@ -20,13 +20,13 @@ const navLinks = [
 const Header = () => {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [whatsappLink, setWhatsappLink] = useState('https://wa.me/5511942405253');
+  const [whatsappLink, setWhatsappLink] = useState('https://wa.me/551142405253');
 
   useEffect(() => {
     const storedContent = localStorage.getItem('generalContent');
     if (storedContent) {
         const content = JSON.parse(storedContent);
-        setWhatsappLink(content.whatsappLink || 'https://wa.me/5511942405253');
+        setWhatsappLink(content.whatsappLink || 'https://wa.me/551142405253');
     }
   }, []);
 
@@ -113,5 +113,3 @@ const Header = () => {
 };
 
 export default Header;
-
-    

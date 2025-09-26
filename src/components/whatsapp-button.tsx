@@ -5,13 +5,13 @@ import { MessageCircle } from 'lucide-react';
 import { Button } from './ui/button';
 
 const WhatsAppButton = () => {
-    const [whatsappLink, setWhatsappLink] = useState('https://wa.me/5511942405253');
+    const [whatsappLink, setWhatsappLink] = useState('https://wa.me/551142405253');
 
     useEffect(() => {
         const storedContent = localStorage.getItem('generalContent');
         if (storedContent) {
             const content = JSON.parse(storedContent);
-            setWhatsappLink(content.whatsappLink || 'https://wa.me/5511942405253');
+            setWhatsappLink(content.whatsappLink || 'https://wa.me/551142405253');
         }
     }, []);
 
@@ -34,5 +34,3 @@ const WhatsAppButton = () => {
 };
 
 export default WhatsAppButton;
-
-    

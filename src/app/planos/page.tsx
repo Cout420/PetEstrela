@@ -39,7 +39,7 @@ export default function PlansPage() {
             setWhatsappLink(`${general.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de mais informações sobre os planos de cremação.')}`);
             setSpecialistWhatsappLink(`${general.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os planos.')}`);
         } else {
-            const defaultLink = 'https://wa.me/5511942405253';
+            const defaultLink = 'https://wa.me/551142405253';
             setWhatsappLink(`${defaultLink}?text=${encodeURIComponent('Olá! Gostaria de mais informações sobre os planos de cremação.')}`);
             setSpecialistWhatsappLink(`${defaultLink}?text=${encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os planos.')}`);
         }
@@ -113,5 +113,3 @@ export default function PlansPage() {
     </div>
   );
 }
-
-    

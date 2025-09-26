@@ -23,7 +23,7 @@ const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
 };
 
 export default function Home() {
-  const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/5511942405253' });
+  const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/551142405253', address: '', phone: '', whatsappNumber: '' });
   const [homeContent, setHomeContent] = useState(initialHomePageContent);
 
   useEffect(() => {
@@ -253,7 +253,7 @@ export default function Home() {
                   <strong>Telefone:</strong> {generalContent.phone || '(11) 4240-5253'}
                 </p>
                 <p>
-                  <strong>WhatsApp:</strong> {generalContent.whatsappNumber || '11942405253'}
+                  <strong>WhatsApp:</strong> {generalContent.whatsappNumber || '1142405253'}
                 </p>
               </div>
               <Button asChild size="lg" className="btn-whatsapp mt-8">

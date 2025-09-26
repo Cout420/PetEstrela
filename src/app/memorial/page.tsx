@@ -31,7 +31,7 @@ const MemorialPage = () => {
   const [selectedPet, setSelectedPet] = useState<PetMemorial | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [memorialPets, setMemorialPets] = useState<PetMemorial[]>([]);
-  const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/5511942405253?text=${encodeURIComponent(\'Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.\')}' });
+  const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/551142405253?text=${encodeURIComponent(\'Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.\')}' });
 
   useEffect(() => {
     const storedPets = localStorage.getItem('memorialPets');
@@ -203,7 +203,3 @@ const MemorialPage = () => {
 };
 
 export default MemorialPage;
-
-    
-
-    
