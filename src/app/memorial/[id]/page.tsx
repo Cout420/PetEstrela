@@ -1,34 +1,36 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import Image from 'next/image';
 import qrcode from 'qrcode';
-import { memorialPets as initialPets } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { QrCode, Heart, ArrowLeft, ExternalLink } from 'lucide-react';
-import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PROD_DOMAIN } from '@/lib/link-service';
+import { Card, CardContent } from '@/components/ui/card';
+import { getMemorialById, PetMemorial } from '@/lib/firebase-service';
+import { Timestamp } from 'firebase/firestore';
 
-type PetMemorial = {
-  id: number;
-  name: string;
-  species: string;
-  sexo: string;
-  age: string;
-  family: string;
-  birthDate: string;
-  passingDate: string;
-  arvore: string;
-  local: string;
-  tutores: string;
-  text: string;
-  image?: ImagePlaceholder;
-  images?: (ImagePlaceholder | undefined)[];
-  qrCodeUrl?: string;
+// Helper para converter Timestamp do Firebase para string de data 'YYYY-MM-DD'
+const formatDate = (timestamp: Timestamp | string | undefined): string => {
+  if (!timestamp) return 'Data desconhecida';
+  if (typeof timestamp === 'string') {
+    // Se já for uma string no formato 'YYYY-MM-DD', retorna diretamente
+    if (/^\d{4}-\d{2}-\d{2}$/.test(timestamp)) {
+      return timestamp;
+    }
+    // Tenta converter de outros formatos de string se necessário
+    const date = new Date(timestamp);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+    return 'Data inválida';
+  }
+  // Converte Timestamp do Firebase
+  return timestamp.toDate().toISOString().split('T')[0];
 };
+
 
 const MemorialDetailPage = () => {
   const [pet, setPet] = useState<PetMemorial | null>(null);
@@ -37,22 +39,24 @@ const MemorialDetailPage = () => {
   const qrCodeCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const petId = Number(params.id);
-    if (isNaN(petId)) {
-      setLoading(false);
-      return;
-    }
-    const storedPets = localStorage.getItem('memorialPets');
-    const pets: PetMemorial[] = storedPets ? JSON.parse(storedPets) : initialPets;
-    let foundPet = pets.find((p) => p.id === petId);
-
-    if (foundPet) {
-      if (!foundPet.qrCodeUrl || !foundPet.qrCodeUrl.startsWith(PROD_DOMAIN)) {
-        foundPet.qrCodeUrl = `${PROD_DOMAIN}/memorial/${foundPet.id}`;
+    const fetchPet = async () => {
+      const petId = Number(params.id);
+      if (isNaN(petId)) {
+        setLoading(false);
+        return;
       }
-      setPet(foundPet);
-    }
-    setLoading(false);
+      
+      try {
+        const foundPet = await getMemorialById(petId);
+        setPet(foundPet);
+      } catch (error) {
+        console.error("Erro ao buscar memorial:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPet();
   }, [params.id]);
   
   useEffect(() => {
@@ -65,8 +69,8 @@ const MemorialDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Carregando memorial...</p>
+      <div className="flex min-h-screen items-center justify-center memorial-bg">
+        <p className='text-white text-lg'>Carregando memorial...</p>
       </div>
     );
   }
@@ -93,7 +97,7 @@ const MemorialDetailPage = () => {
             <h1 className="font-headline text-4xl md:text-5xl font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.5)]">
                 Em memória de {pet.name}
             </h1>
-            <p className="text-lg text-gray-200 mt-2 [text-shadow:0_1px_3px_rgba(0,0,0,0.4)]">{pet.birthDate} - {pet.passingDate}</p>
+            <p className="text-lg text-gray-200 mt-2 [text-shadow:0_1px_3px_rgba(0,0,0,0.4)]">{formatDate(pet.birthDate)} - {formatDate(pet.passingDate)}</p>
             <span className="font-mono text-xl text-gray-300 [text-shadow:0_1px_3px_rgba(0,0,0,0.4)]">{formatId(pet.id)}</span>
         </div>
 

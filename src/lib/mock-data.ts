@@ -1,5 +1,7 @@
+
 import type { BarChart, LineChart } from 'lucide-react';
 import { PlaceHolderImages } from './placeholder-images';
+import { Timestamp } from 'firebase/firestore';
 
 export const testimonials = [
   { id: 1, name: 'Ana Souza', text: 'O atendimento foi incrível, cheio de empatia e respeito. Fizeram deste momento difícil algo mais sereno. Recomendo de olhos fechados.' },
@@ -38,7 +40,8 @@ export const memorialPets = [
       { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
       { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
-    qrCodeUrl: ''
+    qrCodeUrl: '',
+    createdAt: Timestamp.fromDate(new Date('2024-05-22T10:00:00'))
   },
   {
     id: 2,
@@ -61,7 +64,8 @@ export const memorialPets = [
       { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
       { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
-    qrCodeUrl: ''
+    qrCodeUrl: '',
+    createdAt: Timestamp.fromDate(new Date('2024-06-18T10:00:00'))
   },
   {
     id: 3,
@@ -84,7 +88,8 @@ export const memorialPets = [
       { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
       { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
-    qrCodeUrl: ''
+    qrCodeUrl: '',
+    createdAt: Timestamp.fromDate(new Date('2024-04-01T10:00:00'))
   },
   {
     id: 4,
@@ -107,7 +112,8 @@ export const memorialPets = [
       { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-max')?.imageUrl || '' },
       { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
-    qrCodeUrl: ''
+    qrCodeUrl: '',
+    createdAt: Timestamp.fromDate(new Date('2024-03-30T10:00:00'))
   },
 ];
 

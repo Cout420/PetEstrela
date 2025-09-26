@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -17,15 +18,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { memorialPets as initialPets, teamMembers as initialTeamMembers, plans as initialPlans } from '@/lib/mock-data';
-import type { ImagePlaceholder } from '@/lib/placeholder-images';
+import { teamMembers as initialTeamMembers, plans as initialPlans } from '@/lib/mock-data';
 import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus, CheckCircle2, HomeIcon, Building2 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { homePageContent as initialHomePageContent, heroSlides as initialHeroSlides, whyChooseUs as initialWhyChooseUs, cremationProcess as initialCremationProcess, allPetsSection as initialAllPetsSection } from '@/lib/home-content';
+import { homePageContent as initialHomePageContent } from '@/lib/home-content';
 import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
 import { PROD_DOMAIN } from '@/lib/link-service';
+import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial } from '@/lib/firebase-service';
+import { Timestamp } from 'firebase/firestore';
 
+// Zod schema for client-side form validation (dates are strings)
 const petSchema = z.object({
   id: z.number(),
   name: z.string().min(1, "O nome do pet é obrigatório."),
@@ -48,13 +51,15 @@ const petSchema = z.object({
   image: z.object({
       id: z.string(),
       imageUrl: z.string(),
-      description: z.string(),
-      imageHint: z.string()
+      description: z.string().optional(),
+      imageHint: z.string().optional()
   }).optional(),
   qrCodeUrl: z.string().optional(),
+  createdAt: z.custom<Timestamp>().optional(), // For internal use
 });
 
-type PetMemorial = z.infer<typeof petSchema>;
+type PetMemorialForm = z.infer<typeof petSchema>;
+
 
 const aboutPageSchema = z.object({
   headerTitle: z.string().min(1, "Título é obrigatório."),
@@ -152,11 +157,10 @@ export default function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pets, setPets] = useState<PetMemorial[]>([]);
+  const [pets, setPets] = useState<FirestorePetMemorial[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingPet, setEditingPet] = useState<PetMemorial | null>(null);
+  const [editingPet, setEditingPet] = useState<FirestorePetMemorial | null>(null);
   const qrCodeCanvasRef = useRef<HTMLCanvasElement>(null);
-
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('petEstrelaAuth') === 'authenticated';
@@ -164,18 +168,14 @@ export default function AdminPage() {
       router.push('/login');
     } else {
       setIsAuthenticated(true);
-      const storedPets = localStorage.getItem('memorialPets');
-      const petsData = storedPets ? JSON.parse(storedPets) : initialPets;
-      // Forcefully update QR code URLs if they are from the wrong domain or missing
-      const correctedPets = petsData.map((pet: PetMemorial) => ({
-        ...pet,
-        qrCodeUrl: (!pet.qrCodeUrl || !pet.qrCodeUrl.startsWith(PROD_DOMAIN))
-          ? `${PROD_DOMAIN}/memorial/${pet.id}`
-          : pet.qrCodeUrl
-      }));
-      setPets(correctedPets);
+      fetchPets();
     }
   }, [router]);
+
+  const fetchPets = async () => {
+    const petsData = await getMemorials();
+    setPets(petsData);
+  }
   
   useEffect(() => {
     if (isFormOpen && editingPet?.qrCodeUrl && qrCodeCanvasRef.current) {
@@ -185,7 +185,7 @@ export default function AdminPage() {
     }
   }, [isFormOpen, editingPet]);
   
-  const petForm = useForm<PetMemorial>({
+  const petForm = useForm<PetMemorialForm>({
     resolver: zodResolver(petSchema),
     defaultValues: {
       name: '', species: '', sexo: '', age: '', family: '', birthDate: '', passingDate: '',
@@ -295,16 +295,22 @@ export default function AdminPage() {
   }, [aboutForm, generalForm, plansForm, homeForm, ourSpaceForm]);
 
   useEffect(() => {
-    if (editingPet) {
-      petForm.reset(editingPet);
-    } else {
-      petForm.reset({
-        id: pets.length > 0 ? Math.max(...pets.map(p => p.id)) + 1 : 1,
-        name: '', species: '', sexo: '', age: '', family: '', birthDate: '', passingDate: '',
-        arvore: '', local: '', tutores: '', text: '', images: Array(5).fill({ id: '', imageUrl: '' }),
-      });
+    const setupForm = async () => {
+      if (editingPet) {
+        petForm.reset(editingPet);
+      } else {
+        const nextId = await getNextMemorialId();
+        petForm.reset({
+          id: nextId,
+          name: '', species: '', sexo: '', age: '', family: '', birthDate: '', passingDate: '',
+          arvore: '', local: '', tutores: '', text: '', images: Array(5).fill({ id: '', imageUrl: '' }),
+        });
+      }
+    };
+    if (isFormOpen) {
+      setupForm();
     }
-  }, [editingPet, petForm, pets]);
+  }, [editingPet, petForm, isFormOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem('petEstrelaAuth');
@@ -312,14 +318,12 @@ export default function AdminPage() {
     router.push('/');
   };
 
-  const handleOpenForm = (pet: PetMemorial | null) => {
+  const handleOpenForm = (pet: FirestorePetMemorial | null) => {
     setEditingPet(pet);
     setIsFormOpen(true);
   };
   
-  const handleSavePet = async (data: PetMemorial) => {
-    let updatedPets;
-    
+  const handleSavePet = async (data: PetMemorialForm) => {
     try {
       const result = await shortenLink({ memorialId: data.id });
       data.qrCodeUrl = result.shortUrl;
@@ -328,27 +332,45 @@ export default function AdminPage() {
       data.qrCodeUrl = `${PROD_DOMAIN}/memorial/${data.id}`;
     }
 
-    if (editingPet) {
-      updatedPets = pets.map(p => p.id === data.id ? { ...data, image: data.images[0] } : p);
-      toast({ title: `Memorial de ${data.name} atualizado com sucesso.` });
-    } else {
-      const newPet = { ...data, id: data.id, image: data.images[0] };
-      updatedPets = [newPet, ...pets];
-      toast({ title: `Memorial de ${data.name} criado com sucesso.` });
+    const petToSave: FirestorePetMemorial = {
+      ...data,
+      image: data.images[0],
+      createdAt: editingPet?.createdAt || Timestamp.now(),
+    };
+
+    try {
+        await saveMemorial(petToSave);
+        if (editingPet) {
+            toast({ title: `Memorial de ${data.name} atualizado com sucesso.` });
+        } else {
+            toast({ title: `Memorial de ${data.name} criado com sucesso.` });
+        }
+        fetchPets(); // Refresh the list
+        setIsFormOpen(false);
+        setEditingPet(null);
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Erro ao salvar",
+            description: "Não foi possível salvar o memorial. Tente novamente.",
+        });
     }
-    setPets(updatedPets);
-    localStorage.setItem('memorialPets', JSON.stringify(updatedPets));
-    setIsFormOpen(false);
-    setEditingPet(null);
   };
 
-  const handleDeletePet = (petId: number) => {
+  const handleDeletePet = async (petId: number) => {
     const petToDelete = pets.find(p => p.id === petId);
     if(petToDelete){
-        const updatedPets = pets.filter(p => p.id !== petId);
-        setPets(updatedPets);
-        localStorage.setItem('memorialPets', JSON.stringify(updatedPets));
-        toast({ title: `Memorial de ${petToDelete.name} excluído com sucesso.` });
+        try {
+            await deleteMemorial(petId);
+            toast({ title: `Memorial de ${petToDelete.name} excluído com sucesso.` });
+            fetchPets(); // Refresh the list
+        } catch (error) {
+             toast({
+                variant: "destructive",
+                title: "Erro ao excluir",
+                description: "Não foi possível excluir o memorial. Tente novamente.",
+            });
+        }
     }
   };
 

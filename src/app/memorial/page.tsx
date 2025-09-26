@@ -1,40 +1,37 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { memorialPets as initialPets } from '@/lib/mock-data';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Search } from 'lucide-react';
-import type { ImagePlaceholder } from '@/lib/placeholder-images';
-
-type PetMemorial = {
-  id: number;
-  name: string;
-  species: string;
-  sexo: string;
-  age: string;
-  family: string;
-  birthDate: string;
-  passingDate: string;
-  arvore: string;
-  local: string;
-  tutores: string;
-  text: string;
-  image?: ImagePlaceholder;
-  images?: (ImagePlaceholder | undefined)[];
-};
+import { getMemorials, PetMemorial } from '@/lib/firebase-service';
+import { memorialPets as initialPets } from '@/lib/mock-data'; // Fallback
 
 const MemorialPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [memorialPets, setMemorialPets] = useState<PetMemorial[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/551142405253?text=${encodeURIComponent(\'Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.\')}' });
 
   useEffect(() => {
-    const storedPets = localStorage.getItem('memorialPets');
-    setMemorialPets(storedPets ? JSON.parse(storedPets) : initialPets);
+    async function fetchPets() {
+      try {
+        const petsFromDb = await getMemorials();
+        setMemorialPets(petsFromDb);
+      } catch (error) {
+        console.error("Failed to fetch memorials from Firestore, using fallback data.", error);
+        // Em caso de erro (ex: config do Firebase faltando), usa os dados locais
+        setMemorialPets(initialPets as any);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchPets();
 
     const storedGeneralContent = localStorage.getItem('generalContent');
     if (storedGeneralContent) {
@@ -95,60 +92,64 @@ const MemorialPage = () => {
               />
             </div>
           </div>
-
-          <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <a href={generalContent.whatsappLink} target="_blank" rel="noopener noreferrer" className='animate-scale-in'>
-              <Card className="luxury-card hover-lift flex h-full min-h-[380px] flex-col items-center justify-center text-center">
-                <CardHeader>
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-                    <PlusCircle className="h-10 w-10 text-primary" />
-                  </div>
-                  <CardTitle className="pt-4 font-headline text-2xl">
-                    Criar um Memorial
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Clique aqui para eternizar a memória do seu amigo.
-                  </p>
-                </CardContent>
-              </Card>
-            </a>
-
-            {filteredPets.map((pet) => (
-              <Link key={pet.id} href={`/memorial/${pet.id}`} className="block animate-scale-in">
-                  <Card
-                    className="luxury-card hover-lift cursor-pointer overflow-hidden text-center h-full"
-                  >
-                    {pet.image && (
-                      <div className="relative h-56 w-full">
-                        <Image
-                          src={pet.image.imageUrl}
-                          alt={pet.image.description}
-                          data-ai-hint={pet.image.imageHint}
-                          fill
-                          className="object-cover"
-                        />
-                        <div className="absolute top-2 right-2 bg-background/80 text-primary font-bold text-sm px-2 py-1 rounded-full">
-                            {formatId(pet.id)}
-                        </div>
-                      </div>
-                    )}
+            
+          {isLoading ? (
+             <div className="text-center mt-12">Carregando memoriais...</div>
+          ) : (
+            <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <a href={generalContent.whatsappLink} target="_blank" rel="noopener noreferrer" className='animate-scale-in'>
+                <Card className="luxury-card hover-lift flex h-full min-h-[380px] flex-col items-center justify-center text-center">
                     <CardHeader>
-                      <CardTitle className="font-headline text-2xl">
-                        {pet.name}
-                      </CardTitle>
+                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+                        <PlusCircle className="h-10 w-10 text-primary" />
+                    </div>
+                    <CardTitle className="pt-4 font-headline text-2xl">
+                        Criar um Memorial
+                    </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground">{pet.species}</p>
+                    <p className="text-muted-foreground">
+                        Clique aqui para eternizar a memória do seu amigo.
+                    </p>
                     </CardContent>
-                    <CardFooter className="flex justify-center">
-                      <Button variant="link">Ver Homenagem</Button>
-                    </CardFooter>
-                  </Card>
-              </Link>
-            ))}
-          </div>
+                </Card>
+                </a>
+
+                {filteredPets.map((pet) => (
+                <Link key={pet.id} href={`/memorial/${pet.id}`} className="block animate-scale-in">
+                    <Card
+                        className="luxury-card hover-lift cursor-pointer overflow-hidden text-center h-full"
+                    >
+                        {pet.image && (
+                        <div className="relative h-56 w-full">
+                            <Image
+                            src={pet.image.imageUrl}
+                            alt={pet.image.description ?? ''}
+                            data-ai-hint={pet.image.imageHint}
+                            fill
+                            className="object-cover"
+                            />
+                            <div className="absolute top-2 right-2 bg-background/80 text-primary font-bold text-sm px-2 py-1 rounded-full">
+                                {formatId(pet.id)}
+                            </div>
+                        </div>
+                        )}
+                        <CardHeader>
+                        <CardTitle className="font-headline text-2xl">
+                            {pet.name}
+                        </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                        <p className="text-muted-foreground">{pet.species}</p>
+                        </CardContent>
+                        <CardFooter className="flex justify-center">
+                        <Button variant="link">Ver Homenagem</Button>
+                        </CardFooter>
+                    </Card>
+                </Link>
+                ))}
+            </div>
+          )}
         </div>
       </div>
     </>
