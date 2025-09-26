@@ -44,7 +44,6 @@ export default function Home() {
         <Carousel
           className="h-full w-full"
           opts={{ loop: true }}
-          // @ts-ignore
           autoplayDelay={5000}
         >
           <CarouselContent>
@@ -196,7 +195,6 @@ export default function Home() {
           <Carousel
             className="mt-12"
             opts={{ align: 'start', loop: true }}
-             // @ts-ignore
             autoplayDelay={4000}
           >
             <CarouselContent className="-ml-4">
