@@ -19,7 +19,7 @@ const config = {
     },
     extend: {
       fontFamily: {
-        headline: ['"Playfair Display"', 'serif'],
+        headline: ['"Cormorant Garamond"', 'serif'],
         body: ['"Inter"', 'sans-serif'],
       },
       colors: {
