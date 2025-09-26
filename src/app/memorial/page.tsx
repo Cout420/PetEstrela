@@ -60,8 +60,16 @@ const MemorialPage = () => {
 
   return (
     <>
-      <div className="bg-background py-16 md:py-24">
-        <div className="container mx-auto px-4">
+      <div className="relative bg-background py-16 md:py-24 overflow-hidden">
+        <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            className="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-20"
+            src="https://i.imgur.com/PnqGjta.mp4"
+        />
+        <div className="container mx-auto px-4 relative z-10">
           <div className="animate-fade-in text-center">
             <h1 className="font-headline text-4xl font-bold text-primary md:text-5xl">
               Memorial Pet Estrela
