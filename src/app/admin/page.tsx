@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
@@ -37,13 +37,13 @@ const petSchema = z.object({
   text: z.string().min(10, "O texto do memorial deve ter pelo menos 10 caracteres."),
   images: z.array(z.object({
       id: z.string(),
-      imageUrl: z.string().url("Por favor, insira uma URL de imagem válida."),
+      imageUrl: z.string().min(1, "Por favor, selecione uma imagem."),
       description: z.string().optional(),
       imageHint: z.string().optional()
   })).min(5, "É necessário adicionar pelo menos 5 imagens."),
   image: z.object({
       id: z.string(),
-      imageUrl: z.string().url(),
+      imageUrl: z.string(),
       description: z.string(),
       imageHint: z.string()
   }).optional(),
@@ -56,10 +56,10 @@ const aboutPageSchema = z.object({
   headerDescription: z.string().min(1, "Descrição do cabeçalho é obrigatória."),
   missionTitle: z.string().min(1, "Título da missão é obrigatório."),
   missionDescription: z.string().min(1, "Descrição da missão é obrigatória."),
-  missionImageUrl: z.string().url("URL da imagem da missão é obrigatória."),
+  missionImageUrl: z.string().min(1, "URL da imagem da missão é obrigatória."),
   historyTitle: z.string().min(1, "Título da história é obrigatório."),
   historyDescription: z.string().min(1, "Descrição da história é obrigatória."),
-  historyImageUrl: z.string().url("URL da imagem da história é obrigatória."),
+  historyImageUrl: z.string().min(1, "URL da imagem da história é obrigatória."),
 });
 
 type AboutPageContent = z.infer<typeof aboutPageSchema>;
@@ -91,7 +91,7 @@ const plansPageSchema = z.object({
 type PlansPageContent = z.infer<typeof plansPageSchema>;
 
 const heroSlideSchema = z.object({
-    imageUrl: z.string().url(),
+    imageUrl: z.string(),
     title: z.string().min(1),
     subtitle: z.string().min(1),
 });
@@ -108,7 +108,7 @@ const cremationProcessStepSchema = z.object({
 const allPetsSectionSchema = z.object({
     title: z.string().min(1),
     description: z.string().min(1),
-    imageUrl: z.string().url(),
+    imageUrl: z.string(),
     petsList: z.array(z.string()),
 });
 
@@ -160,6 +160,18 @@ export default function AdminPage() {
     control: petForm.control,
     name: "images"
   });
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        petForm.setValue(`images.${index}.imageUrl`, reader.result as string, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
   const aboutForm = useForm<AboutPageContent>({
     resolver: zodResolver(aboutPageSchema),
@@ -608,17 +620,27 @@ export default function AdminPage() {
 
                     <div>
                         <Label>Fotos (Mínimo 5)</Label>
-                         <p className="text-sm text-muted-foreground">Adicione as URLs das imagens. A primeira será a foto de capa.</p>
+                         <p className="text-sm text-muted-foreground">Anexe as imagens. A primeira será a foto de capa.</p>
                          <div className="mt-2 space-y-2">
                          {fields.map((field, index) => (
                              <div key={field.id} className="flex items-center gap-2">
                                  <FormField
                                      control={petForm.control}
                                      name={`images.${index}.imageUrl`}
-                                     render={({ field }) => (
+                                     render={({ field: { onChange, value, ...rest } }) => (
                                          <FormItem className="flex-1">
                                              <FormControl>
-                                                 <Input placeholder={`URL da Imagem ${index + 1}`} {...field} />
+                                                <div className='flex items-center gap-2'>
+                                                    <Input 
+                                                        type="file" 
+                                                        accept="image/*"
+                                                        onChange={(e) => handleFileChange(e, index)}
+                                                        className="w-full"
+                                                    />
+                                                    {value && typeof value === 'string' && (
+                                                      <Image src={value} alt={`Preview ${index + 1}`} width={40} height={40} className="rounded-md object-cover" />
+                                                    )}
+                                                </div>
                                              </FormControl>
                                              <FormMessage />
                                          </FormItem>
@@ -637,7 +659,7 @@ export default function AdminPage() {
                             className="mt-2"
                             onClick={() => append({ id: `img-${Date.now()}`, imageUrl: '' })}
                          >
-                            <ImagePlus className="mr-2" /> Adicionar URL de Imagem
+                            <ImagePlus className="mr-2" /> Adicionar Imagem
                          </Button>
                          <Controller
                             control={petForm.control}
@@ -646,12 +668,12 @@ export default function AdminPage() {
                          />
                     </div>
                 </div>
-                <DialogFooter className='flex justify-end gap-2 mt-6'>
+                <div className='flex justify-end gap-2 mt-6'>
                     <DialogClose asChild>
                         <Button type="button" variant="outline">Cancelar</Button>
                     </DialogClose>
                     <Button type="submit">Salvar Pet</Button>
-                </DialogFooter>
+                </div>
             </form>
           </Form>
         </DialogContent>
