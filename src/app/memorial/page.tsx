@@ -58,13 +58,11 @@ const MemorialPage = () => {
   return (
     <>
       <section className="relative flex h-[70vh] items-center justify-center text-center text-white">
-        <video 
-            autoPlay 
-            loop 
-            muted 
-            playsInline 
-            className="absolute top-0 left-0 w-full h-full object-cover z-0"
-            src="https://i.imgur.com/PnqGjta.mp4"
+        <Image
+          src="https://images.unsplash.com/photo-1518843875459-4f01758f8647?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyZWZvcmVzdGF0aW9ufGVufDB8fHx8MTc1ODkwMTU5N3ww&ixlib=rb-4.1.0&q=80&w=1080"
+          alt="Floresta representando o memorial e o reflorestamento"
+          fill
+          className="absolute top-0 left-0 w-full h-full object-cover z-0"
         />
         <div className="absolute top-0 left-0 w-full h-full bg-black/50 z-10"></div>
         <div className="container mx-auto px-4 z-20 animate-fade-in">
