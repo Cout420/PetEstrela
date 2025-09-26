@@ -58,11 +58,11 @@ export default function PlansPage() {
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3 lg:items-start">
+        <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3 lg:items-stretch">
           {content.plans.map((plan, index) => (
             <Card
               key={index}
-              className={`luxury-card hover-lift animate-slide-up flex flex-col ${plan.isMostChosen ? 'border-2 border-accent shadow-luxury' : ''} ${index === 1 ? 'lg:-translate-y-4' : ''}`}
+              className={`luxury-card hover-lift animate-slide-up flex flex-col ${plan.isMostChosen ? 'border-2 border-accent shadow-luxury' : ''}`}
             >
                 {plan.isMostChosen && (
                     <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground">Mais Escolhido</Badge>
