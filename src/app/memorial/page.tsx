@@ -81,7 +81,7 @@ const MemorialPage = () => {
         </div>
       </section>
 
-      <div className="bg-background py-16 md:py-24 memorial-bg">
+      <div className="bg-background py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-lg mx-auto">
             <div className="relative">
