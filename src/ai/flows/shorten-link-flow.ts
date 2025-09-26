@@ -11,15 +11,15 @@ import { ai } from '@/ai/genkit';
 import { createShortLink } from '@/lib/link-service';
 import { z } from 'zod';
 
-export const ShortenLinkInputSchema = z.object({
+const ShortenLinkInputSchema = z.object({
   memorialId: z.number().describe('The unique ID of the pet memorial.'),
 });
-export type ShortenLinkInput = z.infer<typeof ShortenLinkInputSchema>;
+type ShortenLinkInput = z.infer<typeof ShortenLinkInputSchema>;
 
-export const ShortenLinkOutputSchema = z.object({
+const ShortenLinkOutputSchema = z.object({
   shortUrl: z.string().url().describe('The shortened, public URL for the memorial.'),
 });
-export type ShortenLinkOutput = z.infer<typeof ShortenLinkOutputSchema>;
+type ShortenLinkOutput = z.infer<typeof ShortenLinkOutputSchema>;
 
 // Exported wrapper function to be used in client components.
 export async function shortenLink(input: ShortenLinkInput): Promise<ShortenLinkOutput> {
