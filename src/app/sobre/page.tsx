@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,22 +31,56 @@ const values = [
   },
 ];
 
-const missionImage = PlaceHolderImages.find((img) => img.id === 'about-mission');
-const historyImage = PlaceHolderImages.find((img) => img.id === 'about-history');
+type AboutPageContent = {
+  headerTitle: string;
+  headerDescription: string;
+  missionTitle: string;
+  missionDescription: string;
+  missionImageUrl: string;
+  historyTitle: string;
+  historyDescription: string;
+  historyImageUrl: string;
+};
 
 export default function AboutPage() {
+  const [content, setContent] = useState<AboutPageContent | null>(null);
+
+  useEffect(() => {
+    const storedContent = localStorage.getItem('aboutPageContent');
+    if (storedContent) {
+      setContent(JSON.parse(storedContent));
+    } else {
+        setContent({
+            headerTitle: "Sobre o Pet Estrela",
+            headerDescription: "Há mais de 10 anos, nossa missão é proporcionar uma despedida digna e respeitosa, transformando a dor da perda em uma celebração do amor e da amizade.",
+            missionTitle: "Nossa Missão",
+            missionDescription: "Nossa missão é oferecer um serviço de cremação pet que transcenda o procedimento técnico. Buscamos acolher as famílias em um dos momentos mais delicados, garantindo que a memória de seus companheiros seja honrada com a máxima dignidade. Acreditamos que cada vida, não importa o quão pequena, merece uma despedida grandiosa.",
+            missionImageUrl: PlaceHolderImages.find((img) => img.id === 'about-mission')?.imageUrl ?? '',
+            historyTitle: "Nossa História",
+            historyDescription: "Fundada em 2014 com o sonho de oferecer um serviço funerário pet diferenciado, a Pet Estrela nasceu da paixão e do respeito pelos animais. Ao longo dos anos, crescemos e nos modernizamos, mas nunca perdemos a essência do nosso trabalho: o acolhimento.",
+            historyImageUrl: PlaceHolderImages.find((img) => img.id === 'about-history')?.imageUrl ?? '',
+        });
+    }
+  }, []);
+
+  if (!content) {
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <p>Carregando conteúdo...</p>
+        </div>
+    );
+  }
+
   return (
     <>
       {/* Header Section */}
       <section className="bg-muted/50 py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="animate-fade-in font-headline text-4xl font-bold text-gradient-luxury md:text-6xl">
-            Sobre o Pet Estrela
+            {content.headerTitle}
           </h1>
           <p className="animate-fade-in mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
-            Há mais de 10 anos, nossa missão é proporcionar uma despedida digna
-            e respeitosa, transformando a dor da perda em uma celebração do
-            amor e da amizade.
+            {content.headerDescription}
           </p>
         </div>
       </section>
@@ -54,25 +91,22 @@ export default function AboutPage() {
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div className="animate-fade-in order-2 lg:order-1">
               <h2 className="font-headline text-3xl font-bold md:text-4xl">
-                Nossa Missão
+                {content.missionTitle}
               </h2>
               <p className="mt-4 text-muted-foreground md:text-lg">
-                Nossa missão é oferecer um serviço de cremação pet que transcenda o procedimento técnico. Buscamos acolher as famílias em um dos momentos mais delicados, garantindo que a memória de seus companheiros seja honrada com a máxima dignidade. Acreditamos que cada vida, não importa o quão pequena, merece uma despedida grandiosa.
+                {content.missionDescription}
               </p>
               <Button asChild size="lg" className="btn-whatsapp mt-8">
                 <a href="https://wa.me/5511942405253" target="_blank">Fale Conosco</a>
               </Button>
             </div>
             <div className="animate-scale-in relative order-1 h-80 w-full overflow-hidden rounded-lg lg:order-2 lg:h-96">
-              {missionImage && (
-                <Image
-                  src={missionImage.imageUrl}
-                  alt={missionImage.description}
-                  data-ai-hint={missionImage.imageHint}
-                  fill
-                  className="object-cover"
-                />
-              )}
+              <Image
+                src={content.missionImageUrl}
+                alt="Imagem da missão"
+                fill
+                className="object-cover"
+              />
             </div>
           </div>
         </div>
@@ -109,22 +143,19 @@ export default function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="grid items-center gap-12 lg:grid-cols-2">
              <div className="animate-scale-in relative h-80 w-full overflow-hidden rounded-lg lg:h-96">
-              {historyImage && (
                 <Image
-                  src={historyImage.imageUrl}
-                  alt={historyImage.description}
-                  data-ai-hint={historyImage.imageHint}
+                  src={content.historyImageUrl}
+                  alt="Imagem da história"
                   fill
                   className="object-cover"
                 />
-              )}
             </div>
             <div className="animate-fade-in">
               <h2 className="font-headline text-3xl font-bold md:text-4xl">
-                Nossa História
+                {content.historyTitle}
               </h2>
               <p className="mt-4 text-muted-foreground md:text-lg">
-                Fundada em 2014 com o sonho de oferecer um serviço funerário pet diferenciado, a Pet Estrela nasceu da paixão e do respeito pelos animais. Ao longo dos anos, crescemos e nos modernizamos, mas nunca perdemos a essência do nosso trabalho: o acolhimento.
+                {content.historyDescription}
               </p>
               <div className="mt-8 grid grid-cols-2 gap-4">
                 <div className="rounded-lg bg-primary/10 p-4 text-center">
@@ -204,3 +235,5 @@ export default function AboutPage() {
     </>
   );
 }
+
+    

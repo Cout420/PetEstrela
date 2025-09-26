@@ -16,9 +16,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { memorialPets as initialPets } from '@/lib/mock-data';
+import { memorialPets as initialPets, teamMembers as initialTeamMembers } from '@/lib/mock-data';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus } from 'lucide-react';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const petSchema = z.object({
   id: z.number(),
@@ -49,36 +50,26 @@ const petSchema = z.object({
 
 type PetMemorial = z.infer<typeof petSchema>;
 
+const aboutPageSchema = z.object({
+  headerTitle: z.string().min(1, "Título é obrigatório."),
+  headerDescription: z.string().min(1, "Descrição do cabeçalho é obrigatória."),
+  missionTitle: z.string().min(1, "Título da missão é obrigatório."),
+  missionDescription: z.string().min(1, "Descrição da missão é obrigatória."),
+  missionImageUrl: z.string().url("URL da imagem da missão é obrigatória."),
+  historyTitle: z.string().min(1, "Título da história é obrigatório."),
+  historyDescription: z.string().min(1, "Descrição da história é obrigatória."),
+  historyImageUrl: z.string().url("URL da imagem da história é obrigatória."),
+});
+
+type AboutPageContent = z.infer<typeof aboutPageSchema>;
+
 export default function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pets, setPets] = useState<PetMemorial[]>(initialPets);
+  const [pets, setPets] = useState<PetMemorial[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPet, setEditingPet] = useState<PetMemorial | null>(null);
-
-  const form = useForm<PetMemorial>({
-    resolver: zodResolver(petSchema),
-    defaultValues: {
-      name: '',
-      species: '',
-      sexo: '',
-      age: '',
-      family: '',
-      birthDate: '',
-      passingDate: '',
-      arvore: '',
-      local: '',
-      tutores: '',
-      text: '',
-      images: [],
-    },
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "images"
-  });
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('petEstrelaAuth') === 'authenticated';
@@ -86,19 +77,55 @@ export default function AdminPage() {
       router.push('/login');
     } else {
       setIsAuthenticated(true);
+      const storedPets = localStorage.getItem('memorialPets');
+      setPets(storedPets ? JSON.parse(storedPets) : initialPets);
     }
   }, [router]);
+  
+  const petForm = useForm<PetMemorial>({
+    resolver: zodResolver(petSchema),
+    defaultValues: {
+      name: '', species: '', sexo: '', age: '', family: '', birthDate: '', passingDate: '',
+      arvore: '', local: '', tutores: '', text: '', images: [],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: petForm.control,
+    name: "images"
+  });
+
+  const aboutForm = useForm<AboutPageContent>({
+    resolver: zodResolver(aboutPageSchema),
+    defaultValues: {
+        headerTitle: "Sobre o Pet Estrela",
+        headerDescription: "Há mais de 10 anos, nossa missão é proporcionar uma despedida digna e respeitosa, transformando a dor da perda em uma celebração do amor e da amizade.",
+        missionTitle: "Nossa Missão",
+        missionDescription: "Nossa missão é oferecer um serviço de cremação pet que transcenda o procedimento técnico. Buscamos acolher as famílias em um dos momentos mais delicados, garantindo que a memória de seus companheiros seja honrada com a máxima dignidade. Acreditamos que cada vida, não importa o quão pequena, merece uma despedida grandiosa.",
+        missionImageUrl: PlaceHolderImages.find((img) => img.id === 'about-mission')?.imageUrl ?? '',
+        historyTitle: "Nossa História",
+        historyDescription: "Fundada em 2014 com o sonho de oferecer um serviço funerário pet diferenciado, a Pet Estrela nasceu da paixão e do respeito pelos animais. Ao longo dos anos, crescemos e nos modernizamos, mas nunca perdemos a essência do nosso trabalho: o acolhimento.",
+        historyImageUrl: PlaceHolderImages.find((img) => img.id === 'about-history')?.imageUrl ?? '',
+    }
+  });
+
+  useEffect(() => {
+    const storedAboutContent = localStorage.getItem('aboutPageContent');
+    if (storedAboutContent) {
+        aboutForm.reset(JSON.parse(storedAboutContent));
+    }
+  }, [aboutForm]);
 
   useEffect(() => {
     if (editingPet) {
-      form.reset(editingPet);
+      petForm.reset(editingPet);
     } else {
-      form.reset({
+      petForm.reset({
         name: '', species: '', sexo: '', age: '', family: '', birthDate: '', passingDate: '',
         arvore: '', local: '', tutores: '', text: '', images: [],
       });
     }
-  }, [editingPet, form]);
+  }, [editingPet, petForm]);
 
   const handleLogout = () => {
     localStorage.removeItem('petEstrelaAuth');
@@ -112,17 +139,17 @@ export default function AdminPage() {
   };
   
   const handleSavePet = (data: PetMemorial) => {
+    let updatedPets;
     if (editingPet) {
-      // Update
-      const updatedPets = pets.map(p => p.id === data.id ? { ...data, image: data.images[0] } : p);
-      setPets(updatedPets);
+      updatedPets = pets.map(p => p.id === data.id ? { ...data, image: data.images[0] } : p);
       toast({ title: `Memorial de ${data.name} atualizado com sucesso.` });
     } else {
-      // Create
       const newPet = { ...data, id: Date.now(), image: data.images[0] };
-      setPets([newPet, ...pets]);
+      updatedPets = [newPet, ...pets];
       toast({ title: `Memorial de ${data.name} criado com sucesso.` });
     }
+    setPets(updatedPets);
+    localStorage.setItem('memorialPets', JSON.stringify(updatedPets));
     setIsFormOpen(false);
     setEditingPet(null);
   };
@@ -130,9 +157,16 @@ export default function AdminPage() {
   const handleDeletePet = (petId: number) => {
     const petToDelete = pets.find(p => p.id === petId);
     if(petToDelete){
-        setPets(pets.filter(p => p.id !== petId));
+        const updatedPets = pets.filter(p => p.id !== petId);
+        setPets(updatedPets);
+        localStorage.setItem('memorialPets', JSON.stringify(updatedPets));
         toast({ title: `Memorial de ${petToDelete.name} excluído com sucesso.` });
     }
+  };
+
+  const handleSaveAboutContent = (data: AboutPageContent) => {
+    localStorage.setItem('aboutPageContent', JSON.stringify(data));
+    toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
   };
   
   if (!isAuthenticated) {
@@ -225,13 +259,31 @@ export default function AdminPage() {
           </TabsContent>
 
           <TabsContent value="about" className="mt-6">
-             <Card>
-              <CardHeader>
-                <CardTitle>Editar Seção "Sobre Nós"</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Funcionalidade em desenvolvimento.</p>
-              </CardContent>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Editar Página "Sobre Nós"</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Form {...aboutForm}>
+                        <form onSubmit={aboutForm.handleSubmit(handleSaveAboutContent)} className="space-y-6">
+                            <h3 className="text-lg font-semibold text-primary">Seção do Cabeçalho</h3>
+                            <FormField control={aboutForm.control} name="headerTitle" render={({ field }) => (<FormItem><FormLabel>Título Principal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="headerDescription" render={({ field }) => (<FormItem><FormLabel>Descrição do Cabeçalho</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
+                            
+                            <h3 className="text-lg font-semibold text-primary mt-6">Seção Missão</h3>
+                            <FormField control={aboutForm.control} name="missionTitle" render={({ field }) => (<FormItem><FormLabel>Título da Missão</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="missionDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da Missão</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da Missão</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+
+                            <h3 className="text-lg font-semibold text-primary mt-6">Seção História</h3>
+                             <FormField control={aboutForm.control} name="historyTitle" render={({ field }) => (<FormItem><FormLabel>Título da História</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="historyDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da História</FormLabel><FormControl><Textarea {...field} rows={4} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="historyImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da História</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+
+                            <Button type="submit"><Save className="mr-2" /> Salvar Alterações</Button>
+                        </form>
+                    </Form>
+                </CardContent>
             </Card>
           </TabsContent>
 
@@ -258,23 +310,23 @@ export default function AdminPage() {
               Preencha as informações abaixo para gerenciar o memorial.
             </DialogDescription>
           </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSavePet)} className="space-y-6">
+          <Form {...petForm}>
+            <form onSubmit={petForm.handleSubmit(handleSavePet)} className="space-y-6">
                 <div className="mt-4 max-h-[70vh] overflow-y-auto pr-4 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do Pet" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="species" render={({ field }) => (<FormItem><FormLabel>Raça</FormLabel><FormControl><Input placeholder="Ex: Golden Retriever" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="sexo" render={({ field }) => (<FormItem><FormLabel>Sexo</FormLabel><FormControl><Input placeholder="Ex: Macho" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="age" render={({ field }) => (<FormItem><FormLabel>Idade</FormLabel><FormControl><Input placeholder="Ex: 8 anos" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="family" render={({ field }) => (<FormItem><FormLabel>Família</FormLabel><FormControl><Input placeholder="Ex: Família Silva" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="tutores" render={({ field }) => (<FormItem><FormLabel>Tutores</FormLabel><FormControl><Input placeholder="Ex: Maria e João" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="birthDate" render={({ field }) => (<FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="passingDate" render={({ field }) => (<FormItem><FormLabel>Data de Falecimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="arvore" render={({ field }) => (<FormItem><FormLabel>Árvore Plantada</FormLabel><FormControl><Input placeholder="Ex: Ipê Amarelo" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="local" render={({ field }) => (<FormItem><FormLabel>Local</FormLabel><FormControl><Input placeholder="Ex: Jardim da Saudade" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={petForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do Pet" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={petForm.control} name="species" render={({ field }) => (<FormItem><FormLabel>Raça</FormLabel><FormControl><Input placeholder="Ex: Golden Retriever" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={petForm.control} name="sexo" render={({ field }) => (<FormItem><FormLabel>Sexo</FormLabel><FormControl><Input placeholder="Ex: Macho" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={petForm.control} name="age" render={({ field }) => (<FormItem><FormLabel>Idade</FormLabel><FormControl><Input placeholder="Ex: 8 anos" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={petForm.control} name="family" render={({ field }) => (<FormItem><FormLabel>Família</FormLabel><FormControl><Input placeholder="Ex: Família Silva" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={petForm.control} name="tutores" render={({ field }) => (<FormItem><FormLabel>Tutores</FormLabel><FormControl><Input placeholder="Ex: Maria e João" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={petForm.control} name="birthDate" render={({ field }) => (<FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={petForm.control} name="passingDate" render={({ field }) => (<FormItem><FormLabel>Data de Falecimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={petForm.control} name="arvore" render={({ field }) => (<FormItem><FormLabel>Árvore Plantada</FormLabel><FormControl><Input placeholder="Ex: Ipê Amarelo" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={petForm.control} name="local" render={({ field }) => (<FormItem><FormLabel>Local</FormLabel><FormControl><Input placeholder="Ex: Jardim da Saudade" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
                     
-                    <FormField control={form.control} name="text" render={({ field }) => (<FormItem><FormLabel>Texto Memorial</FormLabel><FormControl><Textarea placeholder="Escreva uma bela homenagem..." {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={petForm.control} name="text" render={({ field }) => (<FormItem><FormLabel>Texto Memorial</FormLabel><FormControl><Textarea placeholder="Escreva uma bela homenagem..." {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
 
                     <div>
                         <Label>Fotos (Mínimo 5)</Label>
@@ -283,7 +335,7 @@ export default function AdminPage() {
                          {fields.map((field, index) => (
                              <div key={field.id} className="flex items-center gap-2">
                                  <FormField
-                                     control={form.control}
+                                     control={petForm.control}
                                      name={`images.${index}.imageUrl`}
                                      render={({ field }) => (
                                          <FormItem className="flex-1">
@@ -310,7 +362,7 @@ export default function AdminPage() {
                             <ImagePlus className="mr-2" /> Adicionar URL de Imagem
                          </Button>
                          <Controller
-                            control={form.control}
+                            control={petForm.control}
                             name="images"
                             render={({ fieldState }) => <FormMessage>{fieldState.error?.message}</FormMessage>}
                          />
@@ -329,4 +381,6 @@ export default function AdminPage() {
     </div>
   );
 }
+    
+
     

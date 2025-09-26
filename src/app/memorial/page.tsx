@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { memorialPets } from '@/lib/mock-data';
+import { memorialPets as initialPets } from '@/lib/mock-data';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, QrCode, X, Search, Heart } from 'lucide-react';
+import { PlusCircle, QrCode, Search, Heart } from 'lucide-react';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 
 type PetMemorial = {
@@ -30,6 +30,12 @@ type PetMemorial = {
 const MemorialPage = () => {
   const [selectedPet, setSelectedPet] = useState<PetMemorial | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [memorialPets, setMemorialPets] = useState<PetMemorial[]>([]);
+
+  useEffect(() => {
+    const storedPets = localStorage.getItem('memorialPets');
+    setMemorialPets(storedPets ? JSON.parse(storedPets) : initialPets);
+  }, []);
 
   const formatId = (id: number) => `#${id.toString().padStart(3, '0')}`;
 
@@ -42,7 +48,7 @@ const MemorialPage = () => {
         pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         formatId(pet.id).includes(searchQuery)
     );
-  }, [searchQuery]);
+  }, [searchQuery, memorialPets]);
 
   const whatsappLink = `https://wa.me/5511942405253?text=${encodeURIComponent(
     'Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.'
@@ -192,3 +198,5 @@ const MemorialPage = () => {
 };
 
 export default MemorialPage;
+
+    
