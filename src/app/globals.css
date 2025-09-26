@@ -107,7 +107,7 @@
     background-size: cover;
     background-position: center;
     opacity: 0.2;
-    filter: blur(4px) sepia(0.2) hue-rotate(180deg);
+    filter: blur(4px) sepia(0.4) hue-rotate(180deg);
     z-index: 0;
   }
   .memorial-bg > * {
