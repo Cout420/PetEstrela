@@ -23,6 +23,7 @@ import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X,
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { homePageContent as initialHomePageContent, heroSlides as initialHeroSlides, whyChooseUs as initialWhyChooseUs, cremationProcess as initialCremationProcess, allPetsSection as initialAllPetsSection } from '@/lib/home-content';
 import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-content';
+import { shortenLink } from '@/ai/flows/shorten-link-flow';
 
 const petSchema = z.object({
   id: z.number(),
@@ -49,6 +50,7 @@ const petSchema = z.object({
       description: z.string(),
       imageHint: z.string()
   }).optional(),
+  qrCodeUrl: z.string().optional(),
 });
 
 type PetMemorial = z.infer<typeof petSchema>;
@@ -167,9 +169,8 @@ export default function AdminPage() {
   }, [router]);
   
   useEffect(() => {
-    if (isFormOpen && editingPet && qrCodeCanvasRef.current) {
-      const url = `${window.location.origin}/memorial/${editingPet.id}`;
-      qrcode.toCanvas(qrCodeCanvasRef.current, url, { width: 128, margin: 2 }, (error) => {
+    if (isFormOpen && editingPet?.qrCodeUrl && qrCodeCanvasRef.current) {
+      qrcode.toCanvas(qrCodeCanvasRef.current, editingPet.qrCodeUrl, { width: 128, margin: 2 }, (error) => {
         if (error) console.error("Error generating QR code:", error);
       });
     }
@@ -307,8 +308,25 @@ export default function AdminPage() {
     setIsFormOpen(true);
   };
   
-  const handleSavePet = (data: PetMemorial) => {
+  const handleSavePet = async (data: PetMemorial) => {
     let updatedPets;
+    
+    // Generate short link if it doesn't exist
+    if (!data.qrCodeUrl) {
+      try {
+        const result = await shortenLink({ memorialId: data.id });
+        data.qrCodeUrl = result.shortUrl;
+      } catch (error) {
+        console.error('Failed to shorten link:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao gerar QR Code',
+          description: 'Não foi possível gerar o link para o QR Code. Tente novamente.',
+        });
+        return;
+      }
+    }
+
     if (editingPet) {
       updatedPets = pets.map(p => p.id === data.id ? { ...data, image: data.images[0] } : p);
       toast({ title: `Memorial de ${data.name} atualizado com sucesso.` });

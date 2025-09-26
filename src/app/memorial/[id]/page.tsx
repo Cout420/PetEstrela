@@ -25,6 +25,7 @@ type PetMemorial = {
   text: string;
   image?: ImagePlaceholder;
   images?: (ImagePlaceholder | undefined)[];
+  qrCodeUrl?: string;
 };
 
 const MemorialDetailPage = () => {
@@ -50,9 +51,8 @@ const MemorialDetailPage = () => {
   }, [params.id]);
   
   useEffect(() => {
-    if (pet && qrCodeCanvasRef.current) {
-        const url = window.location.href;
-        qrcode.toCanvas(qrCodeCanvasRef.current, url, { width: 200, margin: 2 }, (error) => {
+    if (pet?.qrCodeUrl && qrCodeCanvasRef.current) {
+        qrcode.toCanvas(qrCodeCanvasRef.current, pet.qrCodeUrl, { width: 200, margin: 2 }, (error) => {
             if (error) console.error("Error generating QR code:", error);
         });
     }
@@ -123,11 +123,13 @@ const MemorialDetailPage = () => {
                     <Heart className="h-5 w-5" />
                     <p>Sempre em nossos corações</p>
                 </div>
-                <div className="mt-8 flex flex-col items-center gap-4 rounded-lg border bg-muted/50 p-6 shadow-soft">
-                    <h4 className="font-semibold text-center">Acesse esta homenagem a qualquer momento</h4>
-                    <canvas ref={qrCodeCanvasRef} />
-                    <p className="text-sm text-muted-foreground text-center">Aponte a câmera do seu celular para este QR Code.</p>
-                </div>
+                {pet.qrCodeUrl && (
+                    <div className="mt-8 flex flex-col items-center gap-4 rounded-lg border bg-muted/50 p-6 shadow-soft">
+                        <h4 className="font-semibold text-center">Acesse esta homenagem a qualquer momento</h4>
+                        <canvas ref={qrCodeCanvasRef} />
+                        <p className="text-sm text-muted-foreground text-center">Aponte a câmera do seu celular para este QR Code.</p>
+                    </div>
+                )}
             </div>
         </div>
       </div>
