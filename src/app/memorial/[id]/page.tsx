@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { QrCode, Heart, ArrowLeft, ExternalLink } from 'lucide-react';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PROD_DOMAIN } from '@/lib/link-service';
 
 type PetMemorial = {
@@ -81,7 +81,7 @@ const MemorialDetailPage = () => {
     <div className="bg-background py-12 md:py-24 memorial-bg">
       <div className="container mx-auto px-4">
         <div className="mb-8">
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="bg-white/20 border-white text-white hover:bg-white hover:text-primary">
                 <Link href="/memorial">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Voltar para o Memorial
@@ -90,11 +90,11 @@ const MemorialDetailPage = () => {
         </div>
 
         <div className="text-center mb-12">
-            <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">
+            <h1 className="font-headline text-4xl md:text-5xl font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.5)]">
                 Em memória de {pet.name}
             </h1>
-            <p className="text-lg text-muted-foreground mt-2">{pet.birthDate} - {pet.passingDate}</p>
-            <span className="font-mono text-xl text-muted-foreground">{formatId(pet.id)}</span>
+            <p className="text-lg text-gray-200 mt-2">{pet.birthDate} - {pet.passingDate}</p>
+            <span className="font-mono text-xl text-gray-300">{formatId(pet.id)}</span>
         </div>
 
         <div className="grid gap-12 pt-4 md:grid-cols-2">
@@ -112,7 +112,7 @@ const MemorialDetailPage = () => {
                 ))}
             </div>
             <div className='sticky top-24 self-start space-y-8'>
-                <div className="space-y-3 text-base text-foreground bg-muted/30 p-6 rounded-lg border shadow-soft">
+                <div className="space-y-3 text-base text-foreground bg-white/90 p-6 rounded-lg border shadow-soft">
                     <p><strong>Raça:</strong> {pet.species}</p>
                     <p><strong>Sexo:</strong> {pet.sexo}</p>
                     <p><strong>Idade:</strong> {pet.age}</p>
@@ -121,22 +121,28 @@ const MemorialDetailPage = () => {
                     <p><strong>Árvore Plantada:</strong> {pet.arvore}</p>
                     <p><strong>Local:</strong> {pet.local}</p>
                 </div>
-                <p className="whitespace-pre-wrap text-base leading-relaxed md:text-lg">
-                    {pet.text}
-                </p>
-                <div className="flex items-center justify-center gap-2 text-lg font-semibold text-primary">
-                    <Heart className="h-5 w-5" />
-                    <p>Sempre em nossos corações</p>
-                </div>
+                
+                <Card className="bg-white/90 border shadow-soft">
+                  <CardContent className="p-6">
+                    <p className="whitespace-pre-wrap text-base leading-relaxed md:text-lg">
+                        {pet.text}
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-lg font-semibold text-primary mt-6">
+                        <Heart className="h-5 w-5" />
+                        <p>Sempre em nossos corações</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {pet.qrCodeUrl && (
                   <div className="space-y-4">
-                    <div className="flex flex-col items-center gap-4 rounded-lg border bg-muted/50 p-6 shadow-soft">
+                    <div className="flex flex-col items-center gap-4 rounded-lg border bg-white/90 p-6 shadow-soft">
                         <h4 className="font-semibold text-center">Acesse esta homenagem a qualquer momento</h4>
                         <canvas ref={qrCodeCanvasRef} />
                         <p className="text-sm text-muted-foreground text-center">Aponte a câmera do seu celular para este QR Code.</p>
                     </div>
 
-                    <Card className="shadow-soft">
+                    <Card className="shadow-soft bg-white/90">
                         <CardContent className="p-4 flex flex-col items-center text-center">
                            <p className='text-sm text-muted-foreground mb-4'>Ou use o link direto para compartilhar esta homenagem.</p>
                             <Button asChild className="w-full">
