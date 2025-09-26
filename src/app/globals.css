@@ -103,11 +103,11 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: url('https://i.imgur.com/dRqMiEi.jpeg');
+    background-image: url('https://i.imgur.com/iPLHZmv.jpeg');
     background-size: cover;
     background-position: center;
-    opacity: 0.5;
-    filter: blur(2px) sepia(0.6) saturate(1.5) hue-rotate(180deg);
+    opacity: 0.75;
+    filter: blur(2px);
     z-index: 0;
   }
   .memorial-bg > * {
