@@ -106,8 +106,8 @@
     background-image: url('https://i.imgur.com/dRqMiEi.jpeg');
     background-size: cover;
     background-position: center;
-    opacity: 0.2;
-    filter: blur(4px) sepia(0.4) hue-rotate(180deg);
+    opacity: 0.5;
+    filter: blur(2px) sepia(0.6) saturate(1.5) hue-rotate(180deg);
     z-index: 0;
   }
   .memorial-bg > * {
