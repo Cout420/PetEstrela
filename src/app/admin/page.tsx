@@ -1,44 +1,84 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { memorialPets } from '@/lib/mock-data';
+import { memorialPets as initialPets } from '@/lib/mock-data';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
-import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode } from 'lucide-react';
+import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus } from 'lucide-react';
 
-type PetMemorial = {
-  id: number;
-  name: string;
-  species: string;
-  sexo: string;
-  age: string;
-  family: string;
-  birthDate: string;
-  passingDate: string;
-  arvore: string;
-  local: string;
-  tutores: string;
-  text: string;
-  image?: ImagePlaceholder;
-  images?: (ImagePlaceholder | undefined)[];
-};
+const petSchema = z.object({
+  id: z.number(),
+  name: z.string().min(1, "O nome do pet é obrigatório."),
+  species: z.string().min(1, "A raça é obrigatória."),
+  sexo: z.string().min(1, "O sexo é obrigatório."),
+  age: z.string().min(1, "A idade é obrigatória."),
+  family: z.string().min(1, "A família é obrigatória."),
+  birthDate: z.string().min(1, "A data de nascimento é obrigatória."),
+  passingDate: z.string().min(1, "A data de falecimento é obrigatória."),
+  arvore: z.string().min(1, "A árvore é obrigatória."),
+  local: z.string().min(1, "O local é obrigatório."),
+  tutores: z.string().min(1, "Os tutores são obrigatórios."),
+  text: z.string().min(10, "O texto do memorial deve ter pelo menos 10 caracteres."),
+  images: z.array(z.object({
+      id: z.string(),
+      imageUrl: z.string().url("Por favor, insira uma URL de imagem válida."),
+      description: z.string().optional(),
+      imageHint: z.string().optional()
+  })).min(5, "É necessário adicionar pelo menos 5 imagens."),
+  image: z.object({
+      id: z.string(),
+      imageUrl: z.string().url(),
+      description: z.string(),
+      imageHint: z.string()
+  }).optional(),
+});
+
+type PetMemorial = z.infer<typeof petSchema>;
 
 export default function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pets, setPets] = useState<PetMemorial[]>(memorialPets);
+  const [pets, setPets] = useState<PetMemorial[]>(initialPets);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPet, setEditingPet] = useState<PetMemorial | null>(null);
+
+  const form = useForm<PetMemorial>({
+    resolver: zodResolver(petSchema),
+    defaultValues: {
+      name: '',
+      species: '',
+      sexo: '',
+      age: '',
+      family: '',
+      birthDate: '',
+      passingDate: '',
+      arvore: '',
+      local: '',
+      tutores: '',
+      text: '',
+      images: [],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "images"
+  });
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('petEstrelaAuth') === 'authenticated';
@@ -48,6 +88,17 @@ export default function AdminPage() {
       setIsAuthenticated(true);
     }
   }, [router]);
+
+  useEffect(() => {
+    if (editingPet) {
+      form.reset(editingPet);
+    } else {
+      form.reset({
+        name: '', species: '', sexo: '', age: '', family: '', birthDate: '', passingDate: '',
+        arvore: '', local: '', tutores: '', text: '', images: [],
+      });
+    }
+  }, [editingPet, form]);
 
   const handleLogout = () => {
     localStorage.removeItem('petEstrelaAuth');
@@ -60,19 +111,30 @@ export default function AdminPage() {
     setIsFormOpen(true);
   };
   
-  const handleSavePet = (petData: PetMemorial) => {
-    // Logic to save pet (create or update)
+  const handleSavePet = (data: PetMemorial) => {
     if (editingPet) {
-      // update
-       toast({ title: `Memorial de ${petData.name} atualizado com sucesso.` });
+      // Update
+      const updatedPets = pets.map(p => p.id === data.id ? { ...data, image: data.images[0] } : p);
+      setPets(updatedPets);
+      toast({ title: `Memorial de ${data.name} atualizado com sucesso.` });
     } else {
-      // create
-       toast({ title: `Memorial de ${petData.name} criado com sucesso.` });
+      // Create
+      const newPet = { ...data, id: Date.now(), image: data.images[0] };
+      setPets([newPet, ...pets]);
+      toast({ title: `Memorial de ${data.name} criado com sucesso.` });
     }
     setIsFormOpen(false);
     setEditingPet(null);
   };
 
+  const handleDeletePet = (petId: number) => {
+    const petToDelete = pets.find(p => p.id === petId);
+    if(petToDelete){
+        setPets(pets.filter(p => p.id !== petId));
+        toast({ title: `Memorial de ${petToDelete.name} excluído com sucesso.` });
+    }
+  };
+  
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -81,11 +143,6 @@ export default function AdminPage() {
     );
   }
 
-  const handleDeletePet = (petId: number) => {
-    // Logic to delete a pet
-    toast({ title: `Pet ${petId} excluído com sucesso.` });
-  };
-  
   return (
     <div className="min-h-screen bg-muted/20 p-4 sm:p-8">
       <div className="container mx-auto">
@@ -125,7 +182,7 @@ export default function AdminPage() {
                         <div className="relative h-52 w-full">
                           <Image
                             src={pet.image.imageUrl}
-                            alt={pet.image.description}
+                            alt={pet.image.description ?? ''}
                             fill
                             className="object-cover"
                           />
@@ -140,9 +197,25 @@ export default function AdminPage() {
                         <Button variant="outline" size="sm" onClick={() => handleOpenForm(pet)}>
                           <Edit className="mr-2 h-4 w-4" /> Editar
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={() => handleDeletePet(pet.id)}>
-                          <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                        </Button>
+                         <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                              <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não pode ser desfeita. Isso excluirá permanentemente o memorial de {pet.name}.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeletePet(pet.id)}>Excluir</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </CardFooter>
                     </Card>
                   ))}
@@ -176,7 +249,7 @@ export default function AdminPage() {
       </div>
 
        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="font-headline text-3xl text-primary">
               {editingPet ? `Editar Memorial de ${editingPet.name}` : 'Criar Novo Memorial'}
@@ -185,41 +258,75 @@ export default function AdminPage() {
               Preencha as informações abaixo para gerenciar o memorial.
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-4 max-h-[70vh] overflow-y-auto pr-4">
-             <p className="text-destructive text-sm mb-4">Funcionalidade de formulário em desenvolvimento.</p>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input placeholder="Nome do Pet" />
-                <Input placeholder="Raça" />
-                <Input placeholder="Sexo" />
-                <Input placeholder="Idade" />
-                <Input type="date" placeholder="Data de Nascimento" />
-                <Input type="date" placeholder="Data de Falecimento" />
-                <Input placeholder="Árvore" />
-                <Input placeholder="Local" />
-                <Input placeholder="Tutores" />
-             </div>
-             <Textarea placeholder="Texto Memorial" className="mt-4" rows={5}/>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSavePet)} className="space-y-6">
+                <div className="mt-4 max-h-[70vh] overflow-y-auto pr-4 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do Pet" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="species" render={({ field }) => (<FormItem><FormLabel>Raça</FormLabel><FormControl><Input placeholder="Ex: Golden Retriever" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="sexo" render={({ field }) => (<FormItem><FormLabel>Sexo</FormLabel><FormControl><Input placeholder="Ex: Macho" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="age" render={({ field }) => (<FormItem><FormLabel>Idade</FormLabel><FormControl><Input placeholder="Ex: 8 anos" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="family" render={({ field }) => (<FormItem><FormLabel>Família</FormLabel><FormControl><Input placeholder="Ex: Família Silva" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="tutores" render={({ field }) => (<FormItem><FormLabel>Tutores</FormLabel><FormControl><Input placeholder="Ex: Maria e João" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="birthDate" render={({ field }) => (<FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="passingDate" render={({ field }) => (<FormItem><FormLabel>Data de Falecimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="arvore" render={({ field }) => (<FormItem><FormLabel>Árvore Plantada</FormLabel><FormControl><Input placeholder="Ex: Ipê Amarelo" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="local" render={({ field }) => (<FormItem><FormLabel>Local</FormLabel><FormControl><Input placeholder="Ex: Jardim da Saudade" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                    
+                    <FormField control={form.control} name="text" render={({ field }) => (<FormItem><FormLabel>Texto Memorial</FormLabel><FormControl><Textarea placeholder="Escreva uma bela homenagem..." {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
 
-             <div className="mt-6">
-                <h4 className="font-semibold">Fotos (Mínimo 5)</h4>
-                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                    {[...Array(5)].map((_, i) => (
-                        <div key={i} className="aspect-square bg-muted rounded-md flex items-center justify-center">
-                            <Upload className="text-muted-foreground"/>
-                        </div>
-                    ))}
+                    <div>
+                        <Label>Fotos (Mínimo 5)</Label>
+                         <p className="text-sm text-muted-foreground">Adicione as URLs das imagens. A primeira será a foto de capa.</p>
+                         <div className="mt-2 space-y-2">
+                         {fields.map((field, index) => (
+                             <div key={field.id} className="flex items-center gap-2">
+                                 <FormField
+                                     control={form.control}
+                                     name={`images.${index}.imageUrl`}
+                                     render={({ field }) => (
+                                         <FormItem className="flex-1">
+                                             <FormControl>
+                                                 <Input placeholder={`URL da Imagem ${index + 1}`} {...field} />
+                                             </FormControl>
+                                             <FormMessage />
+                                         </FormItem>
+                                     )}
+                                 />
+                                <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                             </div>
+                         ))}
+                         </div>
+                         <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => append({ id: `img-${Date.now()}`, imageUrl: '' })}
+                         >
+                            <ImagePlus className="mr-2" /> Adicionar URL de Imagem
+                         </Button>
+                         <Controller
+                            control={form.control}
+                            name="images"
+                            render={({ fieldState }) => <FormMessage>{fieldState.error?.message}</FormMessage>}
+                         />
+                    </div>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">Arraste ou clique para adicionar arquivos.</p>
-             </div>
-          </div>
-          <DialogClose asChild>
-            <div className='flex justify-end gap-2 mt-6'>
-                <Button variant="outline">Cancelar</Button>
-                <Button>Salvar Pet</Button>
-            </div>
-          </DialogClose>
+                <DialogFooter className='flex justify-end gap-2 mt-6'>
+                    <DialogClose asChild>
+                        <Button type="button" variant="outline">Cancelar</Button>
+                    </DialogClose>
+                    <Button type="submit">Salvar Pet</Button>
+                </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+    
