@@ -92,6 +92,28 @@
   .animate-scale-in {
     animation: scale-in 0.5s ease-in-out forwards;
   }
+  .memorial-bg {
+    position: relative;
+    overflow: hidden;
+  }
+  .memorial-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('https://i.imgur.com/dRqMiEi.jpeg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.1;
+    filter: blur(4px);
+    z-index: 0;
+  }
+  .memorial-bg > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 @keyframes fade-in {
