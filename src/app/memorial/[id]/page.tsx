@@ -136,13 +136,13 @@ const MemorialDetailPage = () => {
 
                 {pet.qrCodeUrl && (
                   <div className="space-y-4">
-                    <div className="flex flex-col items-center gap-4 rounded-lg border bg-white/90 p-6 shadow-soft">
+                    <div className="flex flex-col items-center gap-4 rounded-lg border border-white/20 bg-white/20 backdrop-blur-md p-6 shadow-soft">
                         <h4 className="font-semibold text-center">Acesse esta homenagem a qualquer momento</h4>
                         <canvas ref={qrCodeCanvasRef} />
                         <p className="text-sm text-muted-foreground text-center">Aponte a câmera do seu celular para este QR Code.</p>
                     </div>
 
-                    <Card className="shadow-soft bg-white/90">
+                    <Card className="shadow-soft bg-white/20 backdrop-blur-md border border-white/20">
                         <CardContent className="p-4 flex flex-col items-center text-center">
                            <p className='text-sm text-muted-foreground mb-4'>Ou use o link direto para compartilhar esta homenagem.</p>
                             <Button asChild className="w-full">
