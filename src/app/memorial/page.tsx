@@ -74,7 +74,7 @@ const MemorialPage = () => {
                 </div>
             </div>
 
-            <div className="relative h-80 md:h-96 w-full order-1 md:order-2 overflow-hidden rounded-lg shadow-soft">
+            <div className="relative w-full order-1 md:order-2 overflow-hidden rounded-lg shadow-soft aspect-video md:aspect-auto self-stretch">
                 <video 
                     autoPlay 
                     loop 
