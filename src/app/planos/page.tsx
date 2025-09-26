@@ -58,7 +58,7 @@ export default function PlansPage() {
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3 lg:items-stretch">
+        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 lg:items-stretch">
           {content.plans.map((plan, index) => (
             <Card
               key={index}

@@ -74,7 +74,7 @@ const MemorialDetailPage = () => {
   const formatId = (id: number) => `#${id.toString().padStart(3, '0')}`;
 
   return (
-    <div className="bg-background py-16 md:py-24">
+    <div className="bg-background py-12 md:py-24">
       <div className="container mx-auto px-4">
         <div className="mb-8">
             <Button asChild variant="outline">
@@ -107,7 +107,7 @@ const MemorialDetailPage = () => {
                     </div>
                 ))}
             </div>
-            <div className='sticky top-24 self-start'>
+            <div className='sticky top-24 self-start space-y-8'>
                 <div className="space-y-3 text-base text-foreground bg-muted/30 p-6 rounded-lg border shadow-soft">
                     <p><strong>Raça:</strong> {pet.species}</p>
                     <p><strong>Sexo:</strong> {pet.sexo}</p>
@@ -117,15 +117,15 @@ const MemorialDetailPage = () => {
                     <p><strong>Árvore Plantada:</strong> {pet.arvore}</p>
                     <p><strong>Local:</strong> {pet.local}</p>
                 </div>
-                <p className="mt-8 whitespace-pre-wrap text-base leading-relaxed md:text-lg">
+                <p className="whitespace-pre-wrap text-base leading-relaxed md:text-lg">
                     {pet.text}
                 </p>
-                <div className="mt-6 flex items-center justify-center gap-2 text-lg font-semibold text-primary">
+                <div className="flex items-center justify-center gap-2 text-lg font-semibold text-primary">
                     <Heart className="h-5 w-5" />
                     <p>Sempre em nossos corações</p>
                 </div>
                 {pet.qrCodeUrl && (
-                  <div className="space-y-4 mt-8">
+                  <div className="space-y-4">
                     <div className="flex flex-col items-center gap-4 rounded-lg border bg-muted/50 p-6 shadow-soft">
                         <h4 className="font-semibold text-center">Acesse esta homenagem a qualquer momento</h4>
                         <canvas ref={qrCodeCanvasRef} />

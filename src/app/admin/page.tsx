@@ -401,13 +401,13 @@ export default function AdminPage() {
         </header>
 
         <Tabs defaultValue="pets" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="home"><HomeIcon className="mr-2" /> Home</TabsTrigger>
-            <TabsTrigger value="pets"><Users className="mr-2" /> Pets</TabsTrigger>
-            <TabsTrigger value="about"><FileText className="mr-2" /> Sobre Nós</TabsTrigger>
-            <TabsTrigger value="space"><Building2 className="mr-2" /> Nosso Espaço</TabsTrigger>
-            <TabsTrigger value="plans"><CheckCircle2 className="mr-2" /> Planos</TabsTrigger>
-            <TabsTrigger value="general"><Settings className="mr-2" /> Geral</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
+            <TabsTrigger value="home"><HomeIcon className="mr-1 md:mr-2" /> <span className="hidden md:inline">Home</span></TabsTrigger>
+            <TabsTrigger value="pets"><Users className="mr-1 md:mr-2" /> <span className="hidden md:inline">Pets</span></TabsTrigger>
+            <TabsTrigger value="about"><FileText className="mr-1 md:mr-2" /> <span className="hidden md:inline">Sobre</span></TabsTrigger>
+            <TabsTrigger value="space"><Building2 className="mr-1 md:mr-2" /> <span className="hidden md:inline">Espaço</span></TabsTrigger>
+            <TabsTrigger value="plans"><CheckCircle2 className="mr-1 md:mr-2" /> <span className="hidden md:inline">Planos</span></TabsTrigger>
+            <TabsTrigger value="general"><Settings className="mr-1 md:mr-2" /> <span className="hidden md:inline">Geral</span></TabsTrigger>
           </TabsList>
           
           <TabsContent value="home" className="mt-6">
@@ -614,9 +614,9 @@ export default function AdminPage() {
                                     <CardContent className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                                         <FormField control={plansForm.control} name={`plans.${planIndex}.name`} render={({ field }) => (<FormItem><FormLabel>Nome do Plano</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField control={plansForm.control} name={`plans.${planIndex}.price`} render={({ field }) => (<FormItem><FormLabel>Preço</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={plansForm.control} name={`plans.${planIndex}.description`} render={({ field }) => (<FormItem className="col-span-2"><FormLabel>Descrição</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={plansForm.control} name={`plans.${planIndex}.description`} render={({ field }) => (<FormItem className="col-span-1 md:col-span-2"><FormLabel>Descrição</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem>)} />
                                         
-                                        <div className='col-span-2'>
+                                        <div className='col-span-1 md:col-span-2'>
                                             <Label>Características</Label>
                                             <div className="space-y-2 mt-2">
                                                 {plan.features.map((_, featureIndex) => (
@@ -627,7 +627,7 @@ export default function AdminPage() {
                                             </div>
                                         </div>
                                         
-                                        <FormField control={plansForm.control} name={`plans.${planIndex}.optional`} render={({ field }) => (<FormItem className="col-span-2"><FormLabel>Texto Opcional</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={plansForm.control} name={`plans.${planIndex}.optional`} render={({ field }) => (<FormItem className="col-span-1 md:col-span-2"><FormLabel>Texto Opcional</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                     </CardContent>
                                 </Card>
                             ))}
@@ -772,7 +772,7 @@ export default function AdminPage() {
                     {editingPet && (
                       <div className="space-y-2">
                         <Label>QR Code do Memorial</Label>
-                        <div className='flex items-center gap-4 rounded-lg border bg-muted/50 p-4'>
+                        <div className='flex flex-col sm:flex-row items-center gap-4 rounded-lg border bg-muted/50 p-4'>
                           <QrCode className="h-16 w-16 text-muted-foreground" />
                           <div>
                             <h4 className="font-semibold">QR Code para {editingPet.name}</h4>

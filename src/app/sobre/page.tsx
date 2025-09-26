@@ -94,7 +94,7 @@ export default function AboutPage() {
           <h1 className="animate-fade-in font-headline text-4xl font-bold text-gradient-luxury md:text-6xl">
             {content.headerTitle}
           </h1>
-          <p className="animate-fade-in mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
+          <p className="animate-fade-in mx-auto mt-4 max-w-3xl text-base md:text-lg text-muted-foreground">
             {content.headerDescription}
           </p>
         </div>
@@ -231,7 +231,7 @@ export default function AboutPage() {
             <p className="mx-auto mt-4 max-w-2xl text-muted-foreground md:text-lg">
                 Operamos com total transparência e em conformidade com todas as normas ambientais e sanitárias.
             </p>
-            <div className="mt-12 flex flex-wrap justify-center gap-8">
+            <div className="mt-12 flex flex-wrap justify-center gap-6 md:gap-8">
                 <div className="flex items-center gap-3">
                     <Award className="h-8 w-8 text-accent" />
                     <span className="font-semibold">Licença Sanitária</span>

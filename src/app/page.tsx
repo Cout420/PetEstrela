@@ -85,8 +85,8 @@ export default function Home() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 text-white" />
-          <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 text-white" />
+          <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 text-white hidden md:flex" />
+          <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 text-white hidden md:flex" />
         </Carousel>
       </section>
 
