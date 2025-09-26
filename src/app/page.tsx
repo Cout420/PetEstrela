@@ -13,90 +13,27 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, CreditCard, Heart, Star } from 'lucide-react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { testimonials } from '@/lib/mock-data';
+import { homePageContent as initialHomePageContent } from '@/lib/home-content';
 
-const heroSlides = [
-  {
-    image: PlaceHolderImages.find((img) => img.id === 'hero-building'),
-    title: 'Pet Estrela Crematório',
-    subtitle:
-      'Instalações modernas e seguras para cuidar do seu companheiro.',
-  },
-  {
-    image: PlaceHolderImages.find((img) => img.id === 'hero-all-pets'),
-    title: 'Cuidado para Todos os Amigos',
-    subtitle:
-      'Atendemos cães, gatos, aves, cavalos e animais exóticos de todos os portes.',
-  },
-  {
-    image: PlaceHolderImages.find((img) => img.id === 'hero-garden'),
-    title: 'Despedida com Dignidade e Respeito',
-    subtitle: 'Honramos a memória do seu pet com todo carinho que ele merece.',
-  },
-];
-
-const whyChooseUs = [
-  {
-    icon: Clock,
-    title: 'Agilidade',
-    description: 'Processo rápido e respeitoso para sua maior tranquilidade.',
-  },
-  {
-    icon: Clock,
-    title: 'Atendimento 24h',
-    description: 'Nossa equipe está disponível a qualquer hora do dia.',
-  },
-  {
-    icon: CreditCard,
-    title: 'Preço Acessível',
-    description: 'Planos que se ajustam às suas necessidades e orçamento.',
-  },
-  {
-    icon: Heart,
-    title: 'Cuidado Especial',
-    description: 'Tratamos todos os pets, incluindo exóticos, com amor.',
-  },
-];
-
-const cremationProcess = [
-  {
-    step: '01',
-    title: 'Coleta do Animal',
-    description:
-      'Realizamos a remoção do seu pet em sua residência ou clínica veterinária com veículos adaptados.',
-  },
-  {
-    step: '02',
-    title: 'Preparação',
-    description:
-      'O corpo do seu amigo é preparado com todo o respeito e cuidado para a cerimônia de despedida.',
-  },
-  {
-    step: '03',
-    title: 'Cremação',
-    description:
-      'O processo de cremação é realizado de forma individual ou coletiva, seguindo sua escolha.',
-  },
-  {
-    step: '04',
-    title: 'Entrega das Cinzas',
-    description:
-      'As cinzas são entregues em uma urna de sua preferência, junto com um certificado.',
-  },
-];
-
-const allPetsImage = PlaceHolderImages.find(
-  (img) => img.id === 'section-all-pets'
-);
+const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
+  Clock,
+  CreditCard,
+  Heart,
+};
 
 export default function Home() {
   const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/5511942405253' });
+  const [homeContent, setHomeContent] = useState(initialHomePageContent);
 
   useEffect(() => {
-    const storedContent = localStorage.getItem('generalContent');
-    if (storedContent) {
-      setGeneralContent(JSON.parse(storedContent));
+    const storedGeneralContent = localStorage.getItem('generalContent');
+    if (storedGeneralContent) {
+      setGeneralContent(JSON.parse(storedGeneralContent));
+    }
+    const storedHomeContent = localStorage.getItem('homePageContent');
+    if (storedHomeContent) {
+        setHomeContent(JSON.parse(storedHomeContent));
     }
   }, []);
 
@@ -107,17 +44,17 @@ export default function Home() {
         <Carousel
           className="h-full w-full"
           opts={{ loop: true }}
+          // @ts-ignore
           autoplayDelay={5000}
         >
           <CarouselContent>
-            {heroSlides.map((slide, index) => (
+            {homeContent.heroSlides.map((slide, index) => (
               <CarouselItem key={index}>
                 <div className="relative h-[80vh] w-full">
-                  {slide.image && (
+                  {slide.imageUrl && (
                     <Image
-                      src={slide.image.imageUrl}
-                      alt={slide.image.description}
-                      data-ai-hint={slide.image.imageHint}
+                      src={slide.imageUrl}
+                      alt={slide.title}
                       fill
                       className="object-cover"
                       priority={index === 0}
@@ -157,24 +94,26 @@ export default function Home() {
       <section className="bg-background py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h2 className="font-headline text-3xl font-bold md:text-4xl">
-            Por Que Escolher o Pet Estrela?
+            {homeContent.whyChooseUs.title}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground md:text-lg">
-            Oferecemos um serviço completo, com a sensibilidade e o respeito que
-            este momento delicado exige.
+            {homeContent.whyChooseUs.description}
           </p>
           <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {whyChooseUs.map((item, index) => (
-              <div key={index} className="animate-slide-up flex flex-col items-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <item.icon className="h-8 w-8" />
+            {homeContent.whyChooseUs.items.map((item, index) => {
+              const Icon = iconMap[item.icon];
+              return (
+                <div key={index} className="animate-slide-up flex flex-col items-center">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    {Icon && <Icon className="h-8 w-8" />}
+                  </div>
+                  <h3 className="font-headline text-xl font-semibold">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-muted-foreground">{item.description}</p>
                 </div>
-                <h3 className="font-headline text-xl font-semibold">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-muted-foreground">{item.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -184,16 +123,15 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center">
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
-              Nosso Processo de Cremação
+              {homeContent.cremationProcess.title}
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-muted-foreground md:text-lg">
-              Conduzimos cada etapa com máxima transparência, cuidado e
-              seriedade.
+              {homeContent.cremationProcess.description}
             </p>
           </div>
           <div className="relative mt-12 grid grid-cols-1 gap-12 md:grid-cols-4">
             <div className="absolute left-0 top-8 hidden w-full border-t-2 border-dashed border-primary/30 md:block" />
-            {cremationProcess.map((item, index) => (
+            {homeContent.cremationProcess.steps.map((item, index) => (
               <div key={index} className="animate-slide-up relative flex flex-col items-center text-center md:items-start md:text-left">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-background font-headline text-2xl font-bold text-primary">
                   {item.step}
@@ -214,32 +152,17 @@ export default function Home() {
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div className="animate-fade-in">
               <h2 className="font-headline text-3xl font-bold md:text-4xl">
-                Acolhemos Todos os Tipos de Pets
+                {homeContent.allPetsSection.title}
               </h2>
               <p className="mt-4 text-muted-foreground md:text-lg">
-                Nosso amor e respeito se estendem a todos os animais, não
-                importa a espécie ou o porte. Estamos preparados para oferecer
-                uma despedida digna a cada um deles.
+                {homeContent.allPetsSection.description}
               </p>
               <ul className="mt-6 grid grid-cols-2 gap-2 text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-primary" /> Cães
-                </li>
-                <li className="flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-primary" /> Gatos
-                </li>
-                <li className="flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-primary" /> Aves
-                </li>
-                <li className="flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-primary" /> Roedores
-                </li>
-                <li className="flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-primary" /> Répteis
-                </li>
-                <li className="flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-primary" /> Cavalos
-                </li>
+                {homeContent.allPetsSection.petsList.map((pet, index) => (
+                  <li key={index} className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-primary" /> {pet}
+                  </li>
+                ))}
               </ul>
               <Button asChild size="lg" className="btn-whatsapp mt-8">
                 <a href={generalContent.whatsappLink} target="_blank">
@@ -248,11 +171,10 @@ export default function Home() {
               </Button>
             </div>
             <div className="animate-scale-in relative h-80 w-full overflow-hidden rounded-lg lg:h-96">
-              {allPetsImage && (
+              {homeContent.allPetsSection.imageUrl && (
                 <Image
-                  src={allPetsImage.imageUrl}
-                  alt={allPetsImage.description}
-                  data-ai-hint={allPetsImage.imageHint}
+                  src={homeContent.allPetsSection.imageUrl}
+                  alt={homeContent.allPetsSection.title}
                   fill
                   className="object-cover"
                 />
@@ -274,6 +196,7 @@ export default function Home() {
           <Carousel
             className="mt-12"
             opts={{ align: 'start', loop: true }}
+             // @ts-ignore
             autoplayDelay={4000}
           >
             <CarouselContent className="-ml-4">
@@ -360,5 +283,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

@@ -18,8 +18,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { memorialPets as initialPets, teamMembers as initialTeamMembers, plans as initialPlans } from '@/lib/mock-data';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
-import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus, CheckCircle2 } from 'lucide-react';
+import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus, CheckCircle2, HomeIcon } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { homePageContent as initialHomePageContent, heroSlides as initialHeroSlides, whyChooseUs as initialWhyChooseUs, cremationProcess as initialCremationProcess, allPetsSection as initialAllPetsSection } from '@/lib/home-content';
 
 const petSchema = z.object({
   id: z.number(),
@@ -89,6 +90,45 @@ const plansPageSchema = z.object({
 
 type PlansPageContent = z.infer<typeof plansPageSchema>;
 
+const heroSlideSchema = z.object({
+    imageUrl: z.string().url(),
+    title: z.string().min(1),
+    subtitle: z.string().min(1),
+});
+const whyChooseUsItemSchema = z.object({
+    icon: z.string(), // We will handle icon mapping separately
+    title: z.string().min(1),
+    description: z.string().min(1),
+});
+const cremationProcessStepSchema = z.object({
+    step: z.string(),
+    title: z.string().min(1),
+    description: z.string().min(1),
+});
+const allPetsSectionSchema = z.object({
+    title: z.string().min(1),
+    description: z.string().min(1),
+    imageUrl: z.string().url(),
+    petsList: z.array(z.string()),
+});
+
+const homePageSchema = z.object({
+    heroSlides: z.array(heroSlideSchema),
+    whyChooseUs: z.object({
+        title: z.string().min(1),
+        description: z.string().min(1),
+        items: z.array(whyChooseUsItemSchema),
+    }),
+    cremationProcess: z.object({
+        title: z.string().min(1),
+        description: z.string().min(1),
+        steps: z.array(cremationProcessStepSchema),
+    }),
+    allPetsSection: allPetsSectionSchema,
+});
+
+type HomePageContent = z.infer<typeof homePageSchema>;
+
 export default function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -152,12 +192,20 @@ export default function AdminPage() {
         plans: initialPlans,
     },
   });
+  
+  const homeForm = useForm<HomePageContent>({
+    resolver: zodResolver(homePageSchema),
+    defaultValues: initialHomePageContent
+  });
+  
+  const { fields: heroSlidesFields, append: appendHeroSlide, remove: removeHeroSlide } = useFieldArray({
+      control: homeForm.control, name: "heroSlides"
+  });
 
   const { fields: planFields, append: appendPlan, remove: removePlan } = useFieldArray({
       control: plansForm.control,
       name: "plans"
   });
-
 
   useEffect(() => {
     const storedAboutContent = localStorage.getItem('aboutPageContent');
@@ -172,18 +220,23 @@ export default function AdminPage() {
     if(storedPlansContent){
         plansForm.reset(JSON.parse(storedPlansContent));
     }
-  }, [aboutForm, generalForm, plansForm]);
+    const storedHomeContent = localStorage.getItem('homePageContent');
+    if (storedHomeContent) {
+        homeForm.reset(JSON.parse(storedHomeContent));
+    }
+  }, [aboutForm, generalForm, plansForm, homeForm]);
 
   useEffect(() => {
     if (editingPet) {
       petForm.reset(editingPet);
     } else {
       petForm.reset({
+        id: pets.length > 0 ? Math.max(...pets.map(p => p.id)) + 1 : 1,
         name: '', species: '', sexo: '', age: '', family: '', birthDate: '', passingDate: '',
-        arvore: '', local: '', tutores: '', text: '', images: [],
+        arvore: '', local: '', tutores: '', text: '', images: Array(5).fill({ id: '', imageUrl: '' }),
       });
     }
-  }, [editingPet, petForm]);
+  }, [editingPet, petForm, pets]);
 
   const handleLogout = () => {
     localStorage.removeItem('petEstrelaAuth');
@@ -202,7 +255,7 @@ export default function AdminPage() {
       updatedPets = pets.map(p => p.id === data.id ? { ...data, image: data.images[0] } : p);
       toast({ title: `Memorial de ${data.name} atualizado com sucesso.` });
     } else {
-      const newPet = { ...data, id: Date.now(), image: data.images[0] };
+      const newPet = { ...data, id: data.id, image: data.images[0] };
       updatedPets = [newPet, ...pets];
       toast({ title: `Memorial de ${data.name} criado com sucesso.` });
     }
@@ -226,6 +279,11 @@ export default function AdminPage() {
     localStorage.setItem('aboutPageContent', JSON.stringify(data));
     toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
   };
+  
+  const handleSaveHomeContent = (data: HomePageContent) => {
+    localStorage.setItem('homePageContent', JSON.stringify(data));
+    toast({ title: 'Conteúdo da página "Home" atualizado com sucesso.' });
+  }
 
   const handleSaveGeneralContent = (data: GeneralContent) => {
     localStorage.setItem('generalContent', JSON.stringify(data));
@@ -263,13 +321,83 @@ export default function AdminPage() {
         </header>
 
         <Tabs defaultValue="pets" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="home"><HomeIcon className="mr-2" /> Home Page</TabsTrigger>
             <TabsTrigger value="pets"><Users className="mr-2" /> Gerenciar Pets</TabsTrigger>
             <TabsTrigger value="about"><FileText className="mr-2" /> Sobre Nós</TabsTrigger>
             <TabsTrigger value="plans"><CheckCircle2 className="mr-2" /> Planos</TabsTrigger>
             <TabsTrigger value="general"><Settings className="mr-2" /> Conteúdo Geral</TabsTrigger>
           </TabsList>
           
+          <TabsContent value="home" className="mt-6">
+            <Card>
+              <CardHeader><CardTitle>Editar Página Home</CardTitle></CardHeader>
+              <CardContent>
+                <Form {...homeForm}>
+                  <form onSubmit={homeForm.handleSubmit(handleSaveHomeContent)} className="space-y-8">
+                    {/* Hero Section */}
+                    <Card className="p-4">
+                      <CardHeader><CardTitle>Carrossel Principal (Hero)</CardTitle></CardHeader>
+                      <CardContent className="space-y-4">
+                        {heroSlidesFields.map((slide, index) => (
+                          <div key={slide.id} className="space-y-2 rounded-md border p-4">
+                            <h4 className="font-semibold">Slide {index + 1}</h4>
+                            <FormField control={homeForm.control} name={`heroSlides.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                            <FormField control={homeForm.control} name={`heroSlides.${index}.subtitle`} render={({ field }) => (<FormItem><FormLabel>Subtítulo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                            <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                     {/* Why Choose Us */}
+                    <Card className="p-4">
+                        <CardHeader><CardTitle>Seção "Por que escolher?"</CardTitle></CardHeader>
+                        <CardContent className="space-y-4">
+                             <FormField control={homeForm.control} name="whyChooseUs.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                             <FormField control={homeForm.control} name="whyChooseUs.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
+                             {homeForm.getValues('whyChooseUs.items').map((item, index) => (
+                                 <div key={index} className="space-y-2 rounded-md border p-4">
+                                     <h4 className="font-semibold">Item {index + 1}</h4>
+                                     <FormField control={homeForm.control} name={`whyChooseUs.items.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título do Item</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                     <FormField control={homeForm.control} name={`whyChooseUs.items.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Descrição do Item</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                 </div>
+                             ))}
+                        </CardContent>
+                    </Card>
+
+                     {/* Cremation Process */}
+                     <Card className="p-4">
+                         <CardHeader><CardTitle>Seção "Processo de Cremação"</CardTitle></CardHeader>
+                         <CardContent className="space-y-4">
+                              <FormField control={homeForm.control} name="cremationProcess.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                              <FormField control={homeForm.control} name="cremationProcess.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
+                              {homeForm.getValues('cremationProcess.steps').map((step, index) => (
+                                  <div key={index} className="space-y-2 rounded-md border p-4">
+                                      <h4 className="font-semibold">Passo {step.step}</h4>
+                                      <FormField control={homeForm.control} name={`cremationProcess.steps.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título do Passo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                      <FormField control={homeForm.control} name={`cremationProcess.steps.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Descrição do Passo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                  </div>
+                              ))}
+                         </CardContent>
+                     </Card>
+
+                     {/* All Pets Section */}
+                    <Card className="p-4">
+                        <CardHeader><CardTitle>Seção "Todos os Pets"</CardTitle></CardHeader>
+                        <CardContent className="space-y-4">
+                            <FormField control={homeForm.control} name="allPetsSection.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                            <FormField control={homeForm.control} name="allPetsSection.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
+                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        </CardContent>
+                    </Card>
+
+                    <Button type="submit"><Save className="mr-2" /> Salvar Página Home</Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="pets" className="mt-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
@@ -531,5 +659,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
