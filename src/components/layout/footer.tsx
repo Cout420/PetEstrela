@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Logo from '../logo';
 import { Button } from '../ui/button';
+import { Instagram } from 'lucide-react';
 
 type GeneralContent = {
   whatsappNumber: string;
   whatsappLink: string;
   phone: string;
   address: string;
+  instagramLink: string;
 };
 
 const Footer = () => {
@@ -25,6 +27,7 @@ const Footer = () => {
         whatsappLink: 'https://wa.me/5511942405253',
         phone: '(11) 4240-5253',
         address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
+        instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
       });
     }
   }, []);
@@ -70,11 +73,16 @@ const Footer = () => {
                 <p>Telefone: {content.phone}</p>
                 <p>WhatsApp: {content.whatsappNumber}</p>
               </div>
-               <Button asChild className="btn-whatsapp mt-4">
+              <div className="mt-4 flex items-center gap-4">
+               <Button asChild className="btn-whatsapp">
                   <a href={content.whatsappLink} target="_blank">
                       Fale Conosco
                   </a>
               </Button>
+               <a href={content.instagramLink} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                    <Instagram className="h-6 w-6 text-muted-foreground transition-colors hover:text-primary" />
+                </a>
+              </div>
             </div>
           )}
         </div>
@@ -88,5 +96,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
-    

@@ -68,6 +68,7 @@ const generalContentSchema = z.object({
   whatsappLink: z.string().url("Link do WhatsApp é obrigatório."),
   phone: z.string().min(10, "Número de telefone é obrigatório."),
   address: z.string().min(10, "Endereço é obrigatório."),
+  instagramLink: z.string().url("Link do Instagram é obrigatório."),
 });
 
 type GeneralContent = z.infer<typeof generalContentSchema>;
@@ -125,6 +126,7 @@ export default function AdminPage() {
       whatsappLink: 'https://wa.me/5511942405253',
       phone: '(11) 4240-5253',
       address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
+      instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
     }
   });
 
@@ -351,6 +353,13 @@ export default function AdminPage() {
                         <FormControl><Textarea rows={3} {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
+                    )} />
+                    <FormField control={generalForm.control} name="instagramLink" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Link do Instagram</FormLabel>
+                            <FormControl><Input placeholder="https://instagram.com/seu-usuario" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
                     )} />
                     <Button type="submit"><Save className="mr-2" /> Salvar Conteúdo Geral</Button>
                   </form>
