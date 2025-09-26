@@ -1,27 +1,54 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart as RechartsLineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DollarSign, Paw, Users } from 'lucide-react';
-import { adminStats, memorialPets, revenueData, servicesData } from '@/lib/mock-data';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { memorialPets } from '@/lib/mock-data';
+import type { ImagePlaceholder } from '@/lib/placeholder-images';
+import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode } from 'lucide-react';
 
-const COLORS = ['#117EA2', '#E1B15A', '#333333'];
+type PetMemorial = {
+  id: number;
+  name: string;
+  species: string;
+  age: string;
+  family: string;
+  birthDate: string;
+  passingDate: string;
+  text: string;
+  image?: ImagePlaceholder;
+  images?: ImagePlaceholder[];
+};
 
 export default function AdminPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [pets, setPets] = useState<PetMemorial[]>(memorialPets);
+  const [selectedPet, setSelectedPet] = useState<PetMemorial | null>(null);
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('pet-estrela-auth') === 'true';
+    const isLoggedIn = localStorage.getItem('petEstrelaAuth') === 'authenticated';
     if (!isLoggedIn) {
       router.push('/login');
     } else {
       setIsAuthenticated(true);
     }
   }, [router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('petEstrelaAuth');
+    toast({ title: 'Logout realizado com sucesso.' });
+    router.push('/');
+  };
 
   if (!isAuthenticated) {
     return (
@@ -31,130 +58,98 @@ export default function AdminPage() {
     );
   }
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-
+  const handleDeletePet = (petId: number) => {
+    // Logic to delete a pet
+    toast({ title: `Pet ${petId} excluído com sucesso.` });
+  };
+  
   return (
-    <div className="min-h-screen bg-muted/40 p-4 sm:p-8">
+    <div className="min-h-screen bg-muted/20 p-4 sm:p-8">
       <div className="container mx-auto">
-        <h1 className="mb-8 font-headline text-3xl font-bold">
-          Painel Administrativo
-        </h1>
+        <header className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="font-headline text-3xl font-bold text-gradient-luxury">
+              Painel Administrativo
+            </h1>
+            <p className="text-muted-foreground">Pet Estrela Crematório</p>
+          </div>
+          <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair
+          </Button>
+        </header>
 
-        {/* Stats Cards */}
-        <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(adminStats.monthlyRevenue)}</div>
-              <p className="text-xs text-muted-foreground">+5.2% em relação ao mês passado</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Serviços (Mês)</CardTitle>
-              <Paw className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{adminStats.servicesThisMonth}</div>
-              <p className="text-xs text-muted-foreground">+10% em relação ao mês passado</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Memoriais</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{adminStats.totalMemorials}</div>
-              <p className="text-xs text-muted-foreground">Total de famílias atendidas</p>
-            </CardContent>
-          </Card>
-           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Serviços Pendentes</CardTitle>
-              <Paw className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{adminStats.pendingServices}</div>
-               <p className="text-xs text-muted-foreground">Para serem concluídos</p>
-            </CardContent>
-          </Card>
-        </div>
+        <Tabs defaultValue="pets" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pets"><Users className="mr-2" /> Gerenciar Pets</TabsTrigger>
+            <TabsTrigger value="about"><FileText className="mr-2" /> Sobre Nós</TabsTrigger>
+            <TabsTrigger value="general"><Settings className="mr-2" /> Conteúdo Geral</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="pets" className="mt-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Memoriais de Pets</CardTitle>
+                <Button>
+                  <Plus className="mr-2" /> Novo Pet
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {pets.map((pet) => (
+                    <Card key={pet.id} className="luxury-card overflow-hidden">
+                      {pet.image && (
+                        <div className="relative h-52 w-full">
+                          <Image
+                            src={pet.image.imageUrl}
+                            alt={pet.image.description}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                      <CardHeader>
+                        <CardTitle className="font-headline text-2xl">{pet.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{pet.species} - {pet.age}</p>
+                        <p className="text-sm text-muted-foreground">Família {pet.family}</p>
+                      </CardHeader>
+                      <CardFooter className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm">
+                          <Edit className="mr-2 h-4 w-4" /> Editar
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeletePet(pet.id)}>
+                          <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* Charts */}
-        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-7">
-          <Card className="lg:col-span-4">
-            <CardHeader>
-              <CardTitle>Receita nos Últimos Meses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <RechartsLineChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis tickFormatter={(value) => formatCurrency(value as number)} />
-                  <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                  <Legend />
-                  <Line type="monotone" dataKey="revenue" name="Receita" stroke="#117EA2" activeDot={{ r: 8 }} />
-                </RechartsLineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>Distribuição de Planos (Mês)</CardTitle>
-            </CardHeader>
-            <CardContent>
-               <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie data={servicesData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
-                    {servicesData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+          <TabsContent value="about" className="mt-6">
+             <Card>
+              <CardHeader>
+                <CardTitle>Editar Seção "Sobre Nós"</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Funcionalidade em desenvolvimento.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* Recent Memorials */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Memoriais Recentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Pet</TableHead>
-                  <TableHead>Espécie</TableHead>
-                  <TableHead>Família</TableHead>
-                  <TableHead>Data da Passagem</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {memorialPets.map((pet) => (
-                  <TableRow key={pet.id}>
-                    <TableCell className="font-medium">{pet.name}</TableCell>
-                    <TableCell>{pet.species}</TableCell>
-                    <TableCell>{pet.family}</TableCell>
-                    <TableCell>{pet.passingDate}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+          <TabsContent value="general" className="mt-6">
+             <Card>
+              <CardHeader>
+                <CardTitle>Editar Conteúdo Geral</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Funcionalidade em desenvolvimento.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
