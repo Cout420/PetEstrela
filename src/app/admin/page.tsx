@@ -161,12 +161,23 @@ export default function AdminPage() {
     name: "images"
   });
   
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handlePetImageFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         petForm.setValue(`images.${index}.imageUrl`, reader.result as string, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGenericFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: any, form: any) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue(fieldName, reader.result as string, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
     }
@@ -356,7 +367,7 @@ export default function AdminPage() {
                             <h4 className="font-semibold">Slide {index + 1}</h4>
                             <FormField control={homeForm.control} name={`heroSlides.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                             <FormField control={homeForm.control} name={`heroSlides.${index}.subtitle`} render={({ field }) => (<FormItem><FormLabel>Subtítulo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                            <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                            <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `heroSlides.${index}.imageUrl`, homeForm)} /></FormControl></FormItem>)} />
                           </div>
                         ))}
                       </CardContent>
@@ -399,7 +410,7 @@ export default function AdminPage() {
                         <CardContent className="space-y-4">
                             <FormField control={homeForm.control} name="allPetsSection.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                             <FormField control={homeForm.control} name="allPetsSection.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
-                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da Seção</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'allPetsSection.imageUrl', homeForm)} /></FormControl></FormItem>)} />
                         </CardContent>
                     </Card>
 
@@ -483,12 +494,12 @@ export default function AdminPage() {
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção Missão</h3>
                             <FormField control={aboutForm.control} name="missionTitle" render={({ field }) => (<FormItem><FormLabel>Título da Missão</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="missionDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da Missão</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da Missão</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da Missão</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'missionImageUrl', aboutForm)} /></FormControl><FormMessage /></FormItem>)} />
 
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção História</h3>
                              <FormField control={aboutForm.control} name="historyTitle" render={({ field }) => (<FormItem><FormLabel>Título da História</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="historyDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da História</FormLabel><FormControl><Textarea {...field} rows={4} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={aboutForm.control} name="historyImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da História</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="historyImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da História</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'historyImageUrl', aboutForm)} /></FormControl><FormMessage /></FormItem>)} />
 
                             <Button type="submit"><Save className="mr-2" /> Salvar Alterações</Button>
                         </form>
@@ -634,7 +645,7 @@ export default function AdminPage() {
                                                     <Input 
                                                         type="file" 
                                                         accept="image/*"
-                                                        onChange={(e) => handleFileChange(e, index)}
+                                                        onChange={(e) => handlePetImageFileChange(e, index)}
                                                         className="w-full"
                                                     />
                                                     {value && typeof value === 'string' && (
