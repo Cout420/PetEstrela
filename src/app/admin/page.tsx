@@ -97,37 +97,37 @@ const plansPageSchema = z.object({
 type PlansPageContent = z.infer<typeof plansPageSchema>;
 
 const heroSlideSchema = z.object({
-    imageUrl: z.string(),
-    title: z.string().min(1),
-    subtitle: z.string().min(1),
+    imageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
+    title: z.string().min(1, 'Título é obrigatório'),
+    subtitle: z.string().min(1, 'Subtítulo é obrigatório'),
 });
 const whyChooseUsItemSchema = z.object({
-    icon: z.string(),
-    title: z.string().min(1),
-    description: z.string().min(1),
+    icon: z.string().min(1, 'Ícone é obrigatório'),
+    title: z.string().min(1, 'Título é obrigatório'),
+    description: z.string().min(1, 'Descrição é obrigatória'),
 });
 const cremationProcessStepSchema = z.object({
-    step: z.string(),
-    title: z.string().min(1),
-    description: z.string().min(1),
+    step: z.string().min(1, 'Passo é obrigatório'),
+    title: z.string().min(1, 'Título é obrigatório'),
+    description: z.string().min(1, 'Descrição é obrigatória'),
 });
 const allPetsSectionSchema = z.object({
-    title: z.string().min(1),
-    description: z.string().min(1),
-    imageUrl: z.string(),
-    petsList: z.array(z.string()),
+    title: z.string().min(1, 'Título é obrigatório'),
+    description: z.string().min(1, 'Descrição é obrigatória'),
+    imageUrl: z.string().min(1, 'URL da imagem é obrigatória'),
+    petsList: z.array(z.string().min(1, 'O item da lista não pode ser vazio')),
 });
 
 const homePageSchema = z.object({
     heroSlides: z.array(heroSlideSchema),
     whyChooseUs: z.object({
-        title: z.string().min(1),
-        description: z.string().min(1),
+        title: z.string().min(1, 'Título é obrigatório'),
+        description: z.string().min(1, 'Descrição é obrigatória'),
         items: z.array(whyChooseUsItemSchema),
     }),
     cremationProcess: z.object({
-        title: z.string().min(1),
-        description: z.string().min(1),
+        title: z.string().min(1, 'Título é obrigatório'),
+        description: z.string().min(1, 'Descrição é obrigatória'),
         steps: z.array(cremationProcessStepSchema),
     }),
     allPetsSection: allPetsSectionSchema,
@@ -232,33 +232,24 @@ export default function AdminPage() {
 
   const aboutForm = useForm<AboutPageContent>({
     resolver: zodResolver(aboutPageSchema),
-    defaultValues: {
-        headerTitle: "Sobre o Pet Estrela",
-        headerDescription: "Há mais de 10 anos, nossa missão é proporcionar uma despedida digna e respeitosa, transformando a dor da perda em uma celebração do amor e da amizade.",
-        missionTitle: "Nossa Missão",
-        missionDescription: "Nossa missão é oferecer um serviço de cremação pet que transcenda o procedimento técnico. Buscamos acolher as famílias em um dos momentos mais delicados, garantindo que a memória de seus companheiros seja honrada com a máxima dignidade. Acreditamos que cada vida, não importa o quão pequena, merece uma despedida grandiosa.",
-        missionImageUrl: PlaceHolderImages.find((img) => img.id === 'about-mission')?.imageUrl ?? '',
-        historyTitle: "Nossa História",
-        historyDescription: "Fundada em 2014 com o sonho de oferecer um serviço funerário pet diferenciado, a Pet Estrela nasceu da paixão e do respeito pelos animais. Ao longo dos anos, crescemos e nos modernizamos, mas nunca perdemos a essência do nosso trabalho: o acolhimento.",
-        historyImageUrl: PlaceHolderImages.find((img) => img.id === 'about-history')?.imageUrl ?? '',
-    }
+    defaultValues: initialHomePageContent as any, // Temporary to avoid errors, will be reset
   });
   
-    const generalForm = useForm<GeneralContent>({
+  const generalForm = useForm<GeneralContent>({
     resolver: zodResolver(generalContentSchema),
     defaultValues: {
-      whatsappNumber: '1142405253',
-      whatsappLink: 'https://wa.me/551142405253',
-      phone: '(11) 4240-5253',
-      address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
-      instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
+      whatsappNumber: '',
+      whatsappLink: '',
+      phone: '',
+      address: '',
+      instagramLink: '',
     }
   });
 
   const plansForm = useForm<PlansPageContent>({
     resolver: zodResolver(plansPageSchema),
     defaultValues: {
-        plans: initialPlans,
+        plans: [],
     },
   });
   
@@ -534,14 +525,20 @@ useEffect(() => {
                   <form onSubmit={homeForm.handleSubmit(handleSaveHomeContent)} className="space-y-8">
                     {/* Hero Section */}
                     <Card className="p-4">
-                      <CardHeader><CardTitle>Carrossel Principal (Hero)</CardTitle></CardHeader>
+                      <CardHeader className='flex-row items-center justify-between'>
+                        <CardTitle>Carrossel Principal (Hero)</CardTitle>
+                        <Button type="button" size="sm" onClick={() => appendHeroSlide({ imageUrl: '', title: '', subtitle: '' })}><Plus className="mr-2" /> Adicionar Slide</Button>
+                      </CardHeader>
                       <CardContent className="space-y-4">
                         {heroSlidesFields.map((slide, index) => (
-                          <div key={slide.id} className="space-y-2 rounded-md border p-4">
-                            <h4 className="font-semibold">Slide {index + 1}</h4>
-                            <FormField control={homeForm.control} name={`heroSlides.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                            <FormField control={homeForm.control} name={`heroSlides.${index}.subtitle`} render={({ field }) => (<FormItem><FormLabel>Subtítulo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                            <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `heroSlides.${index}.imageUrl`, homeForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl></FormItem>)} />
+                          <div key={slide.id} className="space-y-2 rounded-md border p-4 relative">
+                            <div className='flex justify-between items-center'>
+                              <h4 className="font-semibold">Slide {index + 1}</h4>
+                              <Button type="button" variant="destructive" size="icon" onClick={() => removeHeroSlide(index)}><Trash2 className="h-4 w-4" /></Button>
+                            </div>
+                            <FormField control={homeForm.control} name={`heroSlides.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={homeForm.control} name={`heroSlides.${index}.subtitle`} render={({ field }) => (<FormItem><FormLabel>Subtítulo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `heroSlides.${index}.imageUrl`, homeForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
                           </div>
                         ))}
                       </CardContent>
@@ -550,13 +547,14 @@ useEffect(() => {
                     <Card className="p-4">
                         <CardHeader><CardTitle>Seção "Por que escolher?"</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
-                             <FormField control={homeForm.control} name="whyChooseUs.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                             <FormField control={homeForm.control} name="whyChooseUs.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
+                             <FormField control={homeForm.control} name="whyChooseUs.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                             <FormField control={homeForm.control} name="whyChooseUs.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
                              {homeForm.getValues('whyChooseUs.items').map((item, index) => (
                                  <div key={index} className="space-y-2 rounded-md border p-4">
                                      <h4 className="font-semibold">Item {index + 1}</h4>
-                                     <FormField control={homeForm.control} name={`whyChooseUs.items.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título do Item</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                     <FormField control={homeForm.control} name={`whyChooseUs.items.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Descrição do Item</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                     <FormField control={homeForm.control} name={`whyChooseUs.items.${index}.icon`} render={({ field }) => (<FormItem><FormLabel>Ícone do Item (Nome do Lucide Icon)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={homeForm.control} name={`whyChooseUs.items.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título do Item</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={homeForm.control} name={`whyChooseUs.items.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Descrição do Item</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                  </div>
                              ))}
                         </CardContent>
@@ -566,13 +564,13 @@ useEffect(() => {
                      <Card className="p-4">
                          <CardHeader><CardTitle>Seção "Processo de Cremação"</CardTitle></CardHeader>
                          <CardContent className="space-y-4">
-                              <FormField control={homeForm.control} name="cremationProcess.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                              <FormField control={homeForm.control} name="cremationProcess.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
+                              <FormField control={homeForm.control} name="cremationProcess.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                              <FormField control={homeForm.control} name="cremationProcess.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
                               {homeForm.getValues('cremationProcess.steps').map((step, index) => (
                                   <div key={index} className="space-y-2 rounded-md border p-4">
                                       <h4 className="font-semibold">Passo {step.step}</h4>
-                                      <FormField control={homeForm.control} name={`cremationProcess.steps.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título do Passo</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                      <FormField control={homeForm.control} name={`cremationProcess.steps.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Descrição do Passo</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
+                                      <FormField control={homeForm.control} name={`cremationProcess.steps.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título do Passo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                      <FormField control={homeForm.control} name={`cremationProcess.steps.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Descrição do Passo</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
                                   </div>
                               ))}
                          </CardContent>
@@ -582,9 +580,9 @@ useEffect(() => {
                     <Card className="p-4">
                         <CardHeader><CardTitle>Seção "Todos os Pets"</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
-                            <FormField control={homeForm.control} name="allPetsSection.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                            <FormField control={homeForm.control} name="allPetsSection.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
-                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da Seção</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'allPetsSection.imageUrl', homeForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl></FormItem>)} />
+                            <FormField control={homeForm.control} name="allPetsSection.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={homeForm.control} name="allPetsSection.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da Seção</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'allPetsSection.imageUrl', homeForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
                         </CardContent>
                     </Card>
 
@@ -719,13 +717,19 @@ useEffect(() => {
                             <FormField control={ourSpaceForm.control} name="headerDescription" render={({ field }) => (<FormItem><FormLabel>Descrição do Cabeçalho</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
                             
                             <Card className="p-4">
-                                <CardHeader><CardTitle>Galeria de Imagens</CardTitle></CardHeader>
+                                <CardHeader className="flex-row items-center justify-between">
+                                    <CardTitle>Galeria de Imagens</CardTitle>
+                                    <Button type="button" size="sm" onClick={() => appendGallery({ id: `gallery-${Date.now()}`, title: '', imageUrl: '' })}><Plus className="mr-2" /> Adicionar Imagem</Button>
+                                </CardHeader>
                                 <CardContent className="space-y-4">
                                     {galleryFields.map((item, index) => (
-                                        <div key={item.id} className="space-y-2 rounded-md border p-4">
-                                            <h4 className="font-semibold">Imagem {index + 1}</h4>
-                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título da Imagem</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.imageUrl`} render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Arquivo da Imagem</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `gallery.${index}.imageUrl`, ourSpaceForm)} /><Image src={value} alt="Preview" width={100} height={75} className='mt-2 rounded-md object-cover' /></div></FormControl></FormItem>)} />
+                                        <div key={item.id} className="space-y-2 rounded-md border p-4 relative">
+                                            <div className='flex justify-between items-center'>
+                                              <h4 className="font-semibold">Imagem {index + 1}</h4>
+                                              <Button type="button" variant="destructive" size="icon" onClick={() => removeGallery(index)}><Trash2 className="h-4 w-4" /></Button>
+                                            </div>
+                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título da Imagem</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.imageUrl`} render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Arquivo da Imagem</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `gallery.${index}.imageUrl`, ourSpaceForm)} /><Image src={value} alt="Preview" width={100} height={75} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
                                         </div>
                                     ))}
                                 </CardContent>
@@ -759,13 +763,27 @@ useEffect(() => {
                                         
                                         <div className='col-span-1 md:col-span-2'>
                                             <Label>Características</Label>
-                                            <div className="space-y-2 mt-2">
-                                                {plan.features.map((_, featureIndex) => (
-                                                    <FormField key={featureIndex} control={plansForm.control} name={`plans.${planIndex}.features.${featureIndex}`} render={({ field }) => (
-                                                        <FormItem><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                                                    )} />
-                                                ))}
-                                            </div>
+                                            <Controller
+                                                control={plansForm.control}
+                                                name={`plans.${planIndex}.features`}
+                                                render={({ field }) => (
+                                                    <div className="space-y-2 mt-2">
+                                                        {field.value.map((feature, featureIndex) => (
+                                                            <div key={featureIndex} className="flex items-center gap-2">
+                                                                <Input 
+                                                                  value={feature} 
+                                                                  onChange={(e) => {
+                                                                      const newFeatures = [...field.value];
+                                                                      newFeatures[featureIndex] = e.target.value;
+                                                                      field.onChange(newFeatures);
+                                                                  }}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            />
+                                             <FormMessage />
                                         </div>
                                         
                                         <FormField control={plansForm.control} name={`plans.${planIndex}.optional`} render={({ field }) => (<FormItem className="col-span-1 md:col-span-2"><FormLabel>Texto Opcional</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -952,3 +970,4 @@ useEffect(() => {
     
 
     
+
