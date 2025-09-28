@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -13,28 +14,31 @@ import { getMemorialById, PetMemorial } from '@/lib/firebase-service';
 import { Timestamp } from 'firebase/firestore';
 
 // Helper para converter Timestamp do Firebase para string de data 'YYYY-MM-DD'
-const formatDate = (dateValue: Timestamp | string | undefined): string => {
+const formatDate = (dateValue: Timestamp | Date | string | undefined): string => {
   if (!dateValue) return 'Data desconhecida';
 
-  // Se for uma string (já no formato YYYY-MM-DD do formulário)
-  if (typeof dateValue === 'string') {
+  let date: Date;
+
+  if (dateValue instanceof Timestamp) {
+    date = dateValue.toDate();
+  } else if (dateValue instanceof Date) {
+    date = dateValue;
+  } else if (typeof dateValue === 'string') {
+    date = new Date(dateValue);
+    // Para strings que já estão em UTC YYYY-MM-DD, a conversão pode adicionar um dia.
+    // Adicionamos o fuso horário para interpretar corretamente.
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-      return dateValue;
+       date = new Date(dateValue + 'T00:00:00');
     }
-    // Tenta converter outros formatos de string, se necessário
-    const date = new Date(dateValue);
-     if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0];
-    }
+  } else {
     return 'Data inválida';
   }
-  
-  // Se for um Timestamp do Firebase
-  if (dateValue instanceof Timestamp) {
-    return dateValue.toDate().toISOString().split('T')[0];
+
+  if (isNaN(date.getTime())) {
+    return 'Data inválida';
   }
 
-  return 'Data inválida';
+  return date.toISOString().split('T')[0];
 };
 
 

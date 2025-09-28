@@ -27,7 +27,7 @@ import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-conte
 import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
 import { PROD_DOMAIN } from '@/lib/link-service';
-import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial } from '@/lib/firebase-service';
+import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString } from '@/lib/firebase-service';
 import { Timestamp } from 'firebase/firestore';
 
 // Zod schema for client-side form validation (dates are strings)
@@ -315,12 +315,15 @@ export default function AdminPage() {
   useEffect(() => {
     const setupForm = async () => {
       if (editingPet) {
-        const petData = {
+        // Convert Timestamps to 'YYYY-MM-DD' strings for the form
+        const birthDate = editingPet.birthDate instanceof Timestamp ? editingPet.birthDate.toDate().toISOString().split('T')[0] : '';
+        const passingDate = editingPet.passingDate instanceof Timestamp ? editingPet.passingDate.toDate().toISOString().split('T')[0] : '';
+        
+        petForm.reset({
           ...editingPet,
-          birthDate: editingPet.birthDate ? new Date(editingPet.birthDate).toISOString().split('T')[0] : '',
-          passingDate: editingPet.passingDate ? new Date(editingPet.passingDate).toISOString().split('T')[0] : '',
-        };
-        petForm.reset(petData);
+          birthDate,
+          passingDate,
+        });
       } else {
         const nextId = await getNextMemorialId();
         petForm.reset({
@@ -355,7 +358,7 @@ export default function AdminPage() {
       data.qrCodeUrl = `${PROD_DOMAIN}/memorial/${data.id}`;
     }
 
-    const petToSave: FirestorePetMemorial = {
+    const petToSave: PetMemorialWithDatesAsString = {
       ...data,
       createdAt: editingPet?.createdAt || Timestamp.now(),
     };

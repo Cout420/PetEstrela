@@ -1,7 +1,9 @@
 
+
 import type { BarChart, LineChart } from 'lucide-react';
 import { PlaceHolderImages } from './placeholder-images';
 import { Timestamp } from 'firebase/firestore';
+import type { PetMemorial } from './firebase-service';
 
 export const testimonials = [
   { id: 1, name: 'Ana Souza', text: 'O atendimento foi incrível, cheio de empatia e respeito. Fizeram deste momento difícil algo mais sereno. Recomendo de olhos fechados.' },
@@ -18,7 +20,7 @@ export const testimonials = [
   { id: 12, name: 'Felipe Azevedo', text: 'Nunca imaginei que a despedida do meu cavalo pudesse ser tão respeitosa. A equipe está preparada para animais de todos os portes.' },
 ];
 
-export const memorialPets = [
+export const memorialPets: PetMemorial[] = [
   {
     id: 1,
     name: 'Bento',
@@ -26,13 +28,12 @@ export const memorialPets = [
     sexo: 'Macho',
     age: '8 anos',
     family: 'Família Silva',
-    birthDate: '2016-03-10',
-    passingDate: '2024-05-22',
+    birthDate: Timestamp.fromDate(new Date('2016-03-10')),
+    passingDate: Timestamp.fromDate(new Date('2024-05-22')),
     arvore: 'Ipê Amarelo',
     local: 'Jardim da Saudade',
     tutores: 'Maria e João Silva',
     text: 'Nosso eterno companheiro de quatro patas. Bento trouxe luz e alegria para nossas vidas. Suas corridas no parque e seu olhar carinhoso jamais serão esquecidos. Você foi o melhor amigo que poderíamos ter. Te amaremos para sempre.',
-    image: PlaceHolderImages.find((img) => img.id === 'pet-bento'),
     images: [
       { id: 'img-1', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },
       { id: 'img-2', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-luna')?.imageUrl || '' },
@@ -50,13 +51,12 @@ export const memorialPets = [
     sexo: 'Fêmea',
     age: '12 anos',
     family: 'Família Santos',
-    birthDate: '2012-08-15',
-    passingDate: '2024-06-18',
+    birthDate: Timestamp.fromDate(new Date('2012-08-15')),
+    passingDate: Timestamp.fromDate(new Date('2024-06-18')),
     arvore: 'Quaresmeira',
     local: 'Bosque da Lembrança',
     tutores: 'Ana Santos',
     text: 'Nossa rainha Luna, dona de uma elegância e personalidade únicas. Cada miado, cada ronronar e cada momento de preguiça no sol estão guardados em nossos corações. Sentiremos saudades da sua presença marcante.',
-    image: PlaceHolderImages.find((img) => img.id === 'pet-luna'),
      images: [
       { id: 'img-1', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-luna')?.imageUrl || '' },
       { id: 'img-2', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },
@@ -74,13 +74,12 @@ export const memorialPets = [
     sexo: 'Macho',
     age: '10 anos',
     family: 'Família Costa',
-    birthDate: '2014-01-20',
-    passingDate: '2024-04-01',
+    birthDate: Timestamp.fromDate(new Date('2014-01-20')),
+    passingDate: Timestamp.fromDate(new Date('2024-04-01')),
     arvore: 'Manacá da Serra',
     local: 'Campo das Flores',
     tutores: 'Carlos e Bia Costa',
     text: 'Max, nosso protetor fiel e amigo para todas as horas. Sua lealdade era infinita e sua alegria contagiante. As bolinhas perderam a graça sem você. Obrigado por uma década de amor incondicional.',
-    image: PlaceHolderImages.find((img) => img.id === 'pet-max'),
      images: [
       { id: 'img-1', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-max')?.imageUrl || '' },
       { id: 'img-2', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },
@@ -98,13 +97,12 @@ export const memorialPets = [
     sexo: 'Fêmea',
     age: '15 anos',
     family: 'Família Oliveira',
-    birthDate: '2008-11-05',
-    passingDate: '2024-03-30',
+    birthDate: Timestamp.fromDate(new Date('2008-11-05')),
+    passingDate: Timestamp.fromDate(new Date('2024-03-30')),
     arvore: 'Cerejeira Ornamental',
     local: 'Vale Sereno',
     tutores: 'Sra. Oliveira',
     text: 'Nossa doce e peluda Mimi. Quinze anos de puro amor e companheirismo. Seu jeitinho calmo e seu olhar meigo nos trouxeram paz. Você foi uma parte essencial da nossa família e sua ausência é sentida a cada dia.',
-    image: PlaceHolderImages.find((img) => img.id === 'pet-mimi'),
      images: [
       { id: 'img-1', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
       { id: 'img-2', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },

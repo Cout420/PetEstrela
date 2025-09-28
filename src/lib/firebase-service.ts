@@ -21,15 +21,16 @@ const db = getFirestore(app);
 const memorialsCollection = collection(db, 'memorials');
 
 // --- Tipos ---
-export type PetMemorial = {
+// The representation in Firestore
+export interface PetMemorial {
   id: number;
   name: string;
   species: string;
   sexo: string;
   age: string;
   family: string;
-  birthDate: string; // Manter como string 'YYYY-MM-DD'
-  passingDate: string; // Manter como string 'YYYY-MM-DD'
+  birthDate: Timestamp;
+  passingDate: Timestamp;
   arvore: string;
   local: string;
   tutores: string;
@@ -78,16 +79,25 @@ export async function getMemorialById(id: number): Promise<PetMemorial | null> {
   }
 }
 
+// The type used in forms, where dates are strings.
+export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'passingDate' | 'createdAt'> & {
+    birthDate: string;
+    passingDate: string;
+    createdAt?: Timestamp;
+};
+
 /**
  * Salva (cria ou atualiza) um memorial no Firestore.
  */
-export async function saveMemorial(pet: Omit<PetMemorial, 'createdAt'> & { createdAt?: Timestamp }): Promise<void> {
+export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
   try {
     const docRef = doc(db, 'memorials', pet.id.toString());
     
-    // Adiciona o timestamp de criação apenas se for um novo documento
-    const dataToSave = {
+    // Convert string dates from the form back to Timestamps for Firestore
+    const dataToSave: PetMemorial = {
         ...pet,
+        birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
+        passingDate: Timestamp.fromDate(new Date(pet.passingDate)),
         createdAt: pet.createdAt || Timestamp.now(),
     };
 
@@ -129,5 +139,3 @@ export async function getNextMemorialId(): Promise<number> {
         return 1; // Fallback em caso de erro
     }
 }
-
-    
