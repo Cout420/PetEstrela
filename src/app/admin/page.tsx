@@ -373,8 +373,13 @@ useEffect(() => {
       const result = await shortenLink({ memorialId: data.id });
       const qrCodeUrl = result.shortUrl;
 
+      const processedImages = await Promise.all(
+        data.images.map(image => uploadImageAndGetURL(image.imageUrl).then(url => ({...image, imageUrl: url})))
+      );
+
       const petToSave: PetMemorialWithDatesAsString = {
         ...data,
+        images: processedImages,
         qrCodeUrl: qrCodeUrl,
         createdAt: editingPet?.createdAt || Timestamp.now(),
       };
@@ -417,10 +422,15 @@ useEffect(() => {
 const handleSaveAboutContent = async (data: AboutPageContent) => {
     setIsSaving(true);
     try {
+        const [missionImageUrl, historyImageUrl] = await Promise.all([
+            uploadImageAndGetURL(data.missionImageUrl),
+            uploadImageAndGetURL(data.historyImageUrl),
+        ]);
+        
         const processedData = {
             ...data,
-            missionImageUrl: await uploadImageAndGetURL(data.missionImageUrl),
-            historyImageUrl: await uploadImageAndGetURL(data.historyImageUrl),
+            missionImageUrl,
+            historyImageUrl,
         };
         await saveContent('aboutPageContent', processedData);
         toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
@@ -442,15 +452,15 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
             }))
         );
 
-        const processedAllPetsSection = {
-            ...data.allPetsSection,
-            imageUrl: await uploadImageAndGetURL(data.allPetsSection.imageUrl),
-        };
+        const processedAllPetsImageUrl = await uploadImageAndGetURL(data.allPetsSection.imageUrl);
 
         const processedData = {
             ...data,
             heroSlides: processedSlides,
-            allPetsSection: processedAllPetsSection,
+            allPetsSection: {
+                ...data.allPetsSection,
+                imageUrl: processedAllPetsImageUrl,
+            },
         };
 
         await saveContent('homePageContent', processedData);

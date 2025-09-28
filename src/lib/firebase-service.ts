@@ -125,7 +125,6 @@ export async function getMemorialById(id: number): Promise<PetMemorial | null> {
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
     const docRef = doc(db, 'memorials', pet.id.toString());
     
-    // Process images: upload new ones, keep existing URLs
     const processedImages = await Promise.all(
         pet.images.map(async (image) => {
             const newImageUrl = await uploadImageAndGetURL(image.imageUrl);
@@ -133,7 +132,6 @@ export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<v
         })
     );
 
-    // Convert string dates from the form back to Timestamps for Firestore
     const dataToSave: PetMemorial = {
         ...pet,
         images: processedImages,
