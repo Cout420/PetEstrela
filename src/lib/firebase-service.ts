@@ -55,30 +55,44 @@ export interface PetMemorial {
 
 /**
  * Uploads a base64 encoded image string to Firebase Storage and returns the public URL.
- * @param base64String The base64 data URI.
+ * If the string is already a URL, it returns it as is.
+ * @param imageString The base64 data URI or an existing HTTPS URL.
  * @param path The path in storage to save the image (e.g., 'memorials', 'site-content').
- * @returns The public downloadable URL of the uploaded image.
+ * @returns The public downloadable URL of the image.
  */
-export async function uploadImageAndGetURL(base64String: string, path: string): Promise<string> {
-  if (!base64String || !base64String.startsWith('data:image')) {
-    // It's already a URL or empty, so just return it.
-    return base64String;
+export async function uploadImageAndGetURL(imageString: string, path: string): Promise<string> {
+  // If the string is empty, null, or undefined, return it as is.
+  if (!imageString) {
+    return imageString;
   }
   
-  const fileType = base64String.split(';')[0].split('/')[1];
-  const storageRef = ref(storage, `${path}/${Date.now()}.${fileType}`);
-  
-  // We need to strip the 'data:image/jpeg;base64,' part from the string
-  const base64Data = base64String.split(',')[1];
+  // If it's a data URI (a new file upload), upload it to Storage.
+  if (imageString.startsWith('data:image')) {
+    const fileType = imageString.split(';')[0].split('/')[1];
+    const storageRef = ref(storage, `${path}/${Date.now()}.${fileType}`);
+    
+    // We need to strip the 'data:image/jpeg;base64,' part from the string
+    const base64Data = imageString.split(',')[1];
 
-  try {
-    const snapshot = await uploadString(storageRef, base64Data, 'base64');
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
-  } catch (error) {
-    console.error("Error uploading image:", error);
-    throw new Error("Failed to upload image.");
+    try {
+      const snapshot = await uploadString(storageRef, base64Data, 'base64');
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw new Error("Failed to upload image.");
+    }
   }
+
+  // If it's already an http/https URL, it means the image was not changed, so return the existing URL.
+  if (imageString.startsWith('http')) {
+    return imageString;
+  }
+  
+  // If it's neither a data URI nor a URL, it's likely invalid data.
+  // For robustness, we return it, but you might want to throw an error
+  // depending on expected behavior.
+  return imageString;
 }
 
 
@@ -129,18 +143,14 @@ export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<v
     // Process images: upload new ones and keep existing URLs.
     const processedImages = await Promise.all(
         pet.images.map(async (image) => {
-            // If imageUrl is a base64 string, upload it. Otherwise, it's a URL, keep it.
-            if (image.imageUrl && image.imageUrl.startsWith('data:image')) {
-                 try {
-                    const newUrl = await uploadImageAndGetURL(image.imageUrl, `memorials/${pet.id}`);
-                    return { ...image, imageUrl: newUrl };
-                } catch (uploadError) {
-                    console.error(`Failed to upload image for memorial ${pet.id}.`, uploadError);
-                    // Decide how to handle a failed upload. Here, we're throwing the error.
-                    throw new Error(`Image upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
-                }
+            try {
+                const newUrl = await uploadImageAndGetURL(image.imageUrl, `memorials/${pet.id}`);
+                return { ...image, imageUrl: newUrl };
+            } catch (uploadError) {
+                console.error(`Failed to upload image for memorial ${pet.id}.`, uploadError);
+                // Decide how to handle a failed upload. Here, we're throwing the error.
+                throw new Error(`Image upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
             }
-            return image; // Keep existing image object (with URL)
         })
     );
     
