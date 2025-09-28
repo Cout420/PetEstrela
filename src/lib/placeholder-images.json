@@ -20,9 +20,9 @@
     },
     {
       "id": "section-all-pets",
-      "description": "A happy dog and a cat sitting together in a field.",
-      "imageUrl": "https://images.unsplash.com/photo-1601758177266-bc599de87707?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxkb2clMjBjYXR8ZW58MHx8fHwxNzU4ODE3Nzc0fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "dog cat"
+      "description": "A collage of different animals including a horse, dog, parrot, cat, rabbit, and cow, with the text 'Honoring Beloved Companions'.",
+      "imageUrl": "https://i.imgur.com/iPLHZmv.jpeg",
+      "imageHint": "animal collage"
     },
     {
       "id": "about-mission",
