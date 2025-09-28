@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -33,24 +33,24 @@ export default function Home() {
   const [homeContent, setHomeContent] = useState<HomePageContent>(initialHomePageContent);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [gc, hc] = await Promise.all([
-        getContent<GeneralContent>('generalContent'),
-        getContent<HomePageContent>('homePageContent')
-      ]);
+  const fetchData = useCallback(async () => {
+    const [gc, hc] = await Promise.all([
+      getContent<GeneralContent>('generalContent'),
+      getContent<HomePageContent>('homePageContent')
+    ]);
 
-      if (gc) {
-        setGeneralContent(gc);
-      }
-      if (hc) {
-        setHomeContent(hc);
-      }
-      setIsLoading(false);
-    };
-    
-    fetchData();
+    if (gc) {
+      setGeneralContent(gc);
+    }
+    if (hc) {
+      setHomeContent(hc);
+    }
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (isLoading) {
     return (
