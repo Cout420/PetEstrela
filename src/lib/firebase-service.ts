@@ -67,23 +67,19 @@ export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'pass
  * @returns The public URL of the uploaded or existing image.
  */
 export async function uploadImageAndGetURL(imageData?: string): Promise<string> {
-    if (!imageData) {
-        return '';
+    if (!imageData || !imageData.startsWith('data:image')) {
+        return imageData || '';
     }
-    // If it's a new image (base64), upload it.
-    if (imageData.startsWith('data:image')) {
-        try {
-            const storageRef = ref(storage, `images/${Date.now()}-${Math.random().toString(36).substring(2)}`);
-            const snapshot = await uploadString(storageRef, imageData, 'data_url');
-            const downloadURL = await getDownloadURL(snapshot.ref);
-            return downloadURL;
-        } catch (error) {
-            console.error("Error uploading image:", error);
-            throw new Error("Falha no upload da imagem.");
-        }
+
+    try {
+        const storageRef = ref(storage, `images/${Date.now()}-${Math.random().toString(36).substring(2)}`);
+        const snapshot = await uploadString(storageRef, imageData, 'data_url');
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        return downloadURL;
+    } catch (error) {
+        console.error("Error uploading image:", error);
+        throw new Error("Falha no upload da imagem.");
     }
-    // If it's already a URL, return it as is.
-    return imageData;
 }
 
 
