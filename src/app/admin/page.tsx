@@ -27,8 +27,20 @@ import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-conte
 import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
 import { PROD_DOMAIN } from '@/lib/link-service';
-import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent } from '@/lib/firebase-service';
+import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent, uploadImageAndGetURL } from '@/lib/firebase-service';
 import { Timestamp } from 'firebase/firestore';
+
+
+// Helper function to read file as Data URL
+const readFileAsDataURL = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 
 // Zod schema for client-side form validation (dates are strings)
 const petSchema = z.object({
@@ -46,7 +58,7 @@ const petSchema = z.object({
   text: z.string().min(10, "O texto do memorial deve ter pelo menos 10 caracteres."),
   images: z.array(z.object({
       id: z.string(),
-      imageUrl: z.string().url("Por favor, insira uma URL de imagem válida.").min(1, "Por favor, insira a URL da imagem."),
+      imageUrl: z.string().min(1, "Por favor, insira a URL da imagem."),
       description: z.string().optional(),
       imageHint: z.string().optional()
   })).min(5, "É necessário adicionar pelo menos 5 imagens."),
@@ -62,10 +74,10 @@ const aboutPageSchema = z.object({
   headerDescription: z.string().min(1, "Descrição do cabeçalho é obrigatória."),
   missionTitle: z.string().min(1, "Título da missão é obrigatório."),
   missionDescription: z.string().min(1, "Descrição da missão é obrigatória."),
-  missionImageUrl: z.string().url("URL da imagem da missão é obrigatória.").min(1, "URL da imagem da missão é obrigatória."),
+  missionImageUrl: z.string().min(1, "URL da imagem da missão é obrigatória."),
   historyTitle: z.string().min(1, "Título da história é obrigatório."),
   historyDescription: z.string().min(1, "Descrição da história é obrigatória."),
-  historyImageUrl: z.string().url("URL da imagem da história é obrigatória.").min(1, "URL da imagem da história é obrigatória."),
+  historyImageUrl: z.string().min(1, "URL da imagem da história é obrigatória."),
 });
 
 type AboutPageContent = z.infer<typeof aboutPageSchema>;
@@ -97,7 +109,7 @@ const plansPageSchema = z.object({
 type PlansPageContent = z.infer<typeof plansPageSchema>;
 
 const heroSlideSchema = z.object({
-    imageUrl: z.string().url("URL da imagem é obrigatória.").min(1, 'URL da imagem é obrigatória.'),
+    imageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
     title: z.string().min(1, 'Título é obrigatório'),
     subtitle: z.string().min(1, 'Subtítulo é obrigatório'),
 });
@@ -114,7 +126,7 @@ const cremationProcessStepSchema = z.object({
 const allPetsSectionSchema = z.object({
     title: z.string().min(1, 'Título é obrigatório'),
     description: z.string().min(1, 'Descrição é obrigatória'),
-    imageUrl: z.string().url('URL da imagem é obrigatória.').min(1, 'URL da imagem é obrigatória'),
+    imageUrl: z.string().min(1, 'URL da imagem é obrigatória'),
     petsList: z.array(z.string().min(1, 'O item da lista não pode ser vazio')),
 });
 
@@ -138,7 +150,7 @@ type HomePageContent = z.infer<typeof homePageSchema>;
 const galleryItemSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Título da imagem é obrigatório."),
-  imageUrl: z.string().url("URL da imagem é obrigatória.").min(1, "A imagem é obrigatória."),
+  imageUrl: z.string().min(1, "A imagem é obrigatória."),
 });
 
 const ourSpaceSchema = z.object({
@@ -151,7 +163,7 @@ type OurSpaceContent = z.infer<typeof ourSpaceSchema>;
 
 
 const memorialPageSchema = z.object({
-  heroImageUrl: z.string().url("URL da imagem é obrigatória.").min(1, "A imagem é obrigatória."),
+  heroImageUrl: z.string().min(1, "A imagem é obrigatória."),
   heroTitle: z.string().min(1, "Título é obrigatório."),
   heroDescription1: z.string().min(1, "Primeiro parágrafo da descrição é obrigatório."),
   heroDescription2: z.string().min(1, "Segundo parágrafo da descrição é obrigatório."),
@@ -359,28 +371,22 @@ useEffect(() => {
     setIsSaving(true);
     try {
       const result = await shortenLink({ memorialId: data.id });
-      data.qrCodeUrl = result.shortUrl;
-    } catch (error) {
-      console.error('Failed to shorten link, falling back to direct URL:', error);
-      data.qrCodeUrl = `${PROD_DOMAIN}/memorial/${data.id}`;
-    }
+      const qrCodeUrl = result.shortUrl;
 
-    const petToSave: PetMemorialWithDatesAsString = {
-      ...data,
-      createdAt: editingPet?.createdAt || Timestamp.now(),
-    };
+      const petToSave: PetMemorialWithDatesAsString = {
+        ...data,
+        qrCodeUrl: qrCodeUrl,
+        createdAt: editingPet?.createdAt || Timestamp.now(),
+      };
 
-    try {
-        await saveMemorial(petToSave);
-        if (editingPet) {
-            toast({ title: `Memorial de ${data.name} atualizado com sucesso.` });
-        } else {
-            toast({ title: `Memorial de ${data.name} criado com sucesso.` });
-        }
-        fetchPets(); // Refresh the list
-        setIsFormOpen(false);
-        setEditingPet(null);
+      await saveMemorial(petToSave);
+      
+      toast({ title: `Memorial de ${data.name} ${editingPet ? 'atualizado' : 'criado'} com sucesso.` });
+      fetchPets();
+      setIsFormOpen(false);
+      setEditingPet(null);
     } catch (error) {
+        console.error("Error saving pet memorial: ", error);
         toast({
             variant: "destructive",
             title: "Erro ao salvar",
@@ -408,29 +414,55 @@ useEffect(() => {
     }
   };
 
-  const handleSaveAboutContent = async (data: AboutPageContent) => {
+const handleSaveAboutContent = async (data: AboutPageContent) => {
     setIsSaving(true);
     try {
-      await saveContent('aboutPageContent', data);
-      toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
+        const processedData = {
+            ...data,
+            missionImageUrl: await uploadImageAndGetURL(data.missionImageUrl),
+            historyImageUrl: await uploadImageAndGetURL(data.historyImageUrl),
+        };
+        await saveContent('aboutPageContent', processedData);
+        toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+        console.error("Error saving about content: ", error);
+        toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
     } finally {
-      setIsSaving(false);
+        setIsSaving(false);
     }
-  };
-  
-  const handleSaveHomeContent = async (data: HomePageContent) => {
-     setIsSaving(true);
+};
+
+const handleSaveHomeContent = async (data: HomePageContent) => {
+    setIsSaving(true);
     try {
-      await saveContent('homePageContent', data);
-      toast({ title: 'Conteúdo da página "Home" atualizado com sucesso.' });
+        const processedSlides = await Promise.all(
+            data.heroSlides.map(async (slide) => ({
+                ...slide,
+                imageUrl: await uploadImageAndGetURL(slide.imageUrl),
+            }))
+        );
+
+        const processedAllPetsSection = {
+            ...data.allPetsSection,
+            imageUrl: await uploadImageAndGetURL(data.allPetsSection.imageUrl),
+        };
+
+        const processedData = {
+            ...data,
+            heroSlides: processedSlides,
+            allPetsSection: processedAllPetsSection,
+        };
+
+        await saveContent('homePageContent', processedData);
+        toast({ title: 'Conteúdo da página "Home" atualizado com sucesso.' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo. Verifique se todas as URLs de imagem são válidas.' });
+        console.error("Error saving home content: ", error);
+        toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
     } finally {
-      setIsSaving(false);
+        setIsSaving(false);
     }
-  }
+};
+
 
   const handleSaveGeneralContent = async (data: GeneralContent) => {
     setIsSaving(true);
@@ -459,26 +491,40 @@ useEffect(() => {
   const handleSaveOurSpaceContent = async (data: OurSpaceContent) => {
     setIsSaving(true);
     try {
-      await saveContent('ourSpaceContent', data);
-      toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
+        const processedGallery = await Promise.all(
+            data.gallery.map(async (item) => ({
+                ...item,
+                imageUrl: await uploadImageAndGetURL(item.imageUrl),
+            }))
+        );
+        const processedData = { ...data, gallery: processedGallery };
+        await saveContent('ourSpaceContent', processedData);
+        toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+        console.error("Error saving our space content: ", error);
+        toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
     } finally {
-      setIsSaving(false);
+        setIsSaving(false);
     }
-  };
+};
+
 
   const handleSaveMemorialPageContent = async (data: MemorialPageContent) => {
     setIsSaving(true);
     try {
-      await saveContent('memorialPageContent', data);
-      toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
+        const processedData = {
+            ...data,
+            heroImageUrl: await uploadImageAndGetURL(data.heroImageUrl),
+        };
+        await saveContent('memorialPageContent', processedData);
+        toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+        console.error("Error saving memorial page content: ", error);
+        toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
     } finally {
-      setIsSaving(false);
+        setIsSaving(false);
     }
-  };
+};
 
 
   if (!isAuthenticated) {
@@ -488,6 +534,21 @@ useEffect(() => {
       </div>
     );
   }
+
+  // Generic image upload handler for react-hook-form
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        try {
+            const dataUrl = await readFileAsDataURL(file);
+            field.onChange(dataUrl);
+        } catch (error) {
+            console.error("Error reading file:", error);
+            toast({ variant: "destructive", title: "Erro de Upload", description: "Não foi possível carregar a imagem." });
+        }
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-muted/20 p-4 sm:p-8">
@@ -537,7 +598,18 @@ useEffect(() => {
                             </div>
                             <FormField control={homeForm.control} name={`heroSlides.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={homeForm.control} name={`heroSlides.${index}.subtitle`} render={({ field }) => (<FormItem><FormLabel>Subtítulo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                             <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Imagem</FormLabel>
+                                    <FormControl>
+                                      <div className='flex items-center gap-2'>
+                                        <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                        {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
                           </div>
                         ))}
                       </CardContent>
@@ -581,7 +653,18 @@ useEffect(() => {
                         <CardContent className="space-y-4">
                             <FormField control={homeForm.control} name="allPetsSection.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={homeForm.control} name="allPetsSection.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da Seção</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Imagem da Seção</FormLabel>
+                                    <FormControl>
+                                      <div className='flex items-center gap-2'>
+                                        <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                        {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
                         </CardContent>
                     </Card>
 
@@ -601,7 +684,18 @@ useEffect(() => {
                     <Form {...memorialForm}>
                         <form onSubmit={memorialForm.handleSubmit(handleSaveMemorialPageContent)} className="space-y-6">
                             <h3 className="text-lg font-semibold text-primary">Seção Principal</h3>
-                            <FormField control={memorialForm.control} name="heroImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem de Fundo</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={memorialForm.control} name="heroImageUrl" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Imagem de Fundo</FormLabel>
+                                    <FormControl>
+                                      <div className='flex items-center gap-2'>
+                                        <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                        {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
                             <FormField control={memorialForm.control} name="heroTitle" render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="heroDescription1" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 1)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="heroDescription2" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 2)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
@@ -690,12 +784,34 @@ useEffect(() => {
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção Missão</h3>
                             <FormField control={aboutForm.control} name="missionTitle" render={({ field }) => (<FormItem><FormLabel>Título da Missão</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="missionDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da Missão</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da Missão</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Imagem da Missão</FormLabel>
+                                    <FormControl>
+                                      <div className='flex items-center gap-2'>
+                                        <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                        {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
 
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção História</h3>
                              <FormField control={aboutForm.control} name="historyTitle" render={({ field }) => (<FormItem><FormLabel>Título da História</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="historyDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da História</FormLabel><FormControl><Textarea {...field} rows={4} /></FormControl><FormMessage /></FormItem>)} />
-                             <FormField control={aboutForm.control} name="historyImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da História</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="historyImageUrl" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Imagem da História</FormLabel>
+                                    <FormControl>
+                                      <div className='flex items-center gap-2'>
+                                        <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                        {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                             )} />
 
                             <Button type="submit" disabled={isSaving}><Save className="mr-2" /> {isSaving ? 'Salvando...' : 'Salvar Alterações'}</Button>
                         </form>
@@ -728,7 +844,18 @@ useEffect(() => {
                                               <Button type="button" variant="destructive" size="icon" onClick={() => removeGallery(index)}><Trash2 className="h-4 w-4" /></Button>
                                             </div>
                                             <FormField control={ourSpaceForm.control} name={`gallery.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título da Imagem</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.imageUrl`} render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Imagem</FormLabel>
+                                                    <FormControl>
+                                                        <div className='flex items-center gap-2'>
+                                                          <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                                          {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )} />
                                         </div>
                                     ))}
                                 </CardContent>
@@ -879,24 +1006,26 @@ useEffect(() => {
 
                     <div>
                         <Label>Fotos (Mínimo 5)</Label>
-                         <p className="text-sm text-muted-foreground">Cole a URL da imagem. A primeira será a foto de capa.</p>
+                         <p className="text-sm text-muted-foreground">A primeira imagem será a foto de capa do memorial.</p>
                          <div className="mt-2 space-y-2">
                          {fields.map((field, index) => (
                              <div key={field.id} className="flex items-center gap-2">
                                  <FormField
                                      control={petForm.control}
                                      name={`images.${index}.imageUrl`}
-                                     render={({ field }) => (
+                                     render={({ field: imageField }) => (
                                          <FormItem className="flex-1">
                                              <FormControl>
                                                 <div className='flex items-center gap-2'>
-                                                    <Input 
-                                                        placeholder={`URL da Imagem ${index + 1}`}
-                                                        {...field}
-                                                    />
-                                                    {field.value && (
-                                                      <Image src={field.value} alt={`Preview ${index + 1}`} width={40} height={40} className="rounded-md object-cover" />
-                                                    )}
+                                                   <Input 
+                                                      type="file" 
+                                                      accept="image/*" 
+                                                      onChange={(e) => handleImageUpload(e, imageField)}
+                                                      className="w-full"
+                                                   />
+                                                   {imageField.value && (
+                                                     <Image src={imageField.value} alt={`Preview ${index + 1}`} width={40} height={40} className="rounded-md object-cover" />
+                                                   )}
                                                 </div>
                                              </FormControl>
                                              <FormMessage />
@@ -962,12 +1091,3 @@ useEffect(() => {
     </div>
   );
 }
-
-
-    
-
-    
-
-
-
-

@@ -61,6 +61,31 @@ export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'pass
 
 // --- Funções do Serviço ---
 
+/**
+ * Uploads an image if it's a new base64 encoded string.
+ * @param imageData - The image data, either a base64 string or an existing URL.
+ * @returns The public URL of the uploaded or existing image.
+ */
+export async function uploadImageAndGetURL(imageData: string | undefined): Promise<string> {
+    if (!imageData) {
+        return '';
+    }
+    // If it's a new image (base64), upload it.
+    if (imageData.startsWith('data:image')) {
+        try {
+            const storageRef = ref(storage, `images/${Date.now()}-${Math.random().toString(36).substring(2)}`);
+            const snapshot = await uploadString(storageRef, imageData, 'data_url');
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            return downloadURL;
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            throw new Error("Falha no upload da imagem.");
+        }
+    }
+    // If it's already a URL, return it as is.
+    return imageData;
+}
+
 
 /**
  * Busca todos os memoriais do Firestore, ordenados por data de criação.
@@ -100,9 +125,18 @@ export async function getMemorialById(id: number): Promise<PetMemorial | null> {
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
     const docRef = doc(db, 'memorials', pet.id.toString());
     
+    // Process images: upload new ones, keep existing URLs
+    const processedImages = await Promise.all(
+        pet.images.map(async (image) => {
+            const newImageUrl = await uploadImageAndGetURL(image.imageUrl);
+            return { ...image, imageUrl: newImageUrl };
+        })
+    );
+
     // Convert string dates from the form back to Timestamps for Firestore
     const dataToSave: PetMemorial = {
         ...pet,
+        images: processedImages,
         birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
         passingDate: Timestamp.fromDate(new Date(pet.passingDate)),
         createdAt: pet.createdAt || Timestamp.now(),
