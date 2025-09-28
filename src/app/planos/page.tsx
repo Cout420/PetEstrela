@@ -30,7 +30,15 @@ export default function PlansPage() {
     useEffect(() => {
         const storedPlansContent = localStorage.getItem('plansPageContent');
         if (storedPlansContent) {
-            setContent(JSON.parse(storedPlansContent));
+            try {
+                const parsedContent = JSON.parse(storedPlansContent);
+                // Ensure the parsed content has the correct structure
+                if (parsedContent && Array.isArray(parsedContent.plans)) {
+                    setContent(parsedContent);
+                }
+            } catch (error) {
+                console.error("Failed to parse plans content from localStorage", error);
+            }
         }
 
         const storedGeneralContent = localStorage.getItem('generalContent');

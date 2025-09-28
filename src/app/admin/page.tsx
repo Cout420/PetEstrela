@@ -290,47 +290,53 @@ export default function AdminPage() {
       control: ourSpaceForm.control, name: "gallery"
   });
 
-  useEffect(() => {
-    // Reset with initial data first, then try to load from local storage.
-    // This ensures the form is never empty if local storage is cleared.
-    aboutForm.reset({
-        headerTitle: "Sobre o Pet Estrela",
-        headerDescription: "Há mais de 10 anos, nossa missão é proporcionar uma despedida digna e respeitosa, transformando a dor da perda em uma celebração do amor e da amizade.",
-        missionTitle: "Nossa Missão",
-        missionDescription: "Nossa missão é oferecer um serviço de cremação pet que transcenda o procedimento técnico. Buscamos acolher as famílias em um dos momentos mais delicados, garantindo que a memória de seus companheiros seja honrada com a máxima dignidade. Acreditamos que cada vida, não importa o quão pequena, merece uma despedida grandiosa.",
-        missionImageUrl: PlaceHolderImages.find((img) => img.id === 'about-mission')?.imageUrl ?? '',
-        historyTitle: "Nossa História",
-        historyDescription: "Fundada em 2014 com o sonho de oferecer um serviço funerário pet diferenciado, a Pet Estrela nasceu da paixão e do respeito pelos animais. Ao longo dos anos, crescemos e nos modernizamos, mas nunca perdemos a essência do nosso trabalho: o acolhimento.",
-        historyImageUrl: PlaceHolderImages.find((img) => img.id === 'about-history')?.imageUrl ?? '',
-    });
-    const storedAboutContent = localStorage.getItem('aboutPageContent');
-    if (storedAboutContent) aboutForm.reset(JSON.parse(storedAboutContent));
+useEffect(() => {
+    // Helper function to load from localStorage
+    const loadFromStorage = (key: string, form: any, initialData: any) => {
+      form.reset(initialData); // Reset with initial data first
+      const storedData = localStorage.getItem(key);
+      if (storedData) {
+        try {
+          form.reset(JSON.parse(storedData));
+        } catch (e) {
+          console.error(`Failed to parse ${key} from localStorage`, e);
+          form.reset(initialData); // Fallback to initial data on parse error
+        }
+      }
+    };
     
-    generalForm.reset({
+    // About Page Content
+    loadFromStorage('aboutPageContent', aboutForm, {
+      headerTitle: "Sobre o Pet Estrela",
+      headerDescription: "Há mais de 10 anos, nossa missão é proporcionar uma despedida digna e respeitosa, transformando a dor da perda em uma celebração do amor e da amizade.",
+      missionTitle: "Nossa Missão",
+      missionDescription: "Nossa missão é oferecer um serviço de cremação pet que transcenda o procedimento técnico. Buscamos acolher as famílias em um dos momentos mais delicados, garantindo que a memória de seus companheiros seja honrada com a máxima dignidade. Acreditamos que cada vida, não importa o quão pequena, merece uma despedida grandiosa.",
+      missionImageUrl: PlaceHolderImages.find((img) => img.id === 'about-mission')?.imageUrl ?? '',
+      historyTitle: "Nossa História",
+      historyDescription: "Fundada em 2014 com o sonho de oferecer um serviço funerário pet diferenciado, a Pet Estrela nasceu da paixão e do respeito pelos animais. Ao longo dos anos, crescemos e nos modernizamos, mas nunca perdemos a essência do nosso trabalho: o acolhimento.",
+      historyImageUrl: PlaceHolderImages.find((img) => img.id === 'about-history')?.imageUrl ?? '',
+    });
+
+    // General Content
+    loadFromStorage('generalContent', generalForm, {
       whatsappNumber: '1142405253',
       whatsappLink: 'https://wa.me/551142405253',
       phone: '(11) 4240-5253',
       address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
       instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
     });
-    const storedGeneralContent = localStorage.getItem('generalContent');
-    if (storedGeneralContent) generalForm.reset(JSON.parse(storedGeneralContent));
 
-    plansForm.reset({ plans: initialPlans });
-    const storedPlansContent = localStorage.getItem('plansPageContent');
-    if(storedPlansContent) plansForm.reset(JSON.parse(storedPlansContent));
+    // Plans Page Content
+    loadFromStorage('plansPageContent', plansForm, { plans: initialPlans });
 
-    homeForm.reset(initialHomePageContent);
-    const storedHomeContent = localStorage.getItem('homePageContent');
-    if (storedHomeContent) homeForm.reset(JSON.parse(storedHomeContent));
+    // Home Page Content
+    loadFromStorage('homePageContent', homeForm, initialHomePageContent);
 
-    ourSpaceForm.reset(initialOurSpaceContent);
-    const storedOurSpaceContent = localStorage.getItem('ourSpaceContent');
-    if (storedOurSpaceContent) ourSpaceForm.reset(JSON.parse(storedOurSpaceContent));
-
-    memorialForm.reset(initialMemorialPageContent);
-    const storedMemorialContent = localStorage.getItem('memorialPageContent');
-    if (storedMemorialContent) memorialForm.reset(JSON.parse(storedMemorialContent));
+    // Our Space Content
+    loadFromStorage('ourSpaceContent', ourSpaceForm, initialOurSpaceContent);
+    
+    // Memorial Page Content
+    loadFromStorage('memorialPageContent', memorialForm, initialMemorialPageContent);
 
   }, [aboutForm, generalForm, plansForm, homeForm, ourSpaceForm, memorialForm]);
 
@@ -344,10 +350,12 @@ export default function AdminPage() {
     } else {
       d = new Date(date);
     }
-    // Adjust for timezone offset
-    const year = d.getFullYear();
-    const month = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
+    if (isNaN(d.getTime())) return '';
+    
+    // To avoid timezone issues, get the UTC date parts
+    const year = d.getUTCFullYear();
+    const month = (d.getUTCMonth() + 1).toString().padStart(2, '0');
+    const day = d.getUTCDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
 
@@ -574,23 +582,23 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle>Editar Página Memorial</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Form {...memorialForm}>
-                  <form onSubmit={memorialForm.handleSubmit(handleSaveMemorialPageContent)} className="space-y-6">
-                    <h3 className="text-lg font-semibold text-primary">Seção Principal</h3>
-                    <FormField control={memorialForm.control} name="heroImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem de Fundo</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `heroImageUrl`, memorialForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={memorialForm.control} name="heroTitle" render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={memorialForm.control} name="heroDescription1" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 1)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={memorialForm.control} name="heroDescription2" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 2)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
+                <CardContent>
+                    <Form {...memorialForm}>
+                        <form onSubmit={memorialForm.handleSubmit(handleSaveMemorialPageContent)} className="space-y-6">
+                            <h3 className="text-lg font-semibold text-primary">Seção Principal</h3>
+                            <FormField control={memorialForm.control} name="heroImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem de Fundo</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `heroImageUrl`, memorialForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={memorialForm.control} name="heroTitle" render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={memorialForm.control} name="heroDescription1" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 1)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={memorialForm.control} name="heroDescription2" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 2)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
 
-                    <h3 className="text-lg font-semibold text-primary mt-6">Card "Criar Memorial"</h3>
-                    <FormField control={memorialForm.control} name="createMemorialTitle" render={({ field }) => (<FormItem><FormLabel>Título do Card</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={memorialForm.control} name="createMemorialDescription" render={({ field }) => (<FormItem><FormLabel>Descrição do Card</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem>)} />
-                    
-                    <Button type="submit"><Save className="mr-2" /> Salvar Página Memorial</Button>
-                  </form>
-                </Form>
-              </CardContent>
+                            <h3 className="text-lg font-semibold text-primary mt-6">Card "Criar Memorial"</h3>
+                            <FormField control={memorialForm.control} name="createMemorialTitle" render={({ field }) => (<FormItem><FormLabel>Título do Card</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={memorialForm.control} name="createMemorialDescription" render={({ field }) => (<FormItem><FormLabel>Descrição do Card</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem>)} />
+
+                            <Button type="submit"><Save className="mr-2" /> Salvar Página Memorial</Button>
+                        </form>
+                    </Form>
+                </CardContent>
             </Card>
           </TabsContent>
 
