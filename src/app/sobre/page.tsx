@@ -91,13 +91,25 @@ export default function AboutPage() {
     <>
       {/* Header Section */}
       <section className="bg-muted/30 py-16 md:py-24">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="animate-fade-in font-headline text-4xl font-bold text-gradient-luxury md:text-6xl">
-            {content.headerTitle}
-          </h1>
-          <p className="animate-fade-in mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
-            {content.headerDescription}
-          </p>
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-12">
+            <div className="animate-fade-in text-center md:text-left">
+              <h1 className="font-headline text-4xl font-bold text-gradient-luxury md:text-6xl">
+                {content.headerTitle}
+              </h1>
+              <p className="mt-4 max-w-xl mx-auto md:mx-0 text-lg text-muted-foreground">
+                {content.headerDescription}
+              </p>
+            </div>
+            <div className="animate-scale-in relative h-80 w-full overflow-hidden rounded-lg shadow-soft">
+              <Image
+                src={content.missionImageUrl}
+                alt="Mão segurando a pata de um animal"
+                fill
+                className="object-cover"
+              />
+            </div>
+          </div>
         </div>
       </section>
 
