@@ -125,6 +125,7 @@ export async function getMemorialById(id: number): Promise<PetMemorial | null> {
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
     const docRef = doc(db, 'memorials', pet.id.toString());
     
+    // Process images before saving
     const processedImages = await Promise.all(
         pet.images.map(async (image) => {
             const newImageUrl = await uploadImageAndGetURL(image.imageUrl);
@@ -177,18 +178,41 @@ export async function getNextMemorialId(): Promise<number> {
 
 
 /**
- * Salva um documento de conteúdo genérico no Firestore.
- * @param contentId O ID do documento (ex: 'homePageContent', 'generalContent').
- * @param data O objeto de dados a ser salvo.
+ * Saves a generic content document to Firestore.
+ * It recursively finds all `imageUrl` properties and uploads them if they are base64 strings.
+ * @param contentId The ID of the document (e.g., 'homePageContent', 'generalContent').
+ * @param data The data object to be saved.
  */
-export async function saveContent<T>(contentId: string, data: T): Promise<void> {
-  try {
-    const docRef = doc(db, 'siteContent', contentId);
-    await setDoc(docRef, data, { merge: true });
-  } catch (error) {
-    console.error(`Erro ao salvar conteúdo com ID ${contentId}:`, error);
-    throw error;
-  }
+export async function saveContent<T extends object>(contentId: string, data: T): Promise<void> {
+    try {
+        const docRef = doc(db, 'siteContent', contentId);
+        
+        // This recursive function finds and uploads all images
+        const processNode = async (node: any): Promise<any> => {
+            if (Array.isArray(node)) {
+                return Promise.all(node.map(processNode));
+            }
+            if (typeof node === 'object' && node !== null) {
+                const newNode: { [key: string]: any } = {};
+                for (const key in node) {
+                    if (key === 'imageUrl' && typeof node[key] === 'string') {
+                        newNode[key] = await uploadImageAndGetURL(node[key]);
+                    } else {
+                        newNode[key] = await processNode(node[key]);
+                    }
+                }
+                return newNode;
+            }
+            return node;
+        };
+
+        const processedData = await processNode(data);
+        await setDoc(docRef, processedData, { merge: true });
+
+    } catch (error) {
+        console.error(`Error saving content with ID ${contentId}:`, error);
+        throw error;
+    }
 }
 
 /**

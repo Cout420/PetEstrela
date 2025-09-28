@@ -27,7 +27,7 @@ import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-conte
 import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
 import { PROD_DOMAIN } from '@/lib/link-service';
-import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent, uploadImageAndGetURL } from '@/lib/firebase-service';
+import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent } from '@/lib/firebase-service';
 import { Timestamp } from 'firebase/firestore';
 
 
@@ -373,13 +373,8 @@ useEffect(() => {
       const result = await shortenLink({ memorialId: data.id });
       const qrCodeUrl = result.shortUrl;
 
-      const processedImages = await Promise.all(
-        data.images.map(image => uploadImageAndGetURL(image.imageUrl).then(url => ({...image, imageUrl: url})))
-      );
-
       const petToSave: PetMemorialWithDatesAsString = {
         ...data,
-        images: processedImages,
         qrCodeUrl: qrCodeUrl,
         createdAt: editingPet?.createdAt || Timestamp.now(),
       };
@@ -422,17 +417,7 @@ useEffect(() => {
 const handleSaveAboutContent = async (data: AboutPageContent) => {
     setIsSaving(true);
     try {
-        const [missionImageUrl, historyImageUrl] = await Promise.all([
-            uploadImageAndGetURL(data.missionImageUrl),
-            uploadImageAndGetURL(data.historyImageUrl),
-        ]);
-        
-        const processedData = {
-            ...data,
-            missionImageUrl,
-            historyImageUrl,
-        };
-        await saveContent('aboutPageContent', processedData);
+        await saveContent('aboutPageContent', data);
         toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
     } catch (error) {
         console.error("Error saving about content: ", error);
@@ -445,25 +430,7 @@ const handleSaveAboutContent = async (data: AboutPageContent) => {
 const handleSaveHomeContent = async (data: HomePageContent) => {
     setIsSaving(true);
     try {
-        const processedSlides = await Promise.all(
-            data.heroSlides.map(async (slide) => ({
-                ...slide,
-                imageUrl: await uploadImageAndGetURL(slide.imageUrl),
-            }))
-        );
-
-        const processedAllPetsImageUrl = await uploadImageAndGetURL(data.allPetsSection.imageUrl);
-
-        const processedData = {
-            ...data,
-            heroSlides: processedSlides,
-            allPetsSection: {
-                ...data.allPetsSection,
-                imageUrl: processedAllPetsImageUrl,
-            },
-        };
-
-        await saveContent('homePageContent', processedData);
+        await saveContent('homePageContent', data);
         toast({ title: 'Conteúdo da página "Home" atualizado com sucesso.' });
     } catch (error) {
         console.error("Error saving home content: ", error);
@@ -501,14 +468,7 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
   const handleSaveOurSpaceContent = async (data: OurSpaceContent) => {
     setIsSaving(true);
     try {
-        const processedGallery = await Promise.all(
-            data.gallery.map(async (item) => ({
-                ...item,
-                imageUrl: await uploadImageAndGetURL(item.imageUrl),
-            }))
-        );
-        const processedData = { ...data, gallery: processedGallery };
-        await saveContent('ourSpaceContent', processedData);
+        await saveContent('ourSpaceContent', data);
         toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
     } catch (error) {
         console.error("Error saving our space content: ", error);
@@ -522,11 +482,7 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
   const handleSaveMemorialPageContent = async (data: MemorialPageContent) => {
     setIsSaving(true);
     try {
-        const processedData = {
-            ...data,
-            heroImageUrl: await uploadImageAndGetURL(data.heroImageUrl),
-        };
-        await saveContent('memorialPageContent', processedData);
+        await saveContent('memorialPageContent', data);
         toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
     } catch (error) {
         console.error("Error saving memorial page content: ", error);
