@@ -27,7 +27,7 @@ import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-conte
 import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
 import { PROD_DOMAIN } from '@/lib/link-service';
-import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent } from '@/lib/firebase-service';
+import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent, uploadImageAndGetURL } from '@/lib/firebase-service';
 import { Timestamp } from 'firebase/firestore';
 
 
@@ -369,6 +369,20 @@ useEffect(() => {
     setEditingPet(pet);
     setIsFormOpen(true);
   };
+
+   // Generic image upload handler for react-hook-form
+  const handleFileSelectAndRead = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        try {
+            const dataUrl = await readFileAsDataURL(file);
+            field.onChange(dataUrl); // Update the form field with the base64 URL
+        } catch (error) {
+            console.error("Error reading file:", error);
+            toast({ variant: "destructive", title: "Erro de Upload", description: "Não foi possível carregar a imagem." });
+        }
+    }
+  };
   
   const handleSavePet = async (data: PetMemorialForm) => {
     setIsSaving(true);
@@ -376,8 +390,17 @@ useEffect(() => {
       const result = await shortenLink({ memorialId: data.id });
       const qrCodeUrl = result.shortUrl;
 
+      // Process images before saving
+      const processedImages = await Promise.all(
+        data.images.map(async (image) => {
+            const newImageUrl = await uploadImageAndGetURL(image.imageUrl);
+            return { ...image, imageUrl: newImageUrl };
+        })
+      );
+
       const petToSave: PetMemorialWithDatesAsString = {
         ...data,
+        images: processedImages,
         qrCodeUrl: qrCodeUrl,
         createdAt: editingPet?.createdAt || Timestamp.now(),
       };
@@ -417,23 +440,53 @@ useEffect(() => {
     }
   };
 
-const handleSaveAboutContent = async (data: AboutPageContent) => {
-    setIsSaving(true);
-    try {
-        await saveContent('aboutPageContent', data);
-        toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
-    } catch (error) {
-        console.error("Error saving about content: ", error);
-        toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
-    } finally {
-        setIsSaving(false);
-    }
-};
+  const handleSaveAboutContent = async (data: AboutPageContent) => {
+      setIsSaving(true);
+      try {
+          // Process image URLs before saving
+          const missionImageUrl = await uploadImageAndGetURL(data.missionImageUrl);
+          const historyImageUrl = await uploadImageAndGetURL(data.historyImageUrl);
 
-const handleSaveHomeContent = async (data: HomePageContent) => {
+          const finalData = {
+              ...data,
+              missionImageUrl,
+              historyImageUrl,
+          };
+
+          await saveContent('aboutPageContent', finalData);
+          toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
+      } catch (error) {
+          console.error("Error saving about content: ", error);
+          toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+      } finally {
+          setIsSaving(false);
+      }
+  };
+
+  const handleSaveHomeContent = async (data: HomePageContent) => {
     setIsSaving(true);
     try {
-        await saveContent('homePageContent', data);
+        // Process heroSlides images
+        const processedHeroSlides = await Promise.all(
+            data.heroSlides.map(async (slide) => ({
+                ...slide,
+                imageUrl: await uploadImageAndGetURL(slide.imageUrl),
+            }))
+        );
+
+        // Process allPetsSection image
+        const processedAllPetsImageUrl = await uploadImageAndGetURL(data.allPetsSection.imageUrl);
+
+        const finalData = {
+            ...data,
+            heroSlides: processedHeroSlides,
+            allPetsSection: {
+                ...data.allPetsSection,
+                imageUrl: processedAllPetsImageUrl,
+            },
+        };
+
+        await saveContent('homePageContent', finalData);
         toast({ title: 'Conteúdo da página "Home" atualizado com sucesso.' });
     } catch (error) {
         console.error("Error saving home content: ", error);
@@ -441,7 +494,7 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
     } finally {
         setIsSaving(false);
     }
-};
+  };
 
 
   const handleSaveGeneralContent = async (data: GeneralContent) => {
@@ -469,31 +522,50 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
   };
 
   const handleSaveOurSpaceContent = async (data: OurSpaceContent) => {
-    setIsSaving(true);
-    try {
-        await saveContent('ourSpaceContent', data);
-        toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
-    } catch (error) {
-        console.error("Error saving our space content: ", error);
-        toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
-    } finally {
-        setIsSaving(false);
-    }
-};
+      setIsSaving(true);
+      try {
+          const processedGallery = await Promise.all(
+              data.gallery.map(async (item) => ({
+                  ...item,
+                  imageUrl: await uploadImageAndGetURL(item.imageUrl),
+              }))
+          );
+
+          const finalData = {
+              ...data,
+              gallery: processedGallery,
+          };
+
+          await saveContent('ourSpaceContent', finalData);
+          toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
+      } catch (error) {
+          console.error("Error saving our space content: ", error);
+          toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+      } finally {
+          setIsSaving(false);
+      }
+  };
 
 
   const handleSaveMemorialPageContent = async (data: MemorialPageContent) => {
-    setIsSaving(true);
-    try {
-        await saveContent('memorialPageContent', data);
-        toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
-    } catch (error) {
-        console.error("Error saving memorial page content: ", error);
-        toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
-    } finally {
-        setIsSaving(false);
-    }
-};
+      setIsSaving(true);
+      try {
+          const processedHeroImageUrl = await uploadImageAndGetURL(data.heroImageUrl);
+          
+          const finalData = {
+              ...data,
+              heroImageUrl: processedHeroImageUrl,
+          };
+
+          await saveContent('memorialPageContent', finalData);
+          toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
+      } catch (error) {
+          console.error("Error saving memorial page content: ", error);
+          toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+      } finally {
+          setIsSaving(false);
+      }
+  };
 
 
   if (!isAuthenticated) {
@@ -503,21 +575,6 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
       </div>
     );
   }
-
-  // Generic image upload handler for react-hook-form
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
-    const file = e.target.files?.[0];
-    if (file) {
-        try {
-            const dataUrl = await readFileAsDataURL(file);
-            field.onChange(dataUrl);
-        } catch (error) {
-            console.error("Error reading file:", error);
-            toast({ variant: "destructive", title: "Erro de Upload", description: "Não foi possível carregar a imagem." });
-        }
-    }
-  };
-
 
   return (
     <div className="min-h-screen bg-muted/20 p-4 sm:p-8">
@@ -572,7 +629,7 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
                                     <FormLabel>Imagem</FormLabel>
                                     <FormControl>
                                       <div className='flex items-center gap-2'>
-                                        <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                        <Input type="file" accept="image/*" onChange={(e) => handleFileSelectAndRead(e, field)} className="w-full" />
                                         {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                       </div>
                                     </FormControl>
@@ -627,7 +684,7 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
                                     <FormLabel>Imagem da Seção</FormLabel>
                                     <FormControl>
                                       <div className='flex items-center gap-2'>
-                                        <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                        <Input type="file" accept="image/*" onChange={(e) => handleFileSelectAndRead(e, field)} className="w-full" />
                                         {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                       </div>
                                     </FormControl>
@@ -658,7 +715,7 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
                                     <FormLabel>Imagem de Fundo</FormLabel>
                                     <FormControl>
                                       <div className='flex items-center gap-2'>
-                                        <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                        <Input type="file" accept="image/*" onChange={(e) => handleFileSelectAndRead(e, field)} className="w-full" />
                                         {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                       </div>
                                     </FormControl>
@@ -758,7 +815,7 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
                                     <FormLabel>Imagem da Missão</FormLabel>
                                     <FormControl>
                                       <div className='flex items-center gap-2'>
-                                        <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                        <Input type="file" accept="image/*" onChange={(e) => handleFileSelectAndRead(e, field)} className="w-full" />
                                         {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                       </div>
                                     </FormControl>
@@ -774,7 +831,7 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
                                     <FormLabel>Imagem da História</FormLabel>
                                     <FormControl>
                                       <div className='flex items-center gap-2'>
-                                        <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                        <Input type="file" accept="image/*" onChange={(e) => handleFileSelectAndRead(e, field)} className="w-full" />
                                         {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                       </div>
                                     </FormControl>
@@ -818,7 +875,7 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
                                                     <FormLabel>Imagem</FormLabel>
                                                     <FormControl>
                                                         <div className='flex items-center gap-2'>
-                                                          <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, field)} className="w-full" />
+                                                          <Input type="file" accept="image/*" onChange={(e) => handleFileSelectAndRead(e, field)} className="w-full" />
                                                           {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                                         </div>
                                                     </FormControl>
@@ -989,7 +1046,7 @@ const handleSaveHomeContent = async (data: HomePageContent) => {
                                                    <Input 
                                                       type="file" 
                                                       accept="image/*" 
-                                                      onChange={(e) => handleImageUpload(e, imageField)}
+                                                      onChange={(e) => handleFileSelectAndRead(e, imageField)}
                                                       className="w-full"
                                                    />
                                                    {imageField.value && (
