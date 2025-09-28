@@ -46,7 +46,7 @@ export interface PetMemorial {
       description?: string;
       imageHint?: string;
   }[];
-  qrCodeUrl?: string;
+  qrCodeUrl: string;
   createdAt: Timestamp;
 };
 

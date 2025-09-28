@@ -50,8 +50,12 @@ const petSchema = z.object({
   sexo: z.string().min(1, "O sexo é obrigatório."),
   age: z.string().min(1, "A idade é obrigatória."),
   family: z.string().min(1, "A família é obrigatória."),
-  birthDate: z.string().min(1, "A data de nascimento é obrigatória."),
-  passingDate: z.string().min(1, "A data de falecimento é obrigatória."),
+  birthDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Data de nascimento inválida.",
+  }),
+  passingDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Data de falecimento inválida.",
+  }),
   arvore: z.string().min(1, "A árvore é obrigatória."),
   local: z.string().min(1, "O local é obrigatório."),
   tutores: z.string().min(1, "Os tutores são obrigatórios."),
@@ -62,8 +66,7 @@ const petSchema = z.object({
       description: z.string().optional(),
       imageHint: z.string().optional()
   })).min(5, "É necessário adicionar pelo menos 5 imagens."),
-  qrCodeUrl: z.string().optional(),
-  createdAt: z.custom<Timestamp>().optional(), // For internal use
+  qrCodeUrl: z.string().optional().default(''),
 });
 
 type PetMemorialForm = z.infer<typeof petSchema>;
