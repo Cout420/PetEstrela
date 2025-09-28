@@ -393,10 +393,14 @@ useEffect(() => {
       const result = await shortenLink({ memorialId: data.id });
       const qrCodeUrl = result.shortUrl;
 
+      // Filter out empty image fields before processing
+      const validImages = data.images.filter(image => image.imageUrl);
+
       // Process images: upload new ones, keep existing URLs
       const processedImages = await Promise.all(
-        data.images.map(async (image) => {
+        validImages.map(async (image) => {
            const newUrl = await uploadImage(image.imageUrl);
+           // return a new object with the new url, but keep other potential fields
            return { ...image, imageUrl: newUrl };
         })
       );
@@ -1140,5 +1144,7 @@ useEffect(() => {
     </div>
   );
 }
+
+    
 
     
