@@ -446,9 +446,16 @@ useEffect(() => {
   const handleSaveAboutContent = async (data: AboutPageContent) => {
     setIsSaving(true);
     try {
-        const finalData = { ...data };
-        finalData.missionImageUrl = await uploadImage(data.missionImageUrl);
-        finalData.historyImageUrl = await uploadImage(data.historyImageUrl);
+        const [missionImageUrl, historyImageUrl] = await Promise.all([
+            uploadImage(data.missionImageUrl),
+            uploadImage(data.historyImageUrl)
+        ]);
+
+        const finalData = { 
+            ...data,
+            missionImageUrl,
+            historyImageUrl
+        };
 
         await saveContent('aboutPageContent', finalData);
         toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
@@ -463,7 +470,7 @@ useEffect(() => {
   const handleSaveHomeContent = async (data: HomePageContent) => {
     setIsSaving(true);
     try {
-        // Process Hero Slides
+        // Process Hero Slides images
         const processedHeroSlides = await Promise.all(
             data.heroSlides.map(async (slide) => ({
                 ...slide,
@@ -1133,9 +1140,3 @@ useEffect(() => {
     </div>
   );
 }
-
-    
-
-    
-
-
