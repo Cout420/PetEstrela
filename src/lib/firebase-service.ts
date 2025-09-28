@@ -60,8 +60,8 @@ export interface PetMemorial {
  * @returns The public downloadable URL of the uploaded image.
  */
 export async function uploadImageAndGetURL(base64String: string, path: string): Promise<string> {
-  if (!base64String.startsWith('data:image')) {
-    // It's already a URL, so just return it.
+  if (!base64String || !base64String.startsWith('data:image')) {
+    // It's already a URL or empty, so just return it.
     return base64String;
   }
   
@@ -124,31 +124,36 @@ export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'pass
  * Salva (cria ou atualiza) um memorial no Firestore.
  */
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
-    try {
-        const docRef = doc(db, 'memorials', pet.id.toString());
+    const docRef = doc(db, 'memorials', pet.id.toString());
 
-        // Process images: upload new ones and keep existing URLs.
-        const processedImages = await Promise.all(
-            pet.images.map(async (image) => {
-                const newUrl = await uploadImageAndGetURL(image.imageUrl, `memorials/${pet.id}`);
-                return { ...image, imageUrl: newUrl };
-            })
-        );
-        
-        // Convert string dates from the form back to Timestamps for Firestore
-        const dataToSave: PetMemorial = {
-            ...pet,
-            images: processedImages,
-            birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
-            passingDate: Timestamp.fromDate(new Date(pet.passingDate)),
-            createdAt: pet.createdAt || Timestamp.now(),
-        };
+    // Process images: upload new ones and keep existing URLs.
+    const processedImages = await Promise.all(
+        pet.images.map(async (image) => {
+            // If imageUrl is a base64 string, upload it. Otherwise, it's a URL, keep it.
+            if (image.imageUrl && image.imageUrl.startsWith('data:image')) {
+                 try {
+                    const newUrl = await uploadImageAndGetURL(image.imageUrl, `memorials/${pet.id}`);
+                    return { ...image, imageUrl: newUrl };
+                } catch (uploadError) {
+                    console.error(`Failed to upload image for memorial ${pet.id}.`, uploadError);
+                    // Decide how to handle a failed upload. Here, we're throwing the error.
+                    throw new Error(`Image upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
+                }
+            }
+            return image; // Keep existing image object (with URL)
+        })
+    );
+    
+    // Convert string dates from the form back to Timestamps for Firestore
+    const dataToSave: PetMemorial = {
+        ...pet,
+        images: processedImages,
+        birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
+        passingDate: Timestamp.fromDate(new Date(pet.passingDate)),
+        createdAt: pet.createdAt || Timestamp.now(),
+    };
 
-        await setDoc(docRef, dataToSave, { merge: true });
-    } catch (error) {
-        console.error(`Erro ao salvar memorial com ID ${pet.id}:`, error);
-        throw error;
-    }
+    await setDoc(docRef, dataToSave, { merge: true });
 }
 
 
