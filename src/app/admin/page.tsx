@@ -1,3 +1,5 @@
+
+
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
@@ -97,8 +99,7 @@ const generalContentSchema = z.object({
   instagramLink: z.string().url("Link do Instagram é obrigatório."),
 });
 
-type GeneralContent = z
-.infer<typeof generalContentSchema>;
+type GeneralContent = z.infer<typeof generalContentSchema>;
 
 const planSchema = z.object({
     name: z.string().min(1, 'Nome do plano é obrigatório.'),
@@ -1085,3 +1086,7 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
+
+    
