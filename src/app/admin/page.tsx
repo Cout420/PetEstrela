@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -20,13 +19,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { plans as initialPlans } from '@/lib/mock-data';
-import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus, CheckCircle2, HomeIcon, Building2, Heart } from 'lucide-react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, X, QrCode, ImagePlus, CheckCircle2, HomeIcon, Building2, Heart } from 'lucide-react';
 import { homePageContent as initialHomePageContent } from '@/lib/home-content';
 import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-content';
 import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
-import { PROD_DOMAIN } from '@/lib/link-service';
 import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent, uploadImageAndGetURL } from '@/lib/firebase-service';
 import { Timestamp } from 'firebase/firestore';
 
@@ -218,14 +215,23 @@ export default function AdminPage() {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: petImagesFields, append: appendPetImage, remove: removePetImage } = useFieldArray({
     control: petForm.control,
     name: "images"
   });
 
   const aboutForm = useForm<AboutPageContent>({
     resolver: zodResolver(aboutPageSchema),
-    defaultValues: initialHomePageContent as any, // Temporary to avoid errors, will be reset
+    defaultValues: {
+        headerTitle: '',
+        headerDescription: '',
+        missionTitle: '',
+        missionDescription: '',
+        missionImageUrl: '',
+        historyTitle: '',
+        historyDescription: '',
+        historyImageUrl: '',
+    },
   });
   
   const generalForm = useForm<GeneralContent>({
@@ -241,9 +247,7 @@ export default function AdminPage() {
 
   const plansForm = useForm<PlansPageContent>({
     resolver: zodResolver(plansPageSchema),
-    defaultValues: {
-        plans: [],
-    },
+    defaultValues: { plans: [] },
   });
   
   const homeForm = useForm<HomePageContent>({
@@ -269,6 +273,11 @@ export default function AdminPage() {
       control: plansForm.control,
       name: "plans"
   });
+  
+  const { fields: planFeaturesFields, append: appendPlanFeature, remove: removePlanFeature } = useFieldArray({
+      control: plansForm.control,
+      name: `plans.0.features` // This will be dynamically adjusted
+  });
 
   const { fields: galleryFields, append: appendGallery, remove: removeGallery } = useFieldArray({
       control: ourSpaceForm.control, name: "gallery"
@@ -277,40 +286,51 @@ export default function AdminPage() {
 useEffect(() => {
     const loadContentFromDB = async () => {
       // Load About Page Content
-      aboutForm.reset(initialHomePageContent as any); // Reset with initial data first
       const aboutData = await getContent<AboutPageContent>('aboutPageContent');
       if (aboutData) aboutForm.reset(aboutData);
+      else aboutForm.reset({
+            headerTitle: "Sobre o Pet Estrela",
+            headerDescription: "Há mais de 10 anos, nossa missão é proporcionar uma despedida digna e respeitosa, transformando a dor da perda em uma celebração do amor e da amizade.",
+            missionTitle: "Nossa Missão",
+            missionDescription: "Nossa missão é oferecer um serviço de cremação pet que transcenda o procedimento técnico. Buscamos acolher as famílias em um dos momentos mais delicados, garantindo que a memória de seus companheiros seja honrada com a máxima dignidade. Acreditamos que cada vida, não importa o quão pequena, merece uma despedida grandiosa.",
+            missionImageUrl: '',
+            historyTitle: "Nossa História",
+            historyDescription: "Fundada em 2014 com o sonho de oferecer um serviço funerário pet diferenciado, a Pet Estrela nasceu da paixão e do respeito pelos animais. Ao longo dos anos, crescemos e nos modernizamos, mas nunca perdemos a essência do nosso trabalho: o acolhimento.",
+            historyImageUrl: '',
+        });
+      
 
       // Load General Content
-      generalForm.reset({
+      const generalData = await getContent<GeneralContent>('generalContent');
+      if (generalData) generalForm.reset(generalData);
+      else generalForm.reset({
         whatsappNumber: '1142405253',
         whatsappLink: 'https://wa.me/551142405253',
         phone: '(11) 4240-5253',
         address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
         instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
       });
-      const generalData = await getContent<GeneralContent>('generalContent');
-      if (generalData) generalForm.reset(generalData);
+      
 
       // Load Plans Page Content
-      plansForm.reset({ plans: initialPlans });
       const plansData = await getContent<PlansPageContent>('plansPageContent');
-      if (plansData) plansForm.reset(plansData);
+      if (plansData && plansData.plans.length > 0) plansForm.reset(plansData);
+      else plansForm.reset({ plans: initialPlans });
 
       // Load Home Page Content
-      homeForm.reset(initialHomePageContent);
       const homeData = await getContent<HomePageContent>('homePageContent');
       if (homeData) homeForm.reset(homeData);
+      else homeForm.reset(initialHomePageContent);
 
       // Load Our Space Content
-      ourSpaceForm.reset(initialOurSpaceContent);
       const ourSpaceData = await getContent<OurSpaceContent>('ourSpaceContent');
       if (ourSpaceData) ourSpaceForm.reset(ourSpaceData);
+      else ourSpaceForm.reset(initialOurSpaceContent);
 
       // Load Memorial Page Content
-      memorialForm.reset(initialMemorialPageContent);
       const memorialData = await getContent<MemorialPageContent>('memorialPageContent');
       if (memorialData) memorialForm.reset(memorialData);
+      else memorialForm.reset(initialMemorialPageContent);
     };
 
     if (isAuthenticated) {
@@ -350,7 +370,7 @@ useEffect(() => {
         petForm.reset({
           id: nextId,
           name: '', species: '', sexo: '', age: '', family: '', birthDate: '', passingDate: '',
-          arvore: '', local: '', tutores: '', text: '', images: Array(5).fill({ id: '', imageUrl: '' }),
+          arvore: '', local: '', tutores: '', text: '', images: Array(5).fill(null).map(()=>({ id: `img-${Date.now()}-${Math.random()}`, imageUrl: '' })),
         });
       }
     };
@@ -390,12 +410,8 @@ useEffect(() => {
       const result = await shortenLink({ memorialId: data.id });
       const qrCodeUrl = result.shortUrl;
 
-      // Process images before saving
       const processedImages = await Promise.all(
-        data.images.map(async (image) => {
-            const newImageUrl = await uploadImageAndGetURL(image.imageUrl);
-            return { ...image, imageUrl: newImageUrl };
-        })
+        data.images.map(image => uploadImageAndGetURL(image.imageUrl).then(newUrl => ({...image, imageUrl: newUrl})))
       );
 
       const petToSave: PetMemorialWithDatesAsString = {
@@ -443,15 +459,9 @@ useEffect(() => {
   const handleSaveAboutContent = async (data: AboutPageContent) => {
       setIsSaving(true);
       try {
-          // Process image URLs before saving
-          const missionImageUrl = await uploadImageAndGetURL(data.missionImageUrl);
-          const historyImageUrl = await uploadImageAndGetURL(data.historyImageUrl);
-
-          const finalData = {
-              ...data,
-              missionImageUrl,
-              historyImageUrl,
-          };
+          const finalData = { ...data };
+          finalData.missionImageUrl = await uploadImageAndGetURL(data.missionImageUrl);
+          finalData.historyImageUrl = await uploadImageAndGetURL(data.historyImageUrl);
 
           await saveContent('aboutPageContent', finalData);
           toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
@@ -466,7 +476,6 @@ useEffect(() => {
   const handleSaveHomeContent = async (data: HomePageContent) => {
     setIsSaving(true);
     try {
-        // Process heroSlides images
         const processedHeroSlides = await Promise.all(
             data.heroSlides.map(async (slide) => ({
                 ...slide,
@@ -474,7 +483,6 @@ useEffect(() => {
             }))
         );
 
-        // Process allPetsSection image
         const processedAllPetsImageUrl = await uploadImageAndGetURL(data.allPetsSection.imageUrl);
 
         const finalData = {
@@ -646,7 +654,7 @@ useEffect(() => {
                         <CardContent className="space-y-4">
                              <FormField control={homeForm.control} name="whyChooseUs.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                              <FormField control={homeForm.control} name="whyChooseUs.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                             {homeForm.getValues('whyChooseUs.items').map((item, index) => (
+                             {homeForm.watch('whyChooseUs.items').map((item, index) => (
                                  <div key={index} className="space-y-2 rounded-md border p-4">
                                      <h4 className="font-semibold">Item {index + 1}</h4>
                                      <FormField control={homeForm.control} name={`whyChooseUs.items.${index}.icon`} render={({ field }) => (<FormItem><FormLabel>Ícone do Item (Nome do Lucide Icon)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -663,7 +671,7 @@ useEffect(() => {
                          <CardContent className="space-y-4">
                               <FormField control={homeForm.control} name="cremationProcess.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                               <FormField control={homeForm.control} name="cremationProcess.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                              {homeForm.getValues('cremationProcess.steps').map((step, index) => (
+                              {homeForm.watch('cremationProcess.steps').map((step, index) => (
                                   <div key={index} className="space-y-2 rounded-md border p-4">
                                       <h4 className="font-semibold">Passo {step.step}</h4>
                                       <FormField control={homeForm.control} name={`cremationProcess.steps.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título do Passo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -897,16 +905,18 @@ useEffect(() => {
 
           <TabsContent value="plans" className="mt-6">
             <Card>
-                <CardHeader>
+                <CardHeader className='flex-row items-center justify-between'>
                     <CardTitle>Editar Página de Planos</CardTitle>
+                    <Button type="button" size="sm" onClick={() => appendPlan({ name: 'Novo Plano', price: '', description: '', features: [], isMostChosen: false })}><Plus className="mr-2" /> Adicionar Plano</Button>
                 </CardHeader>
                 <CardContent>
                     <Form {...plansForm}>
                         <form onSubmit={plansForm.handleSubmit(handleSavePlansContent)} className="space-y-8">
                             {planFields.map((plan, planIndex) => (
-                                <Card key={plan.id} className="p-4 border-primary/20">
-                                    <CardHeader>
-                                        <CardTitle>Plano {planIndex + 1}</CardTitle>
+                                <Card key={plan.id} className="p-4 border-primary/20 relative">
+                                    <CardHeader className="flex-row items-center justify-between">
+                                        <CardTitle>Plano {planIndex + 1}: {plansForm.watch(`plans.${planIndex}.name`)}</CardTitle>
+                                        <Button type="button" variant="destructive" size="icon" onClick={() => removePlan(planIndex)}><Trash2 className="h-4 w-4" /></Button>
                                     </CardHeader>
                                     <CardContent className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                                         <FormField control={plansForm.control} name={`plans.${planIndex}.name`} render={({ field }) => (<FormItem><FormLabel>Nome do Plano</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -930,8 +940,14 @@ useEffect(() => {
                                                                       field.onChange(newFeatures);
                                                                   }}
                                                                 />
+                                                                 <Button type="button" variant="destructive" size="icon" onClick={() => {
+                                                                    const newFeatures = [...field.value];
+                                                                    newFeatures.splice(featureIndex, 1);
+                                                                    field.onChange(newFeatures);
+                                                                 }}><Trash2 className="h-4 w-4" /></Button>
                                                             </div>
                                                         ))}
+                                                        <Button type="button" size="sm" variant="outline" className='mt-2' onClick={() => field.onChange([...field.value, 'Nova característica'])}><Plus className="mr-2 h-4 w-4" /> Adicionar Característica</Button>
                                                     </div>
                                                 )}
                                             />
@@ -1034,7 +1050,7 @@ useEffect(() => {
                         <Label>Fotos (Mínimo 5)</Label>
                          <p className="text-sm text-muted-foreground">A primeira imagem será a foto de capa do memorial.</p>
                          <div className="mt-2 space-y-2">
-                         {fields.map((field, index) => (
+                         {petImagesFields.map((field, index) => (
                              <div key={field.id} className="flex items-center gap-2">
                                  <FormField
                                      control={petForm.control}
@@ -1058,7 +1074,7 @@ useEffect(() => {
                                          </FormItem>
                                      )}
                                  />
-                                <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                                <Button type="button" variant="destructive" size="icon" onClick={() => removePetImage(index)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                              </div>
@@ -1069,7 +1085,7 @@ useEffect(() => {
                             variant="outline"
                             size="sm"
                             className="mt-2"
-                            onClick={() => append({ id: `img-${Date.now()}`, imageUrl: '' })}
+                            onClick={() => appendPetImage({ id: `img-${Date.now()}`, imageUrl: '' })}
                          >
                             <ImagePlus className="mr-2" /> Adicionar Imagem
                          </Button>
@@ -1117,3 +1133,5 @@ useEffect(() => {
     </div>
   );
 }
+
+    
