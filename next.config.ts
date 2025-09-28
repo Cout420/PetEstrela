@@ -45,6 +45,12 @@ const nextConfig: NextConfig = {
         hostname: 'prefeitura.rio',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ibb.co',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
