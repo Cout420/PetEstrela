@@ -10,11 +10,13 @@ import { Input } from '@/components/ui/input';
 import { PlusCircle, Search } from 'lucide-react';
 import { getMemorials, PetMemorial } from '@/lib/firebase-service';
 import { memorialPets as initialPets } from '@/lib/mock-data'; // Fallback
+import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
 
 const MemorialPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [memorialPets, setMemorialPets] = useState<PetMemorial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [content, setContent] = useState(initialMemorialPageContent);
   const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/551142405253?text=${encodeURIComponent(\'Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.\')}' });
 
   useEffect(() => {
@@ -25,7 +27,12 @@ const MemorialPage = () => {
       } catch (error) {
         console.error("Failed to fetch memorials from Firestore, using fallback data.", error);
         // Em caso de erro (ex: config do Firebase faltando), usa os dados locais
-        setMemorialPets(initialPets as any);
+        const typedInitialPets: PetMemorial[] = initialPets.map(p => ({
+            ...p,
+            birthDate: p.birthDate || '',
+            passingDate: p.passingDate || ''
+        }));
+        setMemorialPets(typedInitialPets as any);
       } finally {
         setIsLoading(false);
       }
@@ -35,10 +42,15 @@ const MemorialPage = () => {
 
     const storedGeneralContent = localStorage.getItem('generalContent');
     if (storedGeneralContent) {
-        const content = JSON.parse(storedGeneralContent);
+        const gc = JSON.parse(storedGeneralContent);
         setGeneralContent({
-            whatsappLink: `${content.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.')}`
+            whatsappLink: `${gc.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.')}`
         });
+    }
+
+    const storedMemorialContent = localStorage.getItem('memorialPageContent');
+    if (storedMemorialContent) {
+      setContent(JSON.parse(storedMemorialContent));
     }
   }, []);
 
@@ -59,7 +71,7 @@ const MemorialPage = () => {
     <>
       <section className="relative flex h-[70vh] items-center justify-center text-center text-white">
         <Image
-          src="https://i.imgur.com/uG5zZ3H.jpeg"
+          src={content.heroImageUrl}
           alt="Floresta verde e harmoniosa representando o memorial e a natureza"
           fill
           className="absolute top-0 left-0 w-full h-full object-cover z-0"
@@ -67,11 +79,11 @@ const MemorialPage = () => {
         <div className="absolute top-0 left-0 w-full h-full bg-black/50 z-10"></div>
         <div className="container mx-auto px-4 z-20 animate-fade-in">
             <h1 className="font-headline text-4xl font-bold md:text-6xl">
-            Memorial Pet Estrela
+            {content.heroTitle}
             </h1>
             <div className="mt-4 max-w-3xl mx-auto space-y-4 text-base text-gray-200">
-                <p>O Memorial Pet Estrela foi criado como uma forma carinhosa de eternizar a lembrança dos nossos animais que se tornaram estrelinhas. Aqui, cada vida é celebrada através do plantio de uma árvore, que simboliza amor, renovação e memória eterna.</p>
-                <p>Além de homenagear nossos companheiros, este memorial também contribui para o reflorestamento, com mudas frutíferas e nativas, fortalecendo a natureza.</p>
+                <p>{content.heroDescription1}</p>
+                <p>{content.heroDescription2}</p>
             </div>
         </div>
       </section>
@@ -102,12 +114,12 @@ const MemorialPage = () => {
                         <PlusCircle className="h-10 w-10 text-primary" />
                     </div>
                     <CardTitle className="pt-4 font-headline text-2xl">
-                        Criar um Memorial
+                        {content.createMemorialTitle}
                     </CardTitle>
                     </CardHeader>
                     <CardContent>
                     <p className="text-muted-foreground">
-                        Clique aqui para eternizar a memória do seu amigo.
+                        {content.createMemorialDescription}
                     </p>
                     </CardContent>
                 </Card>
@@ -118,12 +130,12 @@ const MemorialPage = () => {
                     <Card
                         className="luxury-card hover-lift cursor-pointer overflow-hidden text-center h-full"
                     >
-                        {pet.image && (
+                        {pet.images && pet.images.length > 0 && (
                         <div className="relative h-56 w-full">
                             <Image
-                            src={pet.image.imageUrl}
-                            alt={pet.image.description ?? ''}
-                            data-ai-hint={pet.image.imageHint}
+                            src={pet.images[0].imageUrl}
+                            alt={pet.images[0].description ?? ''}
+                            data-ai-hint={pet.images[0].imageHint}
                             fill
                             className="object-cover"
                             />
@@ -155,3 +167,5 @@ const MemorialPage = () => {
 };
 
 export default MemorialPage;
+
+    

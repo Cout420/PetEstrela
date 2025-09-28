@@ -40,12 +40,6 @@ export type PetMemorial = {
       description?: string;
       imageHint?: string;
   }[];
-  image?: {
-      id: string;
-      imageUrl: string;
-      description?: string;
-      imageHint?: string;
-  };
   qrCodeUrl?: string;
   createdAt: Timestamp;
 };
@@ -135,3 +129,5 @@ export async function getNextMemorialId(): Promise<number> {
         return 1; // Fallback em caso de erro
     }
 }
+
+    

@@ -20,10 +20,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { teamMembers as initialTeamMembers, plans as initialPlans } from '@/lib/mock-data';
-import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus, CheckCircle2, HomeIcon, Building2 } from 'lucide-react';
+import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus, CheckCircle2, HomeIcon, Building2, Heart } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { homePageContent as initialHomePageContent } from '@/lib/home-content';
 import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-content';
+import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
 import { PROD_DOMAIN } from '@/lib/link-service';
 import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial } from '@/lib/firebase-service';
@@ -148,6 +149,19 @@ const ourSpaceSchema = z.object({
 
 type OurSpaceContent = z.infer<typeof ourSpaceSchema>;
 
+
+const memorialPageSchema = z.object({
+  heroImageUrl: z.string().min(1, "A imagem é obrigatória."),
+  heroTitle: z.string().min(1, "Título é obrigatório."),
+  heroDescription1: z.string().min(1, "Primeiro parágrafo da descrição é obrigatório."),
+  heroDescription2: z.string().min(1, "Segundo parágrafo da descrição é obrigatório."),
+  createMemorialTitle: z.string().min(1, "Título do card 'Criar Memorial' é obrigatório."),
+  createMemorialDescription: z.string().min(1, "Descrição do card 'Criar Memorial' é obrigatória."),
+});
+
+type MemorialPageContent = z.infer<typeof memorialPageSchema>;
+
+
 export default function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -257,6 +271,11 @@ export default function AdminPage() {
     resolver: zodResolver(ourSpaceSchema),
     defaultValues: initialOurSpaceContent
   });
+
+  const memorialForm = useForm<MemorialPageContent>({
+    resolver: zodResolver(memorialPageSchema),
+    defaultValues: initialMemorialPageContent
+  });
   
   const { fields: heroSlidesFields, append: appendHeroSlide, remove: removeHeroSlide } = useFieldArray({
       control: homeForm.control, name: "heroSlides"
@@ -287,12 +306,21 @@ export default function AdminPage() {
     const storedOurSpaceContent = localStorage.getItem('ourSpaceContent');
     if (storedOurSpaceContent) ourSpaceForm.reset(JSON.parse(storedOurSpaceContent));
 
-  }, [aboutForm, generalForm, plansForm, homeForm, ourSpaceForm]);
+    const storedMemorialContent = localStorage.getItem('memorialPageContent');
+    if (storedMemorialContent) memorialForm.reset(JSON.parse(storedMemorialContent));
+
+
+  }, [aboutForm, generalForm, plansForm, homeForm, ourSpaceForm, memorialForm]);
 
   useEffect(() => {
     const setupForm = async () => {
       if (editingPet) {
-        petForm.reset(editingPet);
+        const petData = {
+          ...editingPet,
+          birthDate: editingPet.birthDate ? new Date(editingPet.birthDate).toISOString().split('T')[0] : '',
+          passingDate: editingPet.passingDate ? new Date(editingPet.passingDate).toISOString().split('T')[0] : '',
+        };
+        petForm.reset(petData);
       } else {
         const nextId = await getNextMemorialId();
         petForm.reset({
@@ -329,7 +357,6 @@ export default function AdminPage() {
 
     const petToSave: FirestorePetMemorial = {
       ...data,
-      image: data.images[0],
       createdAt: editingPet?.createdAt || Timestamp.now(),
     };
 
@@ -394,6 +421,12 @@ export default function AdminPage() {
     toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
   };
 
+  const handleSaveMemorialPageContent = (data: MemorialPageContent) => {
+    localStorage.setItem('memorialPageContent', JSON.stringify(data));
+    toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
+  };
+
+
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -419,8 +452,9 @@ export default function AdminPage() {
         </header>
 
         <Tabs defaultValue="pets" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 md:grid-cols-7">
             <TabsTrigger value="home"><HomeIcon className="mr-1 md:mr-2" /> <span className="hidden md:inline">Home</span></TabsTrigger>
+            <TabsTrigger value="memorial"><Heart className="mr-1 md:mr-2" /> <span className="hidden md:inline">Memorial</span></TabsTrigger>
             <TabsTrigger value="pets"><Users className="mr-1 md:mr-2" /> <span className="hidden md:inline">Pets</span></TabsTrigger>
             <TabsTrigger value="about"><FileText className="mr-1 md:mr-2" /> <span className="hidden md:inline">Sobre</span></TabsTrigger>
             <TabsTrigger value="space"><Building2 className="mr-1 md:mr-2" /> <span className="hidden md:inline">Espaço</span></TabsTrigger>
@@ -497,6 +531,31 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="memorial" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Editar Página Memorial</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Form {...memorialForm}>
+                  <form onSubmit={memorialForm.handleSubmit(handleSaveMemorialPageContent)} className="space-y-6">
+                    <h3 className="text-lg font-semibold text-primary">Seção Principal</h3>
+                    <FormField control={memorialForm.control} name="heroImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem de Fundo</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `heroImageUrl`, memorialForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={memorialForm.control} name="heroTitle" render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={memorialForm.control} name="heroDescription1" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 1)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={memorialForm.control} name="heroDescription2" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 2)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
+
+                    <h3 className="text-lg font-semibold text-primary mt-6">Card "Criar Memorial"</h3>
+                    <FormField control={memorialForm.control} name="createMemorialTitle" render={({ field }) => (<FormItem><FormLabel>Título do Card</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={memorialForm.control} name="createMemorialDescription" render={({ field }) => (<FormItem><FormLabel>Descrição do Card</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem>)} />
+                    
+                    <Button type="submit"><Save className="mr-2" /> Salvar Página Memorial</Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="pets" className="mt-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
@@ -509,11 +568,11 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {pets.map((pet) => (
                     <Card key={pet.id} className="luxury-card overflow-hidden">
-                      {pet.image && (
+                      {pet.images && pet.images.length > 0 && (
                         <div className="relative h-52 w-full">
                           <Image
-                            src={pet.image.imageUrl}
-                            alt={pet.image.description ?? ''}
+                            src={pet.images[0].imageUrl}
+                            alt={pet.images[0].description ?? ''}
                             fill
                             className="object-cover"
                           />
@@ -824,3 +883,6 @@ export default function AdminPage() {
     </div>
   );
 }
+
+
+    
