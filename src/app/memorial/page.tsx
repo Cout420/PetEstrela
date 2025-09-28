@@ -59,7 +59,7 @@ const MemorialPage = () => {
     <>
       <section className="relative flex h-[70vh] items-center justify-center text-center text-white">
         <Image
-          src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxncmVlbiUyMG5hdHVyZXxlbnwwfHx8fDE3NTkyMTg4ODh8MA&ixlib=rb-4.1.0&q=80&w=1080"
+          src="https://i.imgur.com/uG5zZ3H.jpeg"
           alt="Floresta verde e harmoniosa representando o memorial e a natureza"
           fill
           className="absolute top-0 left-0 w-full h-full object-cover z-0"
