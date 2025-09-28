@@ -66,7 +66,7 @@ export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'pass
  * @param imageData - The image data, either a base64 string or an existing URL.
  * @returns The public URL of the uploaded or existing image.
  */
-export async function uploadImageAndGetURL(imageData: string | undefined): Promise<string> {
+export async function uploadImageAndGetURL(imageData?: string): Promise<string> {
     if (!imageData) {
         return '';
     }
@@ -128,6 +128,7 @@ export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<v
     // Convert date strings back to Timestamps before saving
     const dataToSave: PetMemorial = {
         ...pet,
+        images: pet.images.map(img => ({...img, imageUrl: img.imageUrl || ''})),
         birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
         passingDate: Timestamp.fromDate(new Date(pet.passingDate)),
         createdAt: pet.createdAt || Timestamp.now(),
@@ -202,3 +203,5 @@ export async function getContent<T>(contentId: string): Promise<T | null> {
     return null;
   }
 }
+
+    

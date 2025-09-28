@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -59,7 +60,7 @@ const petSchema = z.object({
   text: z.string().min(10, "O texto do memorial deve ter pelo menos 10 caracteres."),
   images: z.array(z.object({
       id: z.string(),
-      imageUrl: z.string().min(1, "Por favor, insira a URL da imagem."),
+      imageUrl: z.string().optional(),
       description: z.string().optional(),
       imageHint: z.string().optional()
   })).min(5, "É necessário adicionar pelo menos 5 imagens."),
@@ -74,10 +75,10 @@ const aboutPageSchema = z.object({
   headerDescription: z.string().min(1, "Descrição do cabeçalho é obrigatória."),
   missionTitle: z.string().min(1, "Título da missão é obrigatório."),
   missionDescription: z.string().min(1, "Descrição da missão é obrigatória."),
-  missionImageUrl: z.string().min(1, "URL da imagem da missão é obrigatória."),
+  missionImageUrl: z.string().optional(),
   historyTitle: z.string().min(1, "Título da história é obrigatório."),
   historyDescription: z.string().min(1, "Descrição da história é obrigatória."),
-  historyImageUrl: z.string().min(1, "URL da imagem da história é obrigatória."),
+  historyImageUrl: z.string().optional(),
 });
 
 type AboutPageContent = z.infer<typeof aboutPageSchema>;
@@ -109,7 +110,7 @@ const plansPageSchema = z.object({
 type PlansPageContent = z.infer<typeof plansPageSchema>;
 
 const heroSlideSchema = z.object({
-    imageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
+    imageUrl: z.string().optional(),
     title: z.string().min(1, 'Título é obrigatório'),
     subtitle: z.string().min(1, 'Subtítulo é obrigatório'),
 });
@@ -126,7 +127,7 @@ const cremationProcessStepSchema = z.object({
 const allPetsSectionSchema = z.object({
     title: z.string().min(1, 'Título é obrigatório'),
     description: z.string().min(1, 'Descrição é obrigatória'),
-    imageUrl: z.string().min(1, 'URL da imagem é obrigatória'),
+    imageUrl: z.string().optional(),
     petsList: z.array(z.string().min(1, 'O item da lista não pode ser vazio')),
 });
 
@@ -150,7 +151,7 @@ type HomePageContent = z.infer<typeof homePageSchema>;
 const galleryItemSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Título da imagem é obrigatório."),
-  imageUrl: z.string().min(1, "A imagem é obrigatória."),
+  imageUrl: z.string().optional(),
 });
 
 const ourSpaceSchema = z.object({
@@ -163,7 +164,7 @@ type OurSpaceContent = z.infer<typeof ourSpaceSchema>;
 
 
 const memorialPageSchema = z.object({
-  heroImageUrl: z.string().min(1, "A imagem é obrigatória."),
+  heroImageUrl: z.string().optional(),
   heroTitle: z.string().min(1, "Título é obrigatório."),
   heroDescription1: z.string().min(1, "Primeiro parágrafo da descrição é obrigatório."),
   heroDescription2: z.string().min(1, "Segundo parágrafo da descrição é obrigatório."),
@@ -274,11 +275,6 @@ export default function AdminPage() {
       name: "plans"
   });
   
-  const { fields: planFeaturesFields, append: appendPlanFeature, remove: removePlanFeature } = useFieldArray({
-      control: plansForm.control,
-      name: `plans.0.features` // This will be dynamically adjusted
-  });
-
   const { fields: galleryFields, append: appendGallery, remove: removeGallery } = useFieldArray({
       control: ourSpaceForm.control, name: "gallery"
   });
@@ -399,12 +395,8 @@ useEffect(() => {
       // Process images: upload new ones, keep existing URLs
       const processedImages = await Promise.all(
         data.images.map(async (image) => {
-          // If imageUrl is a data URL, upload it. Otherwise, assume it's a valid public URL.
-          if (image.imageUrl.startsWith('data:image')) {
-            const newUrl = await uploadImageAndGetURL(image.imageUrl);
-            return { ...image, imageUrl: newUrl };
-          }
-          return image;
+           const newUrl = await uploadImageAndGetURL(image.imageUrl);
+           return { ...image, imageUrl: newUrl };
         })
       );
       
@@ -764,7 +756,7 @@ useEffect(() => {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {pets.map((pet) => (
                     <Card key={pet.id} className="luxury-card overflow-hidden">
-                      {pet.images && pet.images.length > 0 && (
+                      {pet.images && pet.images.length > 0 && pet.images[0].imageUrl && (
                         <div className="relative h-52 w-full">
                           <Image
                             src={pet.images[0].imageUrl}
@@ -1140,5 +1132,7 @@ useEffect(() => {
     </div>
   );
 }
+
+    
 
     
