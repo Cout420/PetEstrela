@@ -25,7 +25,8 @@ import { homePageContent as initialHomePageContent } from '@/lib/home-content';
 import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-content';
 import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
-import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent, uploadImageAndGetURL } from '@/lib/firebase-service';
+import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial, PetMemorialWithDatesAsString, saveContent, getContent } from '@/lib/firebase-service';
+import { uploadImage } from '@/lib/actions';
 import { Timestamp } from 'firebase/firestore';
 
 
@@ -179,9 +180,9 @@ export default function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pets, setPets] = useState<FirestorePetMemorial[]>([]);
+  const [pets, setPets] = useState<PetMemorial[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingPet, setEditingPet] = useState<FirestorePetMemorial | null>(null);
+  const [editingPet, setEditingPet] = useState<PetMemorial | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const qrCodeCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -381,7 +382,7 @@ useEffect(() => {
     router.push('/');
   };
 
-  const handleOpenForm = (pet: FirestorePetMemorial | null) => {
+  const handleOpenForm = (pet: PetMemorial | null) => {
     setEditingPet(pet);
     setIsFormOpen(true);
   };
@@ -395,7 +396,7 @@ useEffect(() => {
       // Process images: upload new ones, keep existing URLs
       const processedImages = await Promise.all(
         data.images.map(async (image) => {
-           const newUrl = await uploadImageAndGetURL(image.imageUrl);
+           const newUrl = await uploadImage(image.imageUrl);
            return { ...image, imageUrl: newUrl };
         })
       );
@@ -446,8 +447,8 @@ useEffect(() => {
     setIsSaving(true);
     try {
         const finalData = { ...data };
-        finalData.missionImageUrl = await uploadImageAndGetURL(data.missionImageUrl);
-        finalData.historyImageUrl = await uploadImageAndGetURL(data.historyImageUrl);
+        finalData.missionImageUrl = await uploadImage(data.missionImageUrl);
+        finalData.historyImageUrl = await uploadImage(data.historyImageUrl);
 
         await saveContent('aboutPageContent', finalData);
         toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
@@ -466,12 +467,12 @@ useEffect(() => {
         const processedHeroSlides = await Promise.all(
             data.heroSlides.map(async (slide) => ({
                 ...slide,
-                imageUrl: await uploadImageAndGetURL(slide.imageUrl),
+                imageUrl: await uploadImage(slide.imageUrl),
             }))
         );
 
         // Process All Pets Section Image
-        const processedAllPetsImageUrl = await uploadImageAndGetURL(data.allPetsSection.imageUrl);
+        const processedAllPetsImageUrl = await uploadImage(data.allPetsSection.imageUrl);
 
         const finalData = {
             ...data,
@@ -522,7 +523,7 @@ useEffect(() => {
         const processedGallery = await Promise.all(
             data.gallery.map(async (item) => ({
                 ...item,
-                imageUrl: await uploadImageAndGetURL(item.imageUrl),
+                imageUrl: await uploadImage(item.imageUrl),
             }))
         );
 
@@ -545,7 +546,7 @@ useEffect(() => {
   const handleSaveMemorialPageContent = async (data: MemorialPageContent) => {
     setIsSaving(true);
     try {
-        const processedHeroImageUrl = await uploadImageAndGetURL(data.heroImageUrl);
+        const processedHeroImageUrl = await uploadImage(data.heroImageUrl);
         
         const finalData = {
             ...data,
@@ -1136,4 +1137,5 @@ useEffect(() => {
     
 
     
+
 
