@@ -211,7 +211,7 @@ export default function AdminPage() {
     resolver: zodResolver(petSchema),
     defaultValues: {
       name: '', species: '', sexo: '', age: '', family: '', birthDate: '', passingDate: '',
-      arvore: '', local: '', tutores: '', text: '', images: [],
+      arvore: '', local: '', tutores: '', text: '', images: [], qrCodeUrl: '',
     },
   });
 
@@ -389,20 +389,6 @@ useEffect(() => {
     setEditingPet(pet);
     setIsFormOpen(true);
   };
-
-   // Generic image upload handler for react-hook-form
-  const handleFileSelectAndRead = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
-    const file = e.target.files?.[0];
-    if (file) {
-        try {
-            const dataUrl = await readFileAsDataURL(file);
-            field.onChange(dataUrl); // Update the form field with the base64 URL
-        } catch (error) {
-            console.error("Error reading file:", error);
-            toast({ variant: "destructive", title: "Erro de Upload", description: "Não foi possível carregar a imagem." });
-        }
-    }
-  };
   
   const handleSavePet = async (data: PetMemorialForm) => {
     setIsSaving(true);
@@ -410,10 +396,18 @@ useEffect(() => {
       const result = await shortenLink({ memorialId: data.id });
       const qrCodeUrl = result.shortUrl;
 
+      // Process images: upload new ones, keep existing URLs
       const processedImages = await Promise.all(
-        data.images.map(image => uploadImageAndGetURL(image.imageUrl).then(newUrl => ({...image, imageUrl: newUrl})))
+        data.images.map(async (image) => {
+          // If imageUrl is a data URL, upload it. Otherwise, assume it's a valid public URL.
+          if (image.imageUrl.startsWith('data:image')) {
+            const newUrl = await uploadImageAndGetURL(image.imageUrl);
+            return { ...image, imageUrl: newUrl };
+          }
+          return image;
+        })
       );
-
+      
       const petToSave: PetMemorialWithDatesAsString = {
         ...data,
         images: processedImages,
@@ -457,25 +451,26 @@ useEffect(() => {
   };
 
   const handleSaveAboutContent = async (data: AboutPageContent) => {
-      setIsSaving(true);
-      try {
-          const finalData = { ...data };
-          finalData.missionImageUrl = await uploadImageAndGetURL(data.missionImageUrl);
-          finalData.historyImageUrl = await uploadImageAndGetURL(data.historyImageUrl);
+    setIsSaving(true);
+    try {
+        const finalData = { ...data };
+        finalData.missionImageUrl = await uploadImageAndGetURL(data.missionImageUrl);
+        finalData.historyImageUrl = await uploadImageAndGetURL(data.historyImageUrl);
 
-          await saveContent('aboutPageContent', finalData);
-          toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
-      } catch (error) {
-          console.error("Error saving about content: ", error);
-          toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
-      } finally {
-          setIsSaving(false);
-      }
+        await saveContent('aboutPageContent', finalData);
+        toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
+    } catch (error) {
+        console.error("Error saving about content: ", error);
+        toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const handleSaveHomeContent = async (data: HomePageContent) => {
     setIsSaving(true);
     try {
+        // Process Hero Slides
         const processedHeroSlides = await Promise.all(
             data.heroSlides.map(async (slide) => ({
                 ...slide,
@@ -483,6 +478,7 @@ useEffect(() => {
             }))
         );
 
+        // Process All Pets Section Image
         const processedAllPetsImageUrl = await uploadImageAndGetURL(data.allPetsSection.imageUrl);
 
         const finalData = {
@@ -503,7 +499,6 @@ useEffect(() => {
         setIsSaving(false);
     }
   };
-
 
   const handleSaveGeneralContent = async (data: GeneralContent) => {
     setIsSaving(true);
@@ -530,51 +525,63 @@ useEffect(() => {
   };
 
   const handleSaveOurSpaceContent = async (data: OurSpaceContent) => {
-      setIsSaving(true);
-      try {
-          const processedGallery = await Promise.all(
-              data.gallery.map(async (item) => ({
-                  ...item,
-                  imageUrl: await uploadImageAndGetURL(item.imageUrl),
-              }))
-          );
+    setIsSaving(true);
+    try {
+        const processedGallery = await Promise.all(
+            data.gallery.map(async (item) => ({
+                ...item,
+                imageUrl: await uploadImageAndGetURL(item.imageUrl),
+            }))
+        );
 
-          const finalData = {
-              ...data,
-              gallery: processedGallery,
-          };
+        const finalData = {
+            ...data,
+            gallery: processedGallery,
+        };
 
-          await saveContent('ourSpaceContent', finalData);
-          toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
-      } catch (error) {
-          console.error("Error saving our space content: ", error);
-          toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
-      } finally {
-          setIsSaving(false);
-      }
+        await saveContent('ourSpaceContent', finalData);
+        toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
+    } catch (error) {
+        console.error("Error saving our space content: ", error);
+        toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    } finally {
+        setIsSaving(false);
+    }
   };
 
 
   const handleSaveMemorialPageContent = async (data: MemorialPageContent) => {
-      setIsSaving(true);
-      try {
-          const processedHeroImageUrl = await uploadImageAndGetURL(data.heroImageUrl);
-          
-          const finalData = {
-              ...data,
-              heroImageUrl: processedHeroImageUrl,
-          };
+    setIsSaving(true);
+    try {
+        const processedHeroImageUrl = await uploadImageAndGetURL(data.heroImageUrl);
+        
+        const finalData = {
+            ...data,
+            heroImageUrl: processedHeroImageUrl,
+        };
 
-          await saveContent('memorialPageContent', finalData);
-          toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
-      } catch (error) {
-          console.error("Error saving memorial page content: ", error);
-          toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
-      } finally {
-          setIsSaving(false);
-      }
+        await saveContent('memorialPageContent', finalData);
+        toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
+    } catch (error) {
+        console.error("Error saving memorial page content: ", error);
+        toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    } finally {
+        setIsSaving(false);
+    }
   };
 
+  const handleFileSelectAndRead = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        try {
+            const dataUrl = await readFileAsDataURL(file);
+            field.onChange(dataUrl); // Update the form field with the base64 URL
+        } catch (error) {
+            console.error("Error reading file:", error);
+            toast({ variant: "destructive", title: "Erro de Upload", description: "Não foi possível carregar a imagem." });
+        }
+    }
+  };
 
   if (!isAuthenticated) {
     return (

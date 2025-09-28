@@ -125,6 +125,7 @@ export async function getMemorialById(id: number): Promise<PetMemorial | null> {
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
     const docRef = doc(db, 'memorials', pet.id.toString());
     
+    // Convert date strings back to Timestamps before saving
     const dataToSave: PetMemorial = {
         ...pet,
         birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
