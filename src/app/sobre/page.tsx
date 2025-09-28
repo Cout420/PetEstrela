@@ -90,20 +90,12 @@ export default function AboutPage() {
   return (
     <>
       {/* Header Section */}
-      <section className="relative flex min-h-[50vh] items-center justify-center text-center text-white">
-        <Image
-          src={PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl ?? ''}
-          alt="Jardim memorial como plano de fundo"
-          fill
-          className="absolute top-0 left-0 w-full h-full object-cover z-0"
-          priority
-        />
-        <div className="absolute top-0 left-0 w-full h-full bg-black/50 z-10"></div>
-        <div className="container relative z-20 mx-auto px-4 animate-fade-in">
-          <h1 className="font-headline text-4xl font-bold md:text-6xl">
+      <section className="bg-muted/30 py-16 md:py-24">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="animate-fade-in font-headline text-4xl font-bold text-gradient-luxury md:text-6xl">
             {content.headerTitle}
           </h1>
-          <p className="mx-auto mt-4 max-w-3xl text-base md:text-lg text-gray-200">
+          <p className="animate-fade-in mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
             {content.headerDescription}
           </p>
         </div>
