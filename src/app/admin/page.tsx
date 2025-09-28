@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { teamMembers as initialTeamMembers, plans as initialPlans } from '@/lib/mock-data';
+import { plans as initialPlans } from '@/lib/mock-data';
 import { LogOut, Users, FileText, Settings, Plus, Edit, Trash2, Save, Upload, X, QrCode, ImagePlus, CheckCircle2, HomeIcon, Building2, Heart } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { homePageContent as initialHomePageContent } from '@/lib/home-content';
@@ -291,38 +291,73 @@ export default function AdminPage() {
   });
 
   useEffect(() => {
+    // Reset with initial data first, then try to load from local storage.
+    // This ensures the form is never empty if local storage is cleared.
+    aboutForm.reset({
+        headerTitle: "Sobre o Pet Estrela",
+        headerDescription: "Há mais de 10 anos, nossa missão é proporcionar uma despedida digna e respeitosa, transformando a dor da perda em uma celebração do amor e da amizade.",
+        missionTitle: "Nossa Missão",
+        missionDescription: "Nossa missão é oferecer um serviço de cremação pet que transcenda o procedimento técnico. Buscamos acolher as famílias em um dos momentos mais delicados, garantindo que a memória de seus companheiros seja honrada com a máxima dignidade. Acreditamos que cada vida, não importa o quão pequena, merece uma despedida grandiosa.",
+        missionImageUrl: PlaceHolderImages.find((img) => img.id === 'about-mission')?.imageUrl ?? '',
+        historyTitle: "Nossa História",
+        historyDescription: "Fundada em 2014 com o sonho de oferecer um serviço funerário pet diferenciado, a Pet Estrela nasceu da paixão e do respeito pelos animais. Ao longo dos anos, crescemos e nos modernizamos, mas nunca perdemos a essência do nosso trabalho: o acolhimento.",
+        historyImageUrl: PlaceHolderImages.find((img) => img.id === 'about-history')?.imageUrl ?? '',
+    });
     const storedAboutContent = localStorage.getItem('aboutPageContent');
     if (storedAboutContent) aboutForm.reset(JSON.parse(storedAboutContent));
     
+    generalForm.reset({
+      whatsappNumber: '1142405253',
+      whatsappLink: 'https://wa.me/551142405253',
+      phone: '(11) 4240-5253',
+      address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
+      instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
+    });
     const storedGeneralContent = localStorage.getItem('generalContent');
     if (storedGeneralContent) generalForm.reset(JSON.parse(storedGeneralContent));
 
+    plansForm.reset({ plans: initialPlans });
     const storedPlansContent = localStorage.getItem('plansPageContent');
     if(storedPlansContent) plansForm.reset(JSON.parse(storedPlansContent));
 
+    homeForm.reset(initialHomePageContent);
     const storedHomeContent = localStorage.getItem('homePageContent');
     if (storedHomeContent) homeForm.reset(JSON.parse(storedHomeContent));
 
+    ourSpaceForm.reset(initialOurSpaceContent);
     const storedOurSpaceContent = localStorage.getItem('ourSpaceContent');
     if (storedOurSpaceContent) ourSpaceForm.reset(JSON.parse(storedOurSpaceContent));
 
+    memorialForm.reset(initialMemorialPageContent);
     const storedMemorialContent = localStorage.getItem('memorialPageContent');
     if (storedMemorialContent) memorialForm.reset(JSON.parse(storedMemorialContent));
 
-
   }, [aboutForm, generalForm, plansForm, homeForm, ourSpaceForm, memorialForm]);
+
+  const formatDateForInput = (date: Timestamp | Date | string | undefined): string => {
+    if (!date) return '';
+    let d: Date;
+    if (date instanceof Timestamp) {
+      d = date.toDate();
+    } else if (date instanceof Date) {
+      d = date;
+    } else {
+      d = new Date(date);
+    }
+    // Adjust for timezone offset
+    const year = d.getFullYear();
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   useEffect(() => {
     const setupForm = async () => {
       if (editingPet) {
-        // Convert Timestamps to 'YYYY-MM-DD' strings for the form
-        const birthDate = editingPet.birthDate instanceof Timestamp ? editingPet.birthDate.toDate().toISOString().split('T')[0] : '';
-        const passingDate = editingPet.passingDate instanceof Timestamp ? editingPet.passingDate.toDate().toISOString().split('T')[0] : '';
-        
         petForm.reset({
           ...editingPet,
-          birthDate,
-          passingDate,
+          birthDate: formatDateForInput(editingPet.birthDate),
+          passingDate: formatDateForInput(editingPet.passingDate),
         });
       } else {
         const nextId = await getNextMemorialId();
@@ -887,5 +922,7 @@ export default function AdminPage() {
   );
 }
 
+
+    
 
     
