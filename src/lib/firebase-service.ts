@@ -2,8 +2,10 @@
 
 'use server';
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, query, orderBy, limit, writeBatch, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
+import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "firebase/storage";
+
 
 // Sua configuração do Firebase virá do .env.local
 const firebaseConfig = {
@@ -16,8 +18,9 @@ const firebaseConfig = {
 };
 
 // Inicializa o Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 const memorialsCollection = collection(db, 'memorials');
 const contentCollection = collection(db, 'siteContent');
@@ -49,6 +52,35 @@ export interface PetMemorial {
 
 
 // --- Funções do Serviço ---
+
+/**
+ * Uploads a base64 encoded image string to Firebase Storage and returns the public URL.
+ * @param base64String The base64 data URI.
+ * @param path The path in storage to save the image (e.g., 'memorials', 'site-content').
+ * @returns The public downloadable URL of the uploaded image.
+ */
+export async function uploadImageAndGetURL(base64String: string, path: string): Promise<string> {
+  if (!base64String.startsWith('data:image')) {
+    // It's already a URL, so just return it.
+    return base64String;
+  }
+  
+  const fileType = base64String.split(';')[0].split('/')[1];
+  const storageRef = ref(storage, `${path}/${Date.now()}.${fileType}`);
+  
+  // We need to strip the 'data:image/jpeg;base64,' part from the string
+  const base64Data = base64String.split(',')[1];
+
+  try {
+    const snapshot = await uploadString(storageRef, base64Data, 'base64');
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    throw new Error("Failed to upload image.");
+  }
+}
+
 
 /**
  * Busca todos os memoriais do Firestore, ordenados por data de criação.
@@ -92,22 +124,31 @@ export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'pass
  * Salva (cria ou atualiza) um memorial no Firestore.
  */
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
-  try {
-    const docRef = doc(db, 'memorials', pet.id.toString());
-    
-    // Convert string dates from the form back to Timestamps for Firestore
-    const dataToSave: PetMemorial = {
-        ...pet,
-        birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
-        passingDate: Timestamp.fromDate(new Date(pet.passingDate)),
-        createdAt: pet.createdAt || Timestamp.now(),
-    };
+    try {
+        const docRef = doc(db, 'memorials', pet.id.toString());
 
-    await setDoc(docRef, dataToSave, { merge: true });
-  } catch (error) {
-    console.error(`Erro ao salvar memorial com ID ${pet.id}:`, error);
-    throw error;
-  }
+        // Process images: upload new ones and keep existing URLs.
+        const processedImages = await Promise.all(
+            pet.images.map(async (image) => {
+                const newUrl = await uploadImageAndGetURL(image.imageUrl, `memorials/${pet.id}`);
+                return { ...image, imageUrl: newUrl };
+            })
+        );
+        
+        // Convert string dates from the form back to Timestamps for Firestore
+        const dataToSave: PetMemorial = {
+            ...pet,
+            images: processedImages,
+            birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
+            passingDate: Timestamp.fromDate(new Date(pet.passingDate)),
+            createdAt: pet.createdAt || Timestamp.now(),
+        };
+
+        await setDoc(docRef, dataToSave, { merge: true });
+    } catch (error) {
+        console.error(`Erro ao salvar memorial com ID ${pet.id}:`, error);
+        throw error;
+    }
 }
 
 
@@ -151,7 +192,7 @@ export async function getNextMemorialId(): Promise<number> {
 export async function saveContent<T>(contentId: string, data: T): Promise<void> {
   try {
     const docRef = doc(db, 'siteContent', contentId);
-    await setDoc(docRef, { data });
+    await setDoc(docRef, { data }, { merge: true });
   } catch (error) {
     console.error(`Erro ao salvar conteúdo com ID ${contentId}:`, error);
     throw error;

@@ -27,7 +27,7 @@ import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-conte
 import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
 import { PROD_DOMAIN } from '@/lib/link-service';
-import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent } from '@/lib/firebase-service';
+import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent, uploadImageAndGetURL } from '@/lib/firebase-service';
 import { Timestamp } from 'firebase/firestore';
 
 // Zod schema for client-side form validation (dates are strings)
@@ -97,7 +97,7 @@ const plansPageSchema = z.object({
 type PlansPageContent = z.infer<typeof plansPageSchema>;
 
 const heroSlideSchema = z.object({
-    imageUrl: z.string().url('URL da imagem é obrigatória.').min(1, 'URL da imagem é obrigatória.'),
+    imageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
     title: z.string().min(1, 'Título é obrigatório'),
     subtitle: z.string().min(1, 'Subtítulo é obrigatório'),
 });
@@ -138,7 +138,7 @@ type HomePageContent = z.infer<typeof homePageSchema>;
 const galleryItemSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Título da imagem é obrigatório."),
-  imageUrl: z.string().url("URL da imagem é obrigatória.").min(1, "A imagem é obrigatória."),
+  imageUrl: z.string().min(1, "A imagem é obrigatória."),
 });
 
 const ourSpaceSchema = z.object({
@@ -151,7 +151,7 @@ type OurSpaceContent = z.infer<typeof ourSpaceSchema>;
 
 
 const memorialPageSchema = z.object({
-  heroImageUrl: z.string().url("URL da imagem é obrigatória.").min(1, "A imagem é obrigatória."),
+  heroImageUrl: z.string().min(1, "A imagem é obrigatória."),
   heroTitle: z.string().min(1, "Título é obrigatório."),
   heroDescription1: z.string().min(1, "Primeiro parágrafo da descrição é obrigatório."),
   heroDescription2: z.string().min(1, "Segundo parágrafo da descrição é obrigatório."),
@@ -169,6 +169,7 @@ export default function AdminPage() {
   const [pets, setPets] = useState<FirestorePetMemorial[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPet, setEditingPet] = useState<FirestorePetMemorial | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const qrCodeCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -378,6 +379,7 @@ useEffect(() => {
   };
   
   const handleSavePet = async (data: PetMemorialForm) => {
+    setIsSaving(true);
     try {
       const result = await shortenLink({ memorialId: data.id });
       data.qrCodeUrl = result.shortUrl;
@@ -405,8 +407,10 @@ useEffect(() => {
         toast({
             variant: "destructive",
             title: "Erro ao salvar",
-            description: "Não foi possível salvar o memorial. Tente novamente.",
+            description: "Não foi possível salvar o memorial. Verifique as imagens e tente novamente.",
         });
+    } finally {
+        setIsSaving(false);
     }
   };
 
@@ -428,56 +432,104 @@ useEffect(() => {
   };
 
   const handleSaveAboutContent = async (data: AboutPageContent) => {
+    setIsSaving(true);
     try {
-      await saveContent('aboutPageContent', data);
+      const missionImageUrl = await uploadImageAndGetURL(data.missionImageUrl, 'site-content/about');
+      const historyImageUrl = await uploadImageAndGetURL(data.historyImageUrl, 'site-content/about');
+
+      await saveContent('aboutPageContent', { ...data, missionImageUrl, historyImageUrl });
       toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    } finally {
+      setIsSaving(false);
     }
   };
   
   const handleSaveHomeContent = async (data: HomePageContent) => {
+     setIsSaving(true);
     try {
-      await saveContent('homePageContent', data);
+      // Process Hero Slides
+      const processedSlides = await Promise.all(
+        data.heroSlides.map(async (slide) => ({
+          ...slide,
+          imageUrl: await uploadImageAndGetURL(slide.imageUrl, 'site-content/home'),
+        }))
+      );
+
+      // Process All Pets Section Image
+      const allPetsImageUrl = await uploadImageAndGetURL(data.allPetsSection.imageUrl, 'site-content/home');
+
+      const processedData = {
+        ...data,
+        heroSlides: processedSlides,
+        allPetsSection: {
+          ...data.allPetsSection,
+          imageUrl: allPetsImageUrl,
+        },
+      };
+
+      await saveContent('homePageContent', processedData);
       toast({ title: 'Conteúdo da página "Home" atualizado com sucesso.' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo. Verifique se todas as imagens são válidas.' });
+    } finally {
+      setIsSaving(false);
     }
   }
 
   const handleSaveGeneralContent = async (data: GeneralContent) => {
+    setIsSaving(true);
     try {
       await saveContent('generalContent', data);
       toast({ title: 'Conteúdo geral do site atualizado com sucesso.' });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    } finally {
+      setIsSaving(false);
     }
   };
   
   const handleSavePlansContent = async (data: PlansPageContent) => {
+    setIsSaving(true);
     try {
       await saveContent('plansPageContent', data);
       toast({ title: 'Conteúdo da página de planos atualizado com sucesso.' });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleSaveOurSpaceContent = async (data: OurSpaceContent) => {
+    setIsSaving(true);
     try {
-      await saveContent('ourSpaceContent', data);
+       const processedGallery = await Promise.all(
+        data.gallery.map(async (item) => ({
+          ...item,
+          imageUrl: await uploadImageAndGetURL(item.imageUrl, 'site-content/our-space'),
+        }))
+      );
+      await saveContent('ourSpaceContent', { ...data, gallery: processedGallery });
       toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleSaveMemorialPageContent = async (data: MemorialPageContent) => {
+    setIsSaving(true);
     try {
-      await saveContent('memorialPageContent', data);
+      const heroImageUrl = await uploadImageAndGetURL(data.heroImageUrl, 'site-content/memorial');
+      await saveContent('memorialPageContent', { ...data, heroImageUrl });
       toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -538,7 +590,7 @@ useEffect(() => {
                             </div>
                             <FormField control={homeForm.control} name={`heroSlides.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={homeForm.control} name={`heroSlides.${index}.subtitle`} render={({ field }) => (<FormItem><FormLabel>Subtítulo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                             <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                             <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>Imagem</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, `heroSlides.${index}.imageUrl`, homeForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
                           </div>
                         ))}
                       </CardContent>
@@ -582,11 +634,11 @@ useEffect(() => {
                         <CardContent className="space-y-4">
                             <FormField control={homeForm.control} name="allPetsSection.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={homeForm.control} name="allPetsSection.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da Seção</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field }) => (<FormItem><FormLabel>Imagem da Seção</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, 'allPetsSection.imageUrl', homeForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
                         </CardContent>
                     </Card>
 
-                    <Button type="submit"><Save className="mr-2" /> Salvar Página Home</Button>
+                    <Button type="submit" disabled={isSaving}><Save className="mr-2" /> {isSaving ? 'Salvando...' : 'Salvar Página Home'}</Button>
                   </form>
                 </Form>
               </CardContent>
@@ -602,7 +654,7 @@ useEffect(() => {
                     <Form {...memorialForm}>
                         <form onSubmit={memorialForm.handleSubmit(handleSaveMemorialPageContent)} className="space-y-6">
                             <h3 className="text-lg font-semibold text-primary">Seção Principal</h3>
-                            <FormField control={memorialForm.control} name="heroImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem de Fundo</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={memorialForm.control} name="heroImageUrl" render={({ field }) => (<FormItem><FormLabel>Imagem de Fundo</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, 'heroImageUrl', memorialForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="heroTitle" render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="heroDescription1" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 1)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="heroDescription2" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 2)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
@@ -611,7 +663,7 @@ useEffect(() => {
                             <FormField control={memorialForm.control} name="createMemorialTitle" render={({ field }) => (<FormItem><FormLabel>Título do Card</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="createMemorialDescription" render={({ field }) => (<FormItem><FormLabel>Descrição do Card</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem>)} />
 
-                            <Button type="submit"><Save className="mr-2" /> Salvar Página Memorial</Button>
+                            <Button type="submit" disabled={isSaving}><Save className="mr-2" /> {isSaving ? 'Salvando...' : 'Salvar Página Memorial'}</Button>
                         </form>
                     </Form>
                 </CardContent>
@@ -691,14 +743,14 @@ useEffect(() => {
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção Missão</h3>
                             <FormField control={aboutForm.control} name="missionTitle" render={({ field }) => (<FormItem><FormLabel>Título da Missão</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="missionDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da Missão</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da Missão</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field }) => (<FormItem><FormLabel>Imagem da Missão</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, 'missionImageUrl', aboutForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
 
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção História</h3>
                              <FormField control={aboutForm.control} name="historyTitle" render={({ field }) => (<FormItem><FormLabel>Título da História</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="historyDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da História</FormLabel><FormControl><Textarea {...field} rows={4} /></FormControl><FormMessage /></FormItem>)} />
-                             <FormField control={aboutForm.control} name="historyImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da História</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                             <FormField control={aboutForm.control} name="historyImageUrl" render={({ field }) => (<FormItem><FormLabel>Imagem da História</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, 'historyImageUrl', aboutForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
 
-                            <Button type="submit"><Save className="mr-2" /> Salvar Alterações</Button>
+                            <Button type="submit" disabled={isSaving}><Save className="mr-2" /> {isSaving ? 'Salvando...' : 'Salvar Alterações'}</Button>
                         </form>
                     </Form>
                 </CardContent>
@@ -729,13 +781,13 @@ useEffect(() => {
                                               <Button type="button" variant="destructive" size="icon" onClick={() => removeGallery(index)}><Trash2 className="h-4 w-4" /></Button>
                                             </div>
                                             <FormField control={ourSpaceForm.control} name={`gallery.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título da Imagem</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>Imagem</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, `gallery.${index}.imageUrl`, ourSpaceForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
                                         </div>
                                     ))}
                                 </CardContent>
                             </Card>
 
-                            <Button type="submit"><Save className="mr-2" /> Salvar Página "Nosso Espaço"</Button>
+                            <Button type="submit" disabled={isSaving}><Save className="mr-2" /> {isSaving ? 'Salvando...' : 'Salvar Página "Nosso Espaço"'}</Button>
                         </form>
                     </Form>
                 </CardContent>
@@ -790,7 +842,7 @@ useEffect(() => {
                                     </CardContent>
                                 </Card>
                             ))}
-                            <Button type="submit"><Save className="mr-2" /> Salvar Planos</Button>
+                            <Button type="submit" disabled={isSaving}><Save className="mr-2" /> {isSaving ? 'Salvando...' : 'Salvar Planos'}</Button>
                         </form>
                     </Form>
                 </CardContent>
@@ -841,7 +893,7 @@ useEffect(() => {
                             <FormMessage />
                         </FormItem>
                     )} />
-                    <Button type="submit"><Save className="mr-2" /> Salvar Conteúdo Geral</Button>
+                    <Button type="submit" disabled={isSaving}><Save className="mr-2" /> {isSaving ? 'Salvando...' : 'Salvar Conteúdo Geral'}</Button>
                   </form>
                 </Form>
               </CardContent>
@@ -956,7 +1008,7 @@ useEffect(() => {
                     <DialogClose asChild>
                         <Button type="button" variant="outline">Cancelar</Button>
                     </DialogClose>
-                    <Button type="submit">Salvar Pet</Button>
+                    <Button type="submit" disabled={isSaving}>{isSaving ? 'Salvando...' : 'Salvar Pet'}</Button>
                 </div>
             </form>
           </Form>
@@ -970,5 +1022,6 @@ useEffect(() => {
     
 
     
+
 
 
