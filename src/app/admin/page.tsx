@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -48,12 +49,6 @@ const petSchema = z.object({
       description: z.string().optional(),
       imageHint: z.string().optional()
   })).min(5, "É necessário adicionar pelo menos 5 imagens."),
-  image: z.object({
-      id: z.string(),
-      imageUrl: z.string(),
-      description: z.string().optional(),
-      imageHint: z.string().optional()
-  }).optional(),
   qrCodeUrl: z.string().optional(),
   createdAt: z.custom<Timestamp>().optional(), // For internal use
 });
