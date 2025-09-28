@@ -623,7 +623,7 @@ export default function AdminPage() {
                          <CardHeader><CardTitle>Seção "Processo de Cremação"</CardTitle></CardHeader>
                          <CardContent className="space-y-4">
                               <FormField control={homeForm.control} name="cremationProcess.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                              <FormField control={homeForm.control} name="cremationProcess.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormMessage /></FormItem>)} />
+                              <FormField control={homeForm.control} name="cremationProcess.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
                               {homeForm.watch('cremationProcess.steps').map((step, index) => (
                                   <div key={index} className="space-y-2 rounded-md border p-4">
                                       <h4 className="font-semibold">Passo {step.step}</h4>
