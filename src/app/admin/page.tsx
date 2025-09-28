@@ -62,10 +62,10 @@ const aboutPageSchema = z.object({
   headerDescription: z.string().min(1, "Descrição do cabeçalho é obrigatória."),
   missionTitle: z.string().min(1, "Título da missão é obrigatório."),
   missionDescription: z.string().min(1, "Descrição da missão é obrigatória."),
-  missionImageUrl: z.string().min(1, "URL da imagem da missão é obrigatória."),
+  missionImageUrl: z.string().url("URL da imagem da missão é obrigatória.").min(1, "URL da imagem da missão é obrigatória."),
   historyTitle: z.string().min(1, "Título da história é obrigatório."),
   historyDescription: z.string().min(1, "Descrição da história é obrigatória."),
-  historyImageUrl: z.string().min(1, "URL da imagem da história é obrigatória."),
+  historyImageUrl: z.string().url("URL da imagem da história é obrigatória.").min(1, "URL da imagem da história é obrigatória."),
 });
 
 type AboutPageContent = z.infer<typeof aboutPageSchema>;
@@ -97,7 +97,7 @@ const plansPageSchema = z.object({
 type PlansPageContent = z.infer<typeof plansPageSchema>;
 
 const heroSlideSchema = z.object({
-    imageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
+    imageUrl: z.string().url('URL da imagem é obrigatória.').min(1, 'URL da imagem é obrigatória.'),
     title: z.string().min(1, 'Título é obrigatório'),
     subtitle: z.string().min(1, 'Subtítulo é obrigatório'),
 });
@@ -114,7 +114,7 @@ const cremationProcessStepSchema = z.object({
 const allPetsSectionSchema = z.object({
     title: z.string().min(1, 'Título é obrigatório'),
     description: z.string().min(1, 'Descrição é obrigatória'),
-    imageUrl: z.string().min(1, 'URL da imagem é obrigatória'),
+    imageUrl: z.string().url('URL da imagem é obrigatória.').min(1, 'URL da imagem é obrigatória'),
     petsList: z.array(z.string().min(1, 'O item da lista não pode ser vazio')),
 });
 
@@ -138,7 +138,7 @@ type HomePageContent = z.infer<typeof homePageSchema>;
 const galleryItemSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Título da imagem é obrigatório."),
-  imageUrl: z.string().min(1, "A imagem é obrigatória."),
+  imageUrl: z.string().url("URL da imagem é obrigatória.").min(1, "A imagem é obrigatória."),
 });
 
 const ourSpaceSchema = z.object({
@@ -151,7 +151,7 @@ type OurSpaceContent = z.infer<typeof ourSpaceSchema>;
 
 
 const memorialPageSchema = z.object({
-  heroImageUrl: z.string().min(1, "A imagem é obrigatória."),
+  heroImageUrl: z.string().url("URL da imagem é obrigatória.").min(1, "A imagem é obrigatória."),
   heroTitle: z.string().min(1, "Título é obrigatório."),
   heroDescription1: z.string().min(1, "Primeiro parágrafo da descrição é obrigatório."),
   heroDescription2: z.string().min(1, "Segundo parágrafo da descrição é obrigatório."),
@@ -218,7 +218,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleGenericFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: any, form: any) => {
+  const handleGenericFileChangeAsURL = (e: React.ChangeEvent<HTMLInputElement>, fieldName: any, form: any) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -538,7 +538,7 @@ useEffect(() => {
                             </div>
                             <FormField control={homeForm.control} name={`heroSlides.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={homeForm.control} name={`heroSlides.${index}.subtitle`} render={({ field }) => (<FormItem><FormLabel>Subtítulo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `heroSlides.${index}.imageUrl`, homeForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
+                             <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
                           </div>
                         ))}
                       </CardContent>
@@ -582,7 +582,7 @@ useEffect(() => {
                         <CardContent className="space-y-4">
                             <FormField control={homeForm.control} name="allPetsSection.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={homeForm.control} name="allPetsSection.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da Seção</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'allPetsSection.imageUrl', homeForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da Seção</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </CardContent>
                     </Card>
 
@@ -602,7 +602,7 @@ useEffect(() => {
                     <Form {...memorialForm}>
                         <form onSubmit={memorialForm.handleSubmit(handleSaveMemorialPageContent)} className="space-y-6">
                             <h3 className="text-lg font-semibold text-primary">Seção Principal</h3>
-                            <FormField control={memorialForm.control} name="heroImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem de Fundo</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `heroImageUrl`, memorialForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={memorialForm.control} name="heroImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem de Fundo</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="heroTitle" render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="heroDescription1" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 1)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="heroDescription2" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 2)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
@@ -691,12 +691,12 @@ useEffect(() => {
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção Missão</h3>
                             <FormField control={aboutForm.control} name="missionTitle" render={({ field }) => (<FormItem><FormLabel>Título da Missão</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="missionDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da Missão</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da Missão</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'missionImageUrl', aboutForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da Missão</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
 
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção História</h3>
                              <FormField control={aboutForm.control} name="historyTitle" render={({ field }) => (<FormItem><FormLabel>Título da História</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="historyDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da História</FormLabel><FormControl><Textarea {...field} rows={4} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={aboutForm.control} name="historyImageUrl" render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Imagem da História</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, 'historyImageUrl', aboutForm)} /><Image src={value} alt="Preview" width={100} height={50} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
+                             <FormField control={aboutForm.control} name="historyImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da História</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
 
                             <Button type="submit"><Save className="mr-2" /> Salvar Alterações</Button>
                         </form>
@@ -729,7 +729,7 @@ useEffect(() => {
                                               <Button type="button" variant="destructive" size="icon" onClick={() => removeGallery(index)}><Trash2 className="h-4 w-4" /></Button>
                                             </div>
                                             <FormField control={ourSpaceForm.control} name={`gallery.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título da Imagem</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.imageUrl`} render={({ field: { onChange, value, ...rest } }) => (<FormItem><FormLabel>Arquivo da Imagem</FormLabel><FormControl><div><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChange(e, `gallery.${index}.imageUrl`, ourSpaceForm)} /><Image src={value} alt="Preview" width={100} height={75} className='mt-2 rounded-md object-cover' /></div></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                         </div>
                                     ))}
                                 </CardContent>
@@ -970,4 +970,5 @@ useEffect(() => {
     
 
     
+
 
