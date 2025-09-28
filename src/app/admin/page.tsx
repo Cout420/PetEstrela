@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
@@ -27,6 +27,25 @@ import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemor
 import { Timestamp } from 'firebase/firestore';
 
 
+const isValidImageUrl = (url: string | undefined | null): boolean => {
+    if (!url) return false;
+    try {
+        const parsedUrl = new URL(url);
+        return ['http:', 'https:', 'data:'].includes(parsedUrl.protocol);
+    } catch (e) {
+        return false;
+    }
+};
+
+const isDirectImageLink = (url: string) => {
+    return /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+};
+
+const directImageUrlSchema = z.string().url("URL inválida.").refine(isDirectImageLink, {
+    message: "URL inválida. Deve ser um link direto para uma imagem (jpg, png, etc.)."
+});
+
+
 // Zod schema for client-side form validation (dates are strings)
 const petSchema = z.object({
   id: z.number(),
@@ -35,10 +54,10 @@ const petSchema = z.object({
   sexo: z.string().min(1, "O sexo é obrigatório."),
   age: z.string().min(1, "A idade é obrigatória."),
   family: z.string().min(1, "A família é obrigatória."),
-  birthDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+  birthDate: z.string().refine((val) => !val || !isNaN(Date.parse(val)), {
     message: "Data de nascimento inválida.",
   }),
-  passingDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+  passingDate: z.string().refine((val) => !val || !isNaN(Date.parse(val)), {
     message: "Data de falecimento inválida.",
   }),
   arvore: z.string().min(1, "A árvore é obrigatória."),
@@ -47,10 +66,10 @@ const petSchema = z.object({
   text: z.string().min(10, "O texto do memorial deve ter pelo menos 10 caracteres."),
   images: z.array(z.object({
       id: z.string(),
-      imageUrl: z.string().url("URL da imagem inválida.").optional().or(z.literal('')),
+      imageUrl: directImageUrlSchema.or(z.literal('')),
       description: z.string().optional(),
       imageHint: z.string().optional()
-  })).min(5, "É necessário adicionar pelo menos 5 imagens."),
+  })).min(5, "É necessário adicionar pelo menos 5 imagens válidas."),
   qrCodeUrl: z.string().url().optional().or(z.literal('')),
 });
 
@@ -62,10 +81,10 @@ const aboutPageSchema = z.object({
   headerDescription: z.string().min(1, "Descrição do cabeçalho é obrigatória."),
   missionTitle: z.string().min(1, "Título da missão é obrigatório."),
   missionDescription: z.string().min(1, "Descrição da missão é obrigatória."),
-  missionImageUrl: z.string().url("URL da imagem inválida.").optional().or(z.literal('')),
+  missionImageUrl: directImageUrlSchema.optional().or(z.literal('')),
   historyTitle: z.string().min(1, "Título da história é obrigatório."),
   historyDescription: z.string().min(1, "Descrição da história é obrigatória."),
-  historyImageUrl: z.string().url("URL da imagem inválida.").optional().or(z.literal('')),
+  historyImageUrl: directImageUrlSchema.optional().or(z.literal('')),
 });
 
 type AboutPageContent = z.infer<typeof aboutPageSchema>;
@@ -98,7 +117,7 @@ const plansPageSchema = z.object({
 type PlansPageContent = z.infer<typeof plansPageSchema>;
 
 const heroSlideSchema = z.object({
-    imageUrl: z.string().url("URL da imagem inválida.").optional().or(z.literal('')),
+    imageUrl: directImageUrlSchema.optional().or(z.literal('')),
     title: z.string().min(1, 'Título é obrigatório'),
     subtitle: z.string().min(1, 'Subtítulo é obrigatório'),
 });
@@ -115,7 +134,7 @@ const cremationProcessStepSchema = z.object({
 const allPetsSectionSchema = z.object({
     title: z.string().min(1, 'Título é obrigatório'),
     description: z.string().min(1, 'Descrição é obrigatória'),
-    imageUrl: z.string().url("URL da imagem inválida.").optional().or(z.literal('')),
+    imageUrl: directImageUrlSchema.optional().or(z.literal('')),
     petsList: z.array(z.string().min(1, 'O item da lista não pode ser vazio')),
 });
 
@@ -139,7 +158,7 @@ type HomePageContent = z.infer<typeof homePageSchema>;
 const galleryItemSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Título da imagem é obrigatório."),
-  imageUrl: z.string().url("URL da imagem inválida.").optional().or(z.literal('')),
+  imageUrl: directImageUrlSchema.optional().or(z.literal('')),
 });
 
 const ourSpaceSchema = z.object({
@@ -152,7 +171,7 @@ type OurSpaceContent = z.infer<typeof ourSpaceSchema>;
 
 
 const memorialPageSchema = z.object({
-  heroImageUrl: z.string().url("URL da imagem inválida.").optional().or(z.literal('')),
+  heroImageUrl: directImageUrlSchema.optional().or(z.literal('')),
   heroTitle: z.string().min(1, "Título é obrigatório."),
   heroDescription1: z.string().min(1, "Primeiro parágrafo da descrição é obrigatório."),
   heroDescription2: z.string().min(1, "Segundo parágrafo da descrição é obrigatório."),
@@ -268,8 +287,7 @@ export default function AdminPage() {
       control: ourSpaceForm.control, name: "gallery"
   });
 
-useEffect(() => {
-    const loadContentFromDB = async () => {
+  const loadContentFromDB = useCallback(async () => {
       // Load About Page Content
       const aboutData = await getContent<AboutPageContent>('aboutPageContent');
       if (aboutData) aboutForm.reset(aboutData);
@@ -284,7 +302,6 @@ useEffect(() => {
             historyImageUrl: '',
         });
       
-
       // Load General Content
       const generalData = await getContent<GeneralContent>('generalContent');
       if (generalData) generalForm.reset(generalData);
@@ -296,7 +313,6 @@ useEffect(() => {
         instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
       });
       
-
       // Load Plans Page Content
       const plansData = await getContent<PlansPageContent>('plansPageContent');
       if (plansData && plansData.plans.length > 0) plansForm.reset(plansData);
@@ -316,12 +332,14 @@ useEffect(() => {
       const memorialData = await getContent<MemorialPageContent>('memorialPageContent');
       if (memorialData) memorialForm.reset(memorialData);
       else memorialForm.reset(initialMemorialPageContent);
-    };
 
+  }, [aboutForm, generalForm, plansForm, homeForm, ourSpaceForm, memorialForm]);
+
+  useEffect(() => {
     if (isAuthenticated) {
       loadContentFromDB();
     }
-  }, [isAuthenticated, aboutForm, generalForm, plansForm, homeForm, ourSpaceForm, memorialForm]);
+  }, [isAuthenticated, loadContentFromDB]);
 
   const formatDateForInput = (date: Timestamp | Date | string | undefined): string => {
     if (!date) return '';
@@ -355,7 +373,8 @@ useEffect(() => {
         petForm.reset({
           id: nextId,
           name: '', species: '', sexo: '', age: '', family: '', birthDate: '', passingDate: '',
-          arvore: '', local: '', tutores: '', text: '', images: Array(5).fill(null).map(()=>({ id: `img-${Date.now()}-${Math.random()}`, imageUrl: '' })),
+          arvore: '', local: '', tutores: '', text: '', 
+          images: Array(5).fill(null).map(()=>({ id: `img-${Date.now()}-${Math.random()}`, imageUrl: '' })),
           qrCodeUrl: '',
         });
       }
@@ -380,17 +399,16 @@ useEffect(() => {
     setIsSaving(true);
     try {
       const { shortUrl } = await shortenLink({ memorialId: data.id });
-
-      const validImages = data.images.filter(image => image.imageUrl && image.imageUrl.trim() !== '');
-
+      
+      const validImages = data.images.filter(image => image.imageUrl && isDirectImageLink(image.imageUrl));
+      
       if (validImages.length < 5) {
-        toast({
-          variant: "destructive",
-          title: "Imagens insuficientes",
-          description: "Por favor, forneça pelo menos 5 URLs de imagem válidas.",
-        });
-        setIsSaving(false);
-        return;
+          petForm.setError("images", { 
+              type: "manual", 
+              message: "Por favor, forneça pelo menos 5 URLs de imagem válidas e diretas (jpg, png, etc)." 
+          });
+          setIsSaving(false);
+          return;
       }
       
       const petToSave: PetMemorialWithDatesAsString = {
@@ -574,7 +592,7 @@ useEffect(() => {
                                     <FormControl>
                                       <div className='flex items-center gap-2'>
                                         <Input placeholder="Cole a URL da imagem aqui" {...field} />
-                                        {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                        {field.value && isValidImageUrl(field.value) && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                       </div>
                                     </FormControl>
                                     <FormMessage />
@@ -606,7 +624,7 @@ useEffect(() => {
                          <CardHeader><CardTitle>Seção "Processo de Cremação"</CardTitle></CardHeader>
                          <CardContent className="space-y-4">
                               <FormField control={homeForm.control} name="cremationProcess.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                              <FormField control={homeForm.control} name="cremationProcess.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+                              <FormField control={homeForm.control} name="cremationProcess.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormMessage /></FormItem>)} />
                               {homeForm.watch('cremationProcess.steps').map((step, index) => (
                                   <div key={index} className="space-y-2 rounded-md border p-4">
                                       <h4 className="font-semibold">Passo {step.step}</h4>
@@ -629,7 +647,7 @@ useEffect(() => {
                                     <FormControl>
                                       <div className='flex items-center gap-2'>
                                         <Input placeholder="Cole a URL da imagem aqui" {...field} />
-                                        {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                        {field.value && isValidImageUrl(field.value) && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                       </div>
                                     </FormControl>
                                     <FormMessage />
@@ -660,7 +678,7 @@ useEffect(() => {
                                     <FormControl>
                                       <div className='flex items-center gap-2'>
                                         <Input placeholder="Cole a URL da imagem aqui" {...field} />
-                                        {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                        {field.value && isValidImageUrl(field.value) && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                       </div>
                                     </FormControl>
                                     <FormMessage />
@@ -760,7 +778,7 @@ useEffect(() => {
                                     <FormControl>
                                       <div className='flex items-center gap-2'>
                                         <Input placeholder="Cole a URL da imagem aqui" {...field} />
-                                        {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                        {field.value && isValidImageUrl(field.value) && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                       </div>
                                     </FormControl>
                                     <FormMessage />
@@ -776,7 +794,7 @@ useEffect(() => {
                                     <FormControl>
                                       <div className='flex items-center gap-2'>
                                         <Input placeholder="Cole a URL da imagem aqui" {...field} />
-                                        {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                        {field.value && isValidImageUrl(field.value) && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                       </div>
                                     </FormControl>
                                     <FormMessage />
@@ -820,7 +838,7 @@ useEffect(() => {
                                                     <FormControl>
                                                         <div className='flex items-center gap-2'>
                                                           <Input placeholder="Cole a URL da imagem aqui" {...field} />
-                                                          {field.value && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
+                                                          {field.value && isValidImageUrl(field.value) && <Image src={field.value} alt="Preview" width={40} height={40} className="rounded-md object-cover" />}
                                                         </div>
                                                     </FormControl>
                                                     <FormMessage />
@@ -983,7 +1001,7 @@ useEffect(() => {
                     <FormField control={petForm.control} name="text" render={({ field }) => (<FormItem><FormLabel>Texto Memorial</FormLabel><FormControl><Textarea placeholder="Escreva uma bela homenagem..." {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
 
                     <div>
-                        <Label>Fotos (Mínimo 5)</Label>
+                        <Label>Fotos (Mínimo 5 URLs de imagem direta)</Label>
                          <p className="text-sm text-muted-foreground">A primeira imagem será a foto de capa do memorial. Cole as URLs das imagens abaixo.</p>
                          <div className="mt-2 space-y-2">
                          {petImagesFields.map((field, index) => (
@@ -999,7 +1017,7 @@ useEffect(() => {
                                                       placeholder={`URL da Imagem ${index + 1}`}
                                                       {...imageField}
                                                    />
-                                                   {imageField.value && (
+                                                   {imageField.value && isValidImageUrl(imageField.value) && (
                                                      <Image src={imageField.value} alt={`Preview ${index + 1}`} width={40} height={40} className="rounded-md object-cover" />
                                                    )}
                                                 </div>

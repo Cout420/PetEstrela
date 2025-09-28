@@ -95,12 +95,21 @@ export async function getMemorialById(id: number): Promise<PetMemorial | null> {
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
     const docRef = doc(db, 'memorials', pet.id.toString());
     
+    // Helper function to safely create a Date object
+    const toDate = (dateString: string | undefined): Date => {
+      if (!dateString || isNaN(new Date(dateString).getTime())) {
+        // Return a default date (e.g., now) if the string is invalid or empty
+        return new Date();
+      }
+      return new Date(dateString);
+    };
+
     // Convert date strings back to Timestamps before saving
     const dataToSave: PetMemorial = {
         ...pet,
         images: pet.images.map(img => ({...img, imageUrl: img.imageUrl || ''})),
-        birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
-        passingDate: Timestamp.fromDate(new Date(pet.passingDate)),
+        birthDate: Timestamp.fromDate(toDate(pet.birthDate)),
+        passingDate: Timestamp.fromDate(toDate(pet.passingDate)),
         createdAt: pet.createdAt || Timestamp.now(),
     };
 
