@@ -27,7 +27,7 @@ import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-conte
 import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
 import { PROD_DOMAIN } from '@/lib/link-service';
-import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent, uploadImageAndGetURL } from '@/lib/firebase-service';
+import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent } from '@/lib/firebase-service';
 import { Timestamp } from 'firebase/firestore';
 
 // Zod schema for client-side form validation (dates are strings)
@@ -46,7 +46,7 @@ const petSchema = z.object({
   text: z.string().min(10, "O texto do memorial deve ter pelo menos 10 caracteres."),
   images: z.array(z.object({
       id: z.string(),
-      imageUrl: z.string().min(1, "Por favor, selecione uma imagem."),
+      imageUrl: z.string().url("Por favor, insira uma URL de imagem válida.").min(1, "Por favor, insira a URL da imagem."),
       description: z.string().optional(),
       imageHint: z.string().optional()
   })).min(5, "É necessário adicionar pelo menos 5 imagens."),
@@ -97,7 +97,7 @@ const plansPageSchema = z.object({
 type PlansPageContent = z.infer<typeof plansPageSchema>;
 
 const heroSlideSchema = z.object({
-    imageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
+    imageUrl: z.string().url("URL da imagem é obrigatória.").min(1, 'URL da imagem é obrigatória.'),
     title: z.string().min(1, 'Título é obrigatório'),
     subtitle: z.string().min(1, 'Subtítulo é obrigatório'),
 });
@@ -138,7 +138,7 @@ type HomePageContent = z.infer<typeof homePageSchema>;
 const galleryItemSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Título da imagem é obrigatório."),
-  imageUrl: z.string().min(1, "A imagem é obrigatória."),
+  imageUrl: z.string().url("URL da imagem é obrigatória.").min(1, "A imagem é obrigatória."),
 });
 
 const ourSpaceSchema = z.object({
@@ -151,7 +151,7 @@ type OurSpaceContent = z.infer<typeof ourSpaceSchema>;
 
 
 const memorialPageSchema = z.object({
-  heroImageUrl: z.string().min(1, "A imagem é obrigatória."),
+  heroImageUrl: z.string().url("URL da imagem é obrigatória.").min(1, "A imagem é obrigatória."),
   heroTitle: z.string().min(1, "Título é obrigatório."),
   heroDescription1: z.string().min(1, "Primeiro parágrafo da descrição é obrigatório."),
   heroDescription2: z.string().min(1, "Segundo parágrafo da descrição é obrigatório."),
@@ -207,29 +207,6 @@ export default function AdminPage() {
     control: petForm.control,
     name: "images"
   });
-  
-  const handlePetImageFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        petForm.setValue(`images.${index}.imageUrl`, reader.result as string, { shouldValidate: true });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleGenericFileChangeAsURL = (e: React.ChangeEvent<HTMLInputElement>, fieldName: any, form: any) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        form.setValue(fieldName, reader.result as string, { shouldValidate: true });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
 
   const aboutForm = useForm<AboutPageContent>({
     resolver: zodResolver(aboutPageSchema),
@@ -407,7 +384,7 @@ useEffect(() => {
         toast({
             variant: "destructive",
             title: "Erro ao salvar",
-            description: "Não foi possível salvar o memorial. Verifique as imagens e tente novamente.",
+            description: "Não foi possível salvar o memorial. Verifique os dados e tente novamente.",
         });
     } finally {
         setIsSaving(false);
@@ -434,10 +411,7 @@ useEffect(() => {
   const handleSaveAboutContent = async (data: AboutPageContent) => {
     setIsSaving(true);
     try {
-      const missionImageUrl = await uploadImageAndGetURL(data.missionImageUrl, 'site-content/about');
-      const historyImageUrl = await uploadImageAndGetURL(data.historyImageUrl, 'site-content/about');
-
-      await saveContent('aboutPageContent', { ...data, missionImageUrl, historyImageUrl });
+      await saveContent('aboutPageContent', data);
       toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
@@ -449,30 +423,10 @@ useEffect(() => {
   const handleSaveHomeContent = async (data: HomePageContent) => {
      setIsSaving(true);
     try {
-      // Process Hero Slides
-      const processedSlides = await Promise.all(
-        data.heroSlides.map(async (slide) => ({
-          ...slide,
-          imageUrl: await uploadImageAndGetURL(slide.imageUrl, 'site-content/home'),
-        }))
-      );
-
-      // Process All Pets Section Image
-      const allPetsImageUrl = await uploadImageAndGetURL(data.allPetsSection.imageUrl, 'site-content/home');
-
-      const processedData = {
-        ...data,
-        heroSlides: processedSlides,
-        allPetsSection: {
-          ...data.allPetsSection,
-          imageUrl: allPetsImageUrl,
-        },
-      };
-
-      await saveContent('homePageContent', processedData);
+      await saveContent('homePageContent', data);
       toast({ title: 'Conteúdo da página "Home" atualizado com sucesso.' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo. Verifique se todas as imagens são válidas.' });
+      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo. Verifique se todas as URLs de imagem são válidas.' });
     } finally {
       setIsSaving(false);
     }
@@ -505,13 +459,7 @@ useEffect(() => {
   const handleSaveOurSpaceContent = async (data: OurSpaceContent) => {
     setIsSaving(true);
     try {
-       const processedGallery = await Promise.all(
-        data.gallery.map(async (item) => ({
-          ...item,
-          imageUrl: await uploadImageAndGetURL(item.imageUrl, 'site-content/our-space'),
-        }))
-      );
-      await saveContent('ourSpaceContent', { ...data, gallery: processedGallery });
+      await saveContent('ourSpaceContent', data);
       toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
@@ -523,8 +471,7 @@ useEffect(() => {
   const handleSaveMemorialPageContent = async (data: MemorialPageContent) => {
     setIsSaving(true);
     try {
-      const heroImageUrl = await uploadImageAndGetURL(data.heroImageUrl, 'site-content/memorial');
-      await saveContent('memorialPageContent', { ...data, heroImageUrl });
+      await saveContent('memorialPageContent', data);
       toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
@@ -590,7 +537,7 @@ useEffect(() => {
                             </div>
                             <FormField control={homeForm.control} name={`heroSlides.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={homeForm.control} name={`heroSlides.${index}.subtitle`} render={({ field }) => (<FormItem><FormLabel>Subtítulo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                             <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>Imagem</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, `heroSlides.${index}.imageUrl`, homeForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
+                             <FormField control={homeForm.control} name={`heroSlides.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
                           </div>
                         ))}
                       </CardContent>
@@ -634,7 +581,7 @@ useEffect(() => {
                         <CardContent className="space-y-4">
                             <FormField control={homeForm.control} name="allPetsSection.title" render={({ field }) => (<FormItem><FormLabel>Título da Seção</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={homeForm.control} name="allPetsSection.description" render={({ field }) => (<FormItem><FormLabel>Descrição da Seção</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field }) => (<FormItem><FormLabel>Imagem da Seção</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, 'allPetsSection.imageUrl', homeForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={homeForm.control} name="allPetsSection.imageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da Seção</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </CardContent>
                     </Card>
 
@@ -654,7 +601,7 @@ useEffect(() => {
                     <Form {...memorialForm}>
                         <form onSubmit={memorialForm.handleSubmit(handleSaveMemorialPageContent)} className="space-y-6">
                             <h3 className="text-lg font-semibold text-primary">Seção Principal</h3>
-                            <FormField control={memorialForm.control} name="heroImageUrl" render={({ field }) => (<FormItem><FormLabel>Imagem de Fundo</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, 'heroImageUrl', memorialForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={memorialForm.control} name="heroImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem de Fundo</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="heroTitle" render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="heroDescription1" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 1)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={memorialForm.control} name="heroDescription2" render={({ field }) => (<FormItem><FormLabel>Descrição (Parágrafo 2)</FormLabel><FormControl><Textarea {...field} rows={3} /></FormControl><FormMessage /></FormItem>)} />
@@ -743,12 +690,12 @@ useEffect(() => {
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção Missão</h3>
                             <FormField control={aboutForm.control} name="missionTitle" render={({ field }) => (<FormItem><FormLabel>Título da Missão</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="missionDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da Missão</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field }) => (<FormItem><FormLabel>Imagem da Missão</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, 'missionImageUrl', aboutForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={aboutForm.control} name="missionImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da Missão</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
 
                             <h3 className="text-lg font-semibold text-primary mt-6">Seção História</h3>
                              <FormField control={aboutForm.control} name="historyTitle" render={({ field }) => (<FormItem><FormLabel>Título da História</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={aboutForm.control} name="historyDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da História</FormLabel><FormControl><Textarea {...field} rows={4} /></FormControl><FormMessage /></FormItem>)} />
-                             <FormField control={aboutForm.control} name="historyImageUrl" render={({ field }) => (<FormItem><FormLabel>Imagem da História</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, 'historyImageUrl', aboutForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
+                             <FormField control={aboutForm.control} name="historyImageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem da História</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
 
                             <Button type="submit" disabled={isSaving}><Save className="mr-2" /> {isSaving ? 'Salvando...' : 'Salvar Alterações'}</Button>
                         </form>
@@ -781,7 +728,7 @@ useEffect(() => {
                                               <Button type="button" variant="destructive" size="icon" onClick={() => removeGallery(index)}><Trash2 className="h-4 w-4" /></Button>
                                             </div>
                                             <FormField control={ourSpaceForm.control} name={`gallery.${index}.title`} render={({ field }) => (<FormItem><FormLabel>Título da Imagem</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>Imagem</FormLabel><FormControl><Input type="file" accept="image/*" onChange={(e) => handleGenericFileChangeAsURL(e, `gallery.${index}.imageUrl`, ourSpaceForm)} className="w-full" /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={ourSpaceForm.control} name={`gallery.${index}.imageUrl`} render={({ field }) => (<FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                         </div>
                                     ))}
                                 </CardContent>
@@ -932,25 +879,23 @@ useEffect(() => {
 
                     <div>
                         <Label>Fotos (Mínimo 5)</Label>
-                         <p className="text-sm text-muted-foreground">Anexe as imagens. A primeira será a foto de capa.</p>
+                         <p className="text-sm text-muted-foreground">Cole a URL da imagem. A primeira será a foto de capa.</p>
                          <div className="mt-2 space-y-2">
                          {fields.map((field, index) => (
                              <div key={field.id} className="flex items-center gap-2">
                                  <FormField
                                      control={petForm.control}
                                      name={`images.${index}.imageUrl`}
-                                     render={({ field: { onChange, value, ...rest } }) => (
+                                     render={({ field }) => (
                                          <FormItem className="flex-1">
                                              <FormControl>
                                                 <div className='flex items-center gap-2'>
                                                     <Input 
-                                                        type="file" 
-                                                        accept="image/*"
-                                                        onChange={(e) => handlePetImageFileChange(e, index)}
-                                                        className="w-full"
+                                                        placeholder={`URL da Imagem ${index + 1}`}
+                                                        {...field}
                                                     />
-                                                    {value && typeof value === 'string' && (
-                                                      <Image src={value} alt={`Preview ${index + 1}`} width={40} height={40} className="rounded-md object-cover" />
+                                                    {field.value && (
+                                                      <Image src={field.value} alt={`Preview ${index + 1}`} width={40} height={40} className="rounded-md object-cover" />
                                                     )}
                                                 </div>
                                              </FormControl>
@@ -1022,6 +967,7 @@ useEffect(() => {
     
 
     
+
 
 
 

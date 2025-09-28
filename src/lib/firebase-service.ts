@@ -51,49 +51,15 @@ export interface PetMemorial {
 };
 
 
+// The type used in forms, where dates are strings.
+export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'passingDate' | 'createdAt'> & {
+    birthDate: string;
+    passingDate: string;
+    createdAt?: Timestamp;
+};
+
+
 // --- Funções do Serviço ---
-
-/**
- * Uploads a base64 encoded image string to Firebase Storage and returns the public URL.
- * If the string is already a URL, it returns it as is.
- * @param imageString The base64 data URI or an existing HTTPS URL.
- * @param path The path in storage to save the image (e.g., 'memorials', 'site-content').
- * @returns The public downloadable URL of the image.
- */
-export async function uploadImageAndGetURL(imageString: string, path: string): Promise<string> {
-  // If the string is empty, null, or undefined, return it as is.
-  if (!imageString) {
-    return imageString;
-  }
-  
-  // If it's a data URI (a new file upload), upload it to Storage.
-  if (imageString.startsWith('data:image')) {
-    const fileType = imageString.split(';')[0].split('/')[1];
-    const storageRef = ref(storage, `${path}/${Date.now()}.${fileType}`);
-    
-    // We need to strip the 'data:image/jpeg;base64,' part from the string
-    const base64Data = imageString.split(',')[1];
-
-    try {
-      const snapshot = await uploadString(storageRef, base64Data, 'base64');
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      return downloadURL;
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      throw new Error("Failed to upload image.");
-    }
-  }
-
-  // If it's already an http/https URL, it means the image was not changed, so return the existing URL.
-  if (imageString.startsWith('http')) {
-    return imageString;
-  }
-  
-  // If it's neither a data URI nor a URL, it's likely invalid data.
-  // For robustness, we return it, but you might want to throw an error
-  // depending on expected behavior.
-  return imageString;
-}
 
 
 /**
@@ -127,37 +93,16 @@ export async function getMemorialById(id: number): Promise<PetMemorial | null> {
   }
 }
 
-// The type used in forms, where dates are strings.
-export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'passingDate' | 'createdAt'> & {
-    birthDate: string;
-    passingDate: string;
-    createdAt?: Timestamp;
-};
 
 /**
  * Salva (cria ou atualiza) um memorial no Firestore.
  */
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
     const docRef = doc(db, 'memorials', pet.id.toString());
-
-    // Process images: upload new ones and keep existing URLs.
-    const processedImages = await Promise.all(
-        pet.images.map(async (image) => {
-            try {
-                const newUrl = await uploadImageAndGetURL(image.imageUrl, `memorials/${pet.id}`);
-                return { ...image, imageUrl: newUrl };
-            } catch (uploadError) {
-                console.error(`Failed to upload image for memorial ${pet.id}.`, uploadError);
-                // Decide how to handle a failed upload. Here, we're throwing the error.
-                throw new Error(`Image upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
-            }
-        })
-    );
     
     // Convert string dates from the form back to Timestamps for Firestore
     const dataToSave: PetMemorial = {
         ...pet,
-        images: processedImages,
         birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
         passingDate: Timestamp.fromDate(new Date(pet.passingDate)),
         createdAt: pet.createdAt || Timestamp.now(),
@@ -207,7 +152,7 @@ export async function getNextMemorialId(): Promise<number> {
 export async function saveContent<T>(contentId: string, data: T): Promise<void> {
   try {
     const docRef = doc(db, 'siteContent', contentId);
-    await setDoc(docRef, { data }, { merge: true });
+    await setDoc(docRef, data, { merge: true });
   } catch (error) {
     console.error(`Erro ao salvar conteúdo com ID ${contentId}:`, error);
     throw error;
@@ -224,7 +169,7 @@ export async function getContent<T>(contentId: string): Promise<T | null> {
     const docRef = doc(db, 'siteContent', contentId);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      return docSnap.data().data as T;
+      return docSnap.data() as T;
     }
     return null;
   } catch (error) {
