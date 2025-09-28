@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -65,7 +66,7 @@ export default function Home() {
                       <h1 className="animate-fade-in font-headline text-4xl font-bold md:text-6xl lg:text-7xl">
                         {slide.title}
                       </h1>
-                      <p className="animate-fade-in mt-4 max-w-2xl text-lg md:text-xl">
+                      <p className="animate-fade-in mx-auto mt-4 max-w-2xl text-lg md:text-xl">
                         {slide.subtitle}
                       </p>
                       <div className="animate-fade-in mt-8 flex flex-wrap justify-center gap-4">
