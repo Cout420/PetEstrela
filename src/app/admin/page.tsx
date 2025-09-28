@@ -139,7 +139,7 @@ const homePageSchema = z.object({
         items: z.array(whyChooseUsItemSchema),
     }),
     cremationProcess: z.object({
-        title: zstring().min(1, 'Título é obrigatório'),
+        title: z.string().min(1, 'Título é obrigatório'),
         description: z.string().min(1, 'Descrição é obrigatória'),
         steps: z.array(cremationProcessStepSchema),
     }),
@@ -1136,3 +1136,4 @@ useEffect(() => {
     
 
     
+
