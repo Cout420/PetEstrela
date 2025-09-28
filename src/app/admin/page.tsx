@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -381,15 +379,24 @@ useEffect(() => {
   const handleSavePet = async (data: PetMemorialForm) => {
     setIsSaving(true);
     try {
-      const result = await shortenLink({ memorialId: data.id });
-      const qrCodeUrl = result.shortUrl;
-      
-      const validImages = data.images.filter(image => image.imageUrl);
+      const { shortUrl } = await shortenLink({ memorialId: data.id });
 
+      const validImages = data.images.filter(image => image.imageUrl && image.imageUrl.trim() !== '');
+
+      if (validImages.length < 5) {
+        toast({
+          variant: "destructive",
+          title: "Imagens insuficientes",
+          description: "Por favor, forneça pelo menos 5 URLs de imagem válidas.",
+        });
+        setIsSaving(false);
+        return;
+      }
+      
       const petToSave: PetMemorialWithDatesAsString = {
         ...data,
         images: validImages,
-        qrCodeUrl: qrCodeUrl,
+        qrCodeUrl: shortUrl,
         createdAt: editingPet?.createdAt || Timestamp.now(),
       };
 
@@ -977,7 +984,7 @@ useEffect(() => {
 
                     <div>
                         <Label>Fotos (Mínimo 5)</Label>
-                         <p className="text-sm text-muted-foreground">A primeira imagem será a foto de capa do memorial.</p>
+                         <p className="text-sm text-muted-foreground">A primeira imagem será a foto de capa do memorial. Cole as URLs das imagens abaixo.</p>
                          <div className="mt-2 space-y-2">
                          {petImagesFields.map((field, index) => (
                              <div key={field.id} className="flex items-center gap-2">
@@ -989,7 +996,7 @@ useEffect(() => {
                                              <FormControl>
                                                 <div className='flex items-center gap-2'>
                                                    <Input 
-                                                      placeholder="Cole a URL da imagem aqui" 
+                                                      placeholder={`URL da Imagem ${index + 1}`}
                                                       {...imageField}
                                                    />
                                                    {imageField.value && (
@@ -1012,7 +1019,7 @@ useEffect(() => {
                             variant="outline"
                             size="sm"
                             className="mt-2"
-                            onClick={() => appendPetImage({ id: `img-${Date.now()}`, imageUrl: '' })}
+                            onClick={() => appendPetImage({ id: `img-${Date.now()}`, imageUrl: '', description: '', imageHint: '' })}
                          >
                             <ImagePlus className="mr-2" /> Adicionar Imagem
                          </Button>
