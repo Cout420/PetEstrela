@@ -1,10 +1,7 @@
-
-
 'use server';
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, query, orderBy, limit, writeBatch, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
-import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "firebase/storage";
 
 
 // Sua configuração do Firebase virá do .env.local
@@ -17,10 +14,9 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Inicializa o Firebase
+// Inicializa o Firebase para uso no lado do cliente/servidor quando o admin SDK não é necessário.
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 const memorialsCollection = collection(db, 'memorials');
 const contentCollection = collection(db, 'siteContent');
@@ -177,5 +173,3 @@ export async function getContent<T>(contentId: string): Promise<T | null> {
     return null;
   }
 }
-
-    

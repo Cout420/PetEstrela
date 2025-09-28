@@ -1,27 +1,12 @@
 'use server';
 
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
-
-// Use server-only environment variables for server-side initialization
-const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID,
-};
-
-// Initialize a specific app for server actions to avoid conflicts with client-side app
-const appName = 'firebase-server-app';
-const app: FirebaseApp = !getApps().some(app => app.name === appName) ? initializeApp(firebaseConfig, appName) : getApp(appName);
-const storage = getStorage(app);
-
+import { getAdminApp } from './firebase-admin';
+import { getStorage } from 'firebase-admin/storage';
+import { randomUUID } from 'crypto';
 
 /**
- * Uploads an image if it's a new base64 encoded string.
- * This is a server action and is executed securely on the server.
+ * Uploads an image if it's a new base64 encoded string using the Firebase Admin SDK.
+ * This is a server action and is executed securely on the server with admin privileges.
  * @param imageData - The image data, either a base64 string or an existing URL.
  * @returns The public URL of the uploaded or existing image.
  */
@@ -32,12 +17,35 @@ export async function uploadImage(imageData?: string): Promise<string> {
     }
 
     try {
-        const storageRef = ref(storage, `images/${Date.now()}-${Math.random().toString(36).substring(2)}`);
-        const snapshot = await uploadString(storageRef, imageData, 'data_url');
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        return downloadURL;
+        const adminApp = getAdminApp();
+        const bucket = getStorage(adminApp).bucket();
+
+        // Extract mime type and base64 data
+        const [dataUrl, base64Data] = imageData.split(',');
+        if (!base64Data) {
+          throw new Error('Invalid base64 string');
+        }
+        
+        const mimeType = dataUrl.match(/:(.*?);/)?.[1];
+        if (!mimeType) {
+            throw new Error('Could not extract MIME type from data URL.');
+        }
+
+        const buffer = Buffer.from(base64Data, 'base64');
+        const fileName = `images/${randomUUID()}`;
+        const file = bucket.file(fileName);
+        
+        await file.save(buffer, {
+            metadata: {
+                contentType: mimeType,
+            },
+        });
+
+        // The public URL is in the format: https://storage.googleapis.com/[BUCKET_NAME]/[FILE_NAME]
+        return `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+
     } catch (error) {
-        console.error("Error uploading image:", error);
+        console.error("Error uploading image with Admin SDK:", error);
         throw new Error("Falha no upload da imagem.");
     }
 }
