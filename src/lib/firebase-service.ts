@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -19,6 +20,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 const memorialsCollection = collection(db, 'memorials');
+const contentCollection = collection(db, 'siteContent');
 
 // --- Tipos ---
 // The representation in Firestore
@@ -138,4 +140,39 @@ export async function getNextMemorialId(): Promise<number> {
         console.error("Erro ao buscar o próximo ID:", error);
         return 1; // Fallback em caso de erro
     }
+}
+
+
+/**
+ * Salva um documento de conteúdo genérico no Firestore.
+ * @param contentId O ID do documento (ex: 'homePageContent', 'generalContent').
+ * @param data O objeto de dados a ser salvo.
+ */
+export async function saveContent<T>(contentId: string, data: T): Promise<void> {
+  try {
+    const docRef = doc(db, 'siteContent', contentId);
+    await setDoc(docRef, { data });
+  } catch (error) {
+    console.error(`Erro ao salvar conteúdo com ID ${contentId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Busca um documento de conteúdo genérico do Firestore.
+ * @param contentId O ID do documento a ser buscado.
+ * @returns Os dados do conteúdo ou null se não encontrado.
+ */
+export async function getContent<T>(contentId: string): Promise<T | null> {
+  try {
+    const docRef = doc(db, 'siteContent', contentId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().data as T;
+    }
+    return null;
+  } catch (error) {
+    console.error(`Erro ao buscar conteúdo com ID ${contentId}:`, error);
+    return null;
+  }
 }

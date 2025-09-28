@@ -4,26 +4,32 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-content';
+import { getContent } from '@/lib/firebase-service';
 
-type OurSpaceContent = {
-  headerTitle: string;
-  headerDescription: string;
-  gallery: {
-    id: string;
-    title: string;
-    imageUrl: string;
-  }[];
-};
+type OurSpaceContent = typeof initialOurSpaceContent;
 
 export default function OurSpacePage() {
   const [content, setContent] = useState<OurSpaceContent>(initialOurSpaceContent);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedContent = localStorage.getItem('ourSpaceContent');
-    if (storedContent) {
-      setContent(JSON.parse(storedContent));
+    const fetchContent = async () => {
+      const dbContent = await getContent<OurSpaceContent>('ourSpaceContent');
+      if (dbContent) {
+        setContent(dbContent);
+      }
+      setIsLoading(false);
     }
+    fetchContent();
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Logo from '../logo';
 import { Button } from '../ui/button';
 import { Instagram } from 'lucide-react';
+import { getContent } from '@/lib/firebase-service';
 
 type GeneralContent = {
   whatsappNumber: string;
@@ -14,22 +15,25 @@ type GeneralContent = {
   instagramLink: string;
 };
 
+const initialContent = {
+    whatsappNumber: '1142405253',
+    whatsappLink: 'https://wa.me/551142405253',
+    phone: '(11) 4240-5253',
+    address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
+    instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
+};
+
 const Footer = () => {
-  const [content, setContent] = useState<GeneralContent | null>(null);
+  const [content, setContent] = useState<GeneralContent>(initialContent);
 
   useEffect(() => {
-    const storedContent = localStorage.getItem('generalContent');
-    if (storedContent) {
-      setContent(JSON.parse(storedContent));
-    } else {
-      setContent({
-        whatsappNumber: '1142405253',
-        whatsappLink: 'https://wa.me/551142405253',
-        phone: '(11) 4240-5253',
-        address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
-        instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
-      });
+    const fetchContent = async () => {
+      const dbContent = await getContent<GeneralContent>('generalContent');
+      if (dbContent) {
+        setContent(dbContent);
+      }
     }
+    fetchContent();
   }, []);
 
   return (

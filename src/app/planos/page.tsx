@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CheckCircle2 } from 'lucide-react';
 import { plans as initialPlansData } from '@/lib/mock-data';
+import { getContent } from '@/lib/firebase-service';
 
 type Plan = {
   name: string;
@@ -21,37 +22,45 @@ type PlansPageContent = {
   plans: Plan[];
 };
 
+type GeneralContent = {
+  whatsappLink?: string;
+}
+
 export default function PlansPage() {
     const [content, setContent] = useState<PlansPageContent>({ plans: initialPlansData });
     const [whatsappLink, setWhatsappLink] = useState('');
     const [specialistWhatsappLink, setSpecialistWhatsappLink] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
 
 
     useEffect(() => {
-        const storedPlansContent = localStorage.getItem('plansPageContent');
-        if (storedPlansContent) {
-            try {
-                const parsedContent = JSON.parse(storedPlansContent);
-                // Ensure the parsed content has the correct structure
-                if (parsedContent && Array.isArray(parsedContent.plans)) {
-                    setContent(parsedContent);
-                }
-            } catch (error) {
-                console.error("Failed to parse plans content from localStorage", error);
-            }
+        const fetchData = async () => {
+          const [plansContent, generalContent] = await Promise.all([
+            getContent<PlansPageContent>('plansPageContent'),
+            getContent<GeneralContent>('generalContent')
+          ]);
+
+          if (plansContent && Array.isArray(plansContent.plans)) {
+            setContent(plansContent);
+          }
+
+          const baseLink = generalContent?.whatsappLink || 'https://wa.me/551142405253';
+          setWhatsappLink(`${baseLink}?text=${encodeURIComponent('Olá! Gostaria de mais informações sobre os planos de cremação.')}`);
+          setSpecialistWhatsappLink(`${baseLink}?text=${encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os planos.')}`);
+          
+          setIsLoading(false);
         }
 
-        const storedGeneralContent = localStorage.getItem('generalContent');
-        if (storedGeneralContent) {
-            const general = JSON.parse(storedGeneralContent);
-            setWhatsappLink(`${general.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de mais informações sobre os planos de cremação.')}`);
-            setSpecialistWhatsappLink(`${general.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os planos.')}`);
-        } else {
-            const defaultLink = 'https://wa.me/551142405253';
-            setWhatsappLink(`${defaultLink}?text=${encodeURIComponent('Olá! Gostaria de mais informações sobre os planos de cremação.')}`);
-            setSpecialistWhatsappLink(`${defaultLink}?text=${encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os planos.')}`);
-        }
+        fetchData();
     }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Carregando planos...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background py-16 md:py-24">

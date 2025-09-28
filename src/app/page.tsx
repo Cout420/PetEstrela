@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -16,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, CreditCard, Heart, Star } from 'lucide-react';
 import { testimonials } from '@/lib/mock-data';
 import { homePageContent as initialHomePageContent } from '@/lib/home-content';
+import { getContent } from '@/lib/firebase-service';
 
 const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
   Clock,
@@ -23,20 +25,40 @@ const iconMap: { [key: string]: React.ComponentType<{ className: string }> } = {
   Heart,
 };
 
+type HomePageContent = typeof initialHomePageContent;
+type GeneralContent = { whatsappLink: string; address: string; phone: string; whatsappNumber: string; };
+
 export default function Home() {
-  const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/551142405253', address: '', phone: '', whatsappNumber: '' });
-  const [homeContent, setHomeContent] = useState(initialHomePageContent);
+  const [generalContent, setGeneralContent] = useState<GeneralContent>({ whatsappLink: 'https://wa.me/551142405253', address: '', phone: '', whatsappNumber: '' });
+  const [homeContent, setHomeContent] = useState<HomePageContent>(initialHomePageContent);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedGeneralContent = localStorage.getItem('generalContent');
-    if (storedGeneralContent) {
-      setGeneralContent(JSON.parse(storedGeneralContent));
-    }
-    const storedHomeContent = localStorage.getItem('homePageContent');
-    if (storedHomeContent) {
-        setHomeContent(JSON.parse(storedHomeContent));
-    }
+    const fetchData = async () => {
+      const [gc, hc] = await Promise.all([
+        getContent<GeneralContent>('generalContent'),
+        getContent<HomePageContent>('homePageContent')
+      ]);
+
+      if (gc) {
+        setGeneralContent(gc);
+      }
+      if (hc) {
+        setHomeContent(hc);
+      }
+      setIsLoading(false);
+    };
+    
+    fetchData();
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col">

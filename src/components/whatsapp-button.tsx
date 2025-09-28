@@ -3,16 +3,19 @@
 import { useEffect, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { Button } from './ui/button';
+import { getContent } from '@/lib/firebase-service';
 
 const WhatsAppButton = () => {
     const [whatsappLink, setWhatsappLink] = useState('https://wa.me/551142405253');
 
     useEffect(() => {
-        const storedContent = localStorage.getItem('generalContent');
-        if (storedContent) {
-            const content = JSON.parse(storedContent);
-            setWhatsappLink(content.whatsappLink || 'https://wa.me/551142405253');
+        const fetchContent = async () => {
+          const content = await getContent<{whatsappLink: string}>('generalContent');
+          if (content?.whatsappLink) {
+            setWhatsappLink(content.whatsappLink);
+          }
         }
+        fetchContent();
     }, []);
 
   return (

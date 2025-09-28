@@ -8,50 +8,53 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Search } from 'lucide-react';
-import { getMemorials, PetMemorial } from '@/lib/firebase-service';
+import { getMemorials, PetMemorial, getContent } from '@/lib/firebase-service';
 import { memorialPets as initialPets } from '@/lib/mock-data'; // Fallback
 import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
+
+type MemorialPageContent = typeof initialMemorialPageContent;
+type GeneralContent = { whatsappLink: string };
+
 
 const MemorialPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [memorialPets, setMemorialPets] = useState<PetMemorial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [content, setContent] = useState(initialMemorialPageContent);
-  const [generalContent, setGeneralContent] = useState({ whatsappLink: 'https://wa.me/551142405253?text=${encodeURIComponent(\'Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.\')}' });
+  const [generalContent, setGeneralContent] = useState<GeneralContent>({ whatsappLink: 'https://wa.me/551142405253?text=${encodeURIComponent(\'Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.\')}' });
 
   useEffect(() => {
-    async function fetchPets() {
+    async function fetchData() {
+      setIsLoading(true);
       try {
-        const petsFromDb = await getMemorials();
-        setMemorialPets(petsFromDb);
+        const [petsFromDb, memorialContent, generalDbContent] = await Promise.all([
+          getMemorials(),
+          getContent<MemorialPageContent>('memorialPageContent'),
+          getContent<GeneralContent>('generalContent'),
+        ]);
+
+        setMemorialPets(petsFromDb.length > 0 ? petsFromDb : initialPets as any);
+
+        if (memorialContent) {
+          setContent(memorialContent);
+        }
+
+        if (generalDbContent?.whatsappLink) {
+           setGeneralContent({
+            whatsappLink: `${generalDbContent.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.')}`
+           });
+        }
+
       } catch (error) {
-        console.error("Failed to fetch memorials from Firestore, using fallback data.", error);
-        // Em caso de erro (ex: config do Firebase faltando), usa os dados locais
-        const typedInitialPets: PetMemorial[] = initialPets.map(p => ({
-            ...p,
-            birthDate: p.birthDate || '',
-            passingDate: p.passingDate || ''
-        }));
-        setMemorialPets(typedInitialPets as any);
+        console.error("Failed to fetch data from Firestore, using fallback data.", error);
+        setMemorialPets(initialPets as any);
+        setContent(initialMemorialPageContent);
       } finally {
         setIsLoading(false);
       }
     }
     
-    fetchPets();
-
-    const storedGeneralContent = localStorage.getItem('generalContent');
-    if (storedGeneralContent) {
-        const gc = JSON.parse(storedGeneralContent);
-        setGeneralContent({
-            whatsappLink: `${gc.whatsappLink}?text=${encodeURIComponent('Olá! Gostaria de informações sobre como criar um memorial digital para o meu pet.')}`
-        });
-    }
-
-    const storedMemorialContent = localStorage.getItem('memorialPageContent');
-    if (storedMemorialContent) {
-      setContent(JSON.parse(storedMemorialContent));
-    }
+    fetchData();
   }, []);
 
   const formatId = (id: number) => `#${id.toString().padStart(3, '0')}`;

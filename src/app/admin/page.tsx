@@ -27,7 +27,7 @@ import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-conte
 import { memorialPageContent as initialMemorialPageContent } from '@/lib/memorial-content';
 import { shortenLink } from '@/ai/flows/shorten-link-flow';
 import { PROD_DOMAIN } from '@/lib/link-service';
-import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString } from '@/lib/firebase-service';
+import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorial as FirestorePetMemorial, PetMemorialWithDatesAsString, saveContent, getContent } from '@/lib/firebase-service';
 import { Timestamp } from 'firebase/firestore';
 
 // Zod schema for client-side form validation (dates are strings)
@@ -291,54 +291,48 @@ export default function AdminPage() {
   });
 
 useEffect(() => {
-    // Helper function to load from localStorage
-    const loadFromStorage = (key: string, form: any, initialData: any) => {
-      form.reset(initialData); // Reset with initial data first
-      const storedData = localStorage.getItem(key);
-      if (storedData) {
-        try {
-          form.reset(JSON.parse(storedData));
-        } catch (e) {
-          console.error(`Failed to parse ${key} from localStorage`, e);
-          form.reset(initialData); // Fallback to initial data on parse error
-        }
-      }
+    const loadContentFromDB = async () => {
+      // Load About Page Content
+      aboutForm.reset(initialHomePageContent as any); // Reset with initial data first
+      const aboutData = await getContent<AboutPageContent>('aboutPageContent');
+      if (aboutData) aboutForm.reset(aboutData);
+
+      // Load General Content
+      generalForm.reset({
+        whatsappNumber: '1142405253',
+        whatsappLink: 'https://wa.me/551142405253',
+        phone: '(11) 4240-5253',
+        address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
+        instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
+      });
+      const generalData = await getContent<GeneralContent>('generalContent');
+      if (generalData) generalForm.reset(generalData);
+
+      // Load Plans Page Content
+      plansForm.reset({ plans: initialPlans });
+      const plansData = await getContent<PlansPageContent>('plansPageContent');
+      if (plansData) plansForm.reset(plansData);
+
+      // Load Home Page Content
+      homeForm.reset(initialHomePageContent);
+      const homeData = await getContent<HomePageContent>('homePageContent');
+      if (homeData) homeForm.reset(homeData);
+
+      // Load Our Space Content
+      ourSpaceForm.reset(initialOurSpaceContent);
+      const ourSpaceData = await getContent<OurSpaceContent>('ourSpaceContent');
+      if (ourSpaceData) ourSpaceForm.reset(ourSpaceData);
+
+      // Load Memorial Page Content
+      memorialForm.reset(initialMemorialPageContent);
+      const memorialData = await getContent<MemorialPageContent>('memorialPageContent');
+      if (memorialData) memorialForm.reset(memorialData);
     };
-    
-    // About Page Content
-    loadFromStorage('aboutPageContent', aboutForm, {
-      headerTitle: "Sobre o Pet Estrela",
-      headerDescription: "Há mais de 10 anos, nossa missão é proporcionar uma despedida digna e respeitosa, transformando a dor da perda em uma celebração do amor e da amizade.",
-      missionTitle: "Nossa Missão",
-      missionDescription: "Nossa missão é oferecer um serviço de cremação pet que transcenda o procedimento técnico. Buscamos acolher as famílias em um dos momentos mais delicados, garantindo que a memória de seus companheiros seja honrada com a máxima dignidade. Acreditamos que cada vida, não importa o quão pequena, merece uma despedida grandiosa.",
-      missionImageUrl: PlaceHolderImages.find((img) => img.id === 'about-mission')?.imageUrl ?? '',
-      historyTitle: "Nossa História",
-      historyDescription: "Fundada em 2014 com o sonho de oferecer um serviço funerário pet diferenciado, a Pet Estrela nasceu da paixão e do respeito pelos animais. Ao longo dos anos, crescemos e nos modernizamos, mas nunca perdemos a essência do nosso trabalho: o acolhimento.",
-      historyImageUrl: PlaceHolderImages.find((img) => img.id === 'about-history')?.imageUrl ?? '',
-    });
 
-    // General Content
-    loadFromStorage('generalContent', generalForm, {
-      whatsappNumber: '1142405253',
-      whatsappLink: 'https://wa.me/551142405253',
-      phone: '(11) 4240-5253',
-      address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
-      instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
-    });
-
-    // Plans Page Content
-    loadFromStorage('plansPageContent', plansForm, { plans: initialPlans });
-
-    // Home Page Content
-    loadFromStorage('homePageContent', homeForm, initialHomePageContent);
-
-    // Our Space Content
-    loadFromStorage('ourSpaceContent', ourSpaceForm, initialOurSpaceContent);
-    
-    // Memorial Page Content
-    loadFromStorage('memorialPageContent', memorialForm, initialMemorialPageContent);
-
-  }, [aboutForm, generalForm, plansForm, homeForm, ourSpaceForm, memorialForm]);
+    if (isAuthenticated) {
+      loadContentFromDB();
+    }
+  }, [isAuthenticated, aboutForm, generalForm, plansForm, homeForm, ourSpaceForm, memorialForm]);
 
   const formatDateForInput = (date: Timestamp | Date | string | undefined): string => {
     if (!date) return '';
@@ -442,34 +436,58 @@ useEffect(() => {
     }
   };
 
-  const handleSaveAboutContent = (data: AboutPageContent) => {
-    localStorage.setItem('aboutPageContent', JSON.stringify(data));
-    toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
+  const handleSaveAboutContent = async (data: AboutPageContent) => {
+    try {
+      await saveContent('aboutPageContent', data);
+      toast({ title: 'Conteúdo da página "Sobre Nós" atualizado com sucesso.' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    }
   };
   
-  const handleSaveHomeContent = (data: HomePageContent) => {
-    localStorage.setItem('homePageContent', JSON.stringify(data));
-    toast({ title: 'Conteúdo da página "Home" atualizado com sucesso.' });
+  const handleSaveHomeContent = async (data: HomePageContent) => {
+    try {
+      await saveContent('homePageContent', data);
+      toast({ title: 'Conteúdo da página "Home" atualizado com sucesso.' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    }
   }
 
-  const handleSaveGeneralContent = (data: GeneralContent) => {
-    localStorage.setItem('generalContent', JSON.stringify(data));
-    toast({ title: 'Conteúdo geral do site atualizado com sucesso.' });
+  const handleSaveGeneralContent = async (data: GeneralContent) => {
+    try {
+      await saveContent('generalContent', data);
+      toast({ title: 'Conteúdo geral do site atualizado com sucesso.' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    }
   };
   
-  const handleSavePlansContent = (data: PlansPageContent) => {
-    localStorage.setItem('plansPageContent', JSON.stringify(data));
-    toast({ title: 'Conteúdo da página de planos atualizado com sucesso.' });
+  const handleSavePlansContent = async (data: PlansPageContent) => {
+    try {
+      await saveContent('plansPageContent', data);
+      toast({ title: 'Conteúdo da página de planos atualizado com sucesso.' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    }
   };
 
-  const handleSaveOurSpaceContent = (data: OurSpaceContent) => {
-    localStorage.setItem('ourSpaceContent', JSON.stringify(data));
-    toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
+  const handleSaveOurSpaceContent = async (data: OurSpaceContent) => {
+    try {
+      await saveContent('ourSpaceContent', data);
+      toast({ title: 'Conteúdo da página "Nosso Espaço" atualizado com sucesso.' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    }
   };
 
-  const handleSaveMemorialPageContent = (data: MemorialPageContent) => {
-    localStorage.setItem('memorialPageContent', JSON.stringify(data));
-    toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
+  const handleSaveMemorialPageContent = async (data: MemorialPageContent) => {
+    try {
+      await saveContent('memorialPageContent', data);
+      toast({ title: 'Conteúdo da página "Memorial" atualizado com sucesso.' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o conteúdo.' });
+    }
   };
 
 
@@ -582,7 +600,7 @@ useEffect(() => {
               <CardHeader>
                 <CardTitle>Editar Página Memorial</CardTitle>
               </CardHeader>
-                <CardContent>
+              <CardContent>
                     <Form {...memorialForm}>
                         <form onSubmit={memorialForm.handleSubmit(handleSaveMemorialPageContent)} className="space-y-6">
                             <h3 className="text-lg font-semibold text-primary">Seção Principal</h3>
