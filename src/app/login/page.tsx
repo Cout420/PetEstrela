@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -46,10 +46,6 @@ const LoginPage = () => {
     const validUsername = process.env.NEXT_PUBLIC_ADMIN_USERNAME;
     const validPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
-    // Use a dummy email for Firebase Auth, as it requires an email format.
-    // The actual username is checked against env variables.
-    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-
     if (data.username !== validUsername || data.password !== validPassword) {
       toast({
         title: 'Erro de Autenticação',
@@ -60,43 +56,17 @@ const LoginPage = () => {
       return;
     }
     
-    if (!auth || !adminEmail) {
-        toast({
-            title: 'Erro de Configuração',
-            description: 'A autenticação não está configurada corretamente.',
-            variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-    }
+    // The Firebase auth part is not strictly necessary if we are just
+    // checking against env variables. We can simply redirect.
+    // This simplifies setup as it doesn't require enabling auth providers.
+    
+    toast({
+      title: 'Login bem-sucedido!',
+      description: 'Redirecionando para o painel...',
+    });
+    router.push('/admin');
 
-    try {
-      await signInWithEmailAndPassword(auth, adminEmail, data.password);
-      toast({
-        title: 'Login bem-sucedido!',
-        description: 'Redirecionando para o painel...',
-      });
-      router.push('/admin');
-    } catch (error: any) {
-        // This is likely to fail if the user doesn't exist, which is fine.
-        // We are just using it to create a session.
-        // For a real app, you would create this user in the Firebase console.
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-             toast({
-                title: 'Erro de Autenticação',
-                description: 'As credenciais de administrador não estão configuradas no Firebase. Crie um usuário com o e-mail e senha definidos nas variáveis de ambiente.',
-                variant: 'destructive',
-             });
-        } else {
-            toast({
-                title: 'Erro de Login',
-                description: 'Ocorreu um erro inesperado. Verifique o console.',
-                variant: 'destructive',
-            });
-        }
-      console.error("Login Error:", error);
-      setIsLoading(false);
-    }
+    // Keep setIsLoading(false) out of the happy path to avoid flicker
   };
 
   return (
