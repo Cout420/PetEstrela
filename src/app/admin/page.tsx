@@ -119,6 +119,7 @@ const AdminMemorialsPage = () => {
         ...memorial,
         birthDate: timestampToString(memorial.birthDate),
         passingDate: timestampToString(memorial.passingDate),
+        qrCodeUrl: memorial.qrCodeUrl || '', // Garante que qrCodeUrl seja sempre uma string
       };
       setEditingMemorial(memorialWithStringDates);
       reset(memorialWithStringDates);
@@ -407,3 +408,5 @@ const AdminMemorialsPage = () => {
 };
 
 export default AdminMemorialsPage;
+
+    
