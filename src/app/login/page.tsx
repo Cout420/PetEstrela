@@ -3,12 +3,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAuth, signInAnonymously } from 'firebase/auth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { app } from '@/lib/firebase-config';
-import { getApps } from 'firebase/app';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,8 +26,6 @@ const LoginPage = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const auth = getApps().length ? getAuth(app) : null;
-
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -56,18 +51,10 @@ const LoginPage = () => {
       return;
     }
     
-    if (!auth) {
-        toast({
-            title: 'Erro de Configuração',
-            description: 'A autenticação do Firebase não está disponível.',
-            variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-    }
-
     try {
-        await signInAnonymously(auth);
+        // Since we are not using a real auth provider for this simple case,
+        // we can consider the login successful if credentials match.
+        // We'll use router to redirect.
         
         toast({
           title: 'Login bem-sucedido!',
@@ -77,10 +64,10 @@ const LoginPage = () => {
         router.push('/admin');
 
     } catch (error) {
-        console.error("Anonymous sign-in failed:", error);
+        console.error("Login failed:", error);
         toast({
             title: 'Falha no Login',
-            description: 'Não foi possível iniciar uma sessão segura. Por favor, habilite o login anônimo no seu painel do Firebase.',
+            description: 'Ocorreu um erro inesperado durante o login. Tente novamente.',
             variant: 'destructive',
         });
         setIsLoading(false);

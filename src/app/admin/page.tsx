@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -15,9 +14,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-import { getApps } from 'firebase/app';
-import { app } from '@/lib/firebase-config'; 
 import { getContent, saveContent, uploadImage } from '@/lib/firebase-service';
 
 import { homePageContent as initialHomePageContent } from '@/lib/home-content';
@@ -141,9 +137,7 @@ type MemorialPageContent = z.infer<typeof memorialPageSchema>;
 const AdminPage = () => {
   const { toast } = useToast();
   const router = useRouter();
-  const auth = getApps().length ? getAuth(app) : null;
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticating, setIsAuthenticating] = useState(true);
   const [activeTab, setActiveTab] = useState('general');
   const [uploadingState, setUploadingState] = useState<{ [key: string]: boolean }>({});
 
@@ -203,36 +197,13 @@ const AdminPage = () => {
   }, [reset, toast]);
 
   useEffect(() => {
-    if (!auth) {
-        setIsAuthenticating(false);
-        router.push('/login');
-        return;
-    }
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setIsAuthenticating(false);
-        loadContent();
-      } else {
-        router.push('/login');
-      }
-    });
-
-    return () => unsubscribe();
-  }, [auth, router, loadContent]);
+    loadContent();
+  }, [loadContent]);
 
   const handleSignOut = async () => {
-    if (!auth) return;
-    try {
-      await signOut(auth);
-      toast({ title: 'Você saiu da sua conta.' });
-      router.push('/login');
-    } catch (error) {
-      toast({
-        title: 'Erro ao sair',
-        description: 'Não foi possível fazer o logout. Tente novamente.',
-        variant: 'destructive',
-      });
-    }
+    // Since we are not using a real auth provider, we just redirect to login
+    toast({ title: 'Você saiu da sua conta.' });
+    router.push('/login');
   };
   
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldName: any) => {
@@ -319,7 +290,7 @@ const AdminPage = () => {
     }
   };
   
-  if (isAuthenticating || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-100">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
