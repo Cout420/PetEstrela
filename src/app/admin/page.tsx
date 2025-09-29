@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -35,7 +34,7 @@ const generalContentSchema = z.object({
 });
 
 const heroSlideSchema = z.object({
-  imageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem inválida.' }),
+  imageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
   title: z.string().min(1, 'Título é obrigatório.'),
   subtitle: z.string().min(1, 'Subtítulo é obrigatório.'),
 });
@@ -67,7 +66,7 @@ const homePageSchema = z.object({
   allPetsSection: z.object({
     title: z.string().min(1, 'Título é obrigatório.'),
     description: z.string().min(1, 'Descrição é obrigatória.'),
-    imageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem inválida.' }),
+    imageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
     petsList: z.array(z.string().min(1, 'Nome do pet é obrigatório.')),
   }),
 });
@@ -77,16 +76,16 @@ const aboutPageSchema = z.object({
   headerDescription: z.string().min(1, 'Descrição do cabeçalho é obrigatória.'),
   missionTitle: z.string().min(1, 'Título da missão é obrigatório.'),
   missionDescription: z.string().min(1, 'Descrição da missão é obrigatória.'),
-  missionImageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem da missão inválida.' }),
+  missionImageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
   historyTitle: z.string().min(1, 'Título da história é obrigatório.'),
   historyDescription: z.string().min(1, 'Descrição da história é obrigatória.'),
-  historyImageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem da história inválida.' }),
+  historyImageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
 });
 
 const ourSpaceGalleryItemSchema = z.object({
   id: z.string(),
   title: z.string().min(1, 'Título é obrigatório.'),
-  imageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem inválida.' }),
+  imageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
 });
 
 const ourSpacePageSchema = z.object({
@@ -110,7 +109,7 @@ const plansPageSchema = z.object({
 });
 
 const memorialPageSchema = z.object({
-  heroImageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem do herói inválida.' }),
+  heroImageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
   heroTitle: z.string().min(1, 'Título do herói é obrigatório.'),
   heroDescription1: z.string().min(1, 'Descrição 1 do herói é obrigatória.'),
   heroDescription2: z.string().min(1, 'Descrição 2 do herói é obrigatória.'),
@@ -132,7 +131,7 @@ type HomePageContent = z.infer<typeof homePageSchema>;
 type AboutPageContent = z.infer<typeof aboutPageSchema>;
 type OurSpacePageContent = z.infer<typeof ourSpacePageSchema>;
 type PlansPageContent = z.infer<typeof plansPageSchema>;
-type MemorialPageContent = z.infer<typeof MemorialPageSchema>;
+type MemorialPageContent = z.infer<typeof memorialPageSchema>;
 
 const AdminPage = () => {
   const { toast } = useToast();
@@ -155,7 +154,7 @@ const AdminPage = () => {
     }
   });
 
-  const { reset, control, setValue, getValues, handleSubmit } = methods;
+  const { reset, control, setValue, handleSubmit } = methods;
 
   const loadContent = useCallback(async () => {
     setIsLoading(true);
@@ -244,8 +243,7 @@ const AdminPage = () => {
 
   const FileUploadButton = ({ fieldName }: { fieldName: string }) => {
     const isUploading = uploadingState[fieldName];
-    // Create a unique ID for the file input to avoid conflicts
-    const inputId = `file-upload-${fieldName}`;
+    const inputId = `file-upload-${fieldName.replace(/\./g, '-')}`;
     
     return (
         <div className="relative flex items-center gap-2">
