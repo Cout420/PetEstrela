@@ -1,9 +1,11 @@
-
 'use server';
 
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, query, orderBy, limit, writeBatch, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
-import { app } from './firebase-config'; // Import configured app
+import { getApp, getApps, initializeApp } from 'firebase/app';
+import { firebaseConfig } from './firebase-config';
 
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 const memorialsCollection = collection(db, 'memorials');
@@ -15,9 +17,7 @@ type PetImage = {
   imageHint?: string;
 };
 
-
 // --- Tipos ---
-// The representation in Firestore
 export interface PetMemorial {
   id: number;
   name: string;
@@ -34,14 +34,11 @@ export interface PetMemorial {
   images: PetImage[];
   qrCodeUrl: string;
   createdAt: Timestamp;
-};
+}
 
-
-// The type used in forms, where dates are strings.
-export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'passingDate' | 'createdAt'> & {
+export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'passingDate'> & {
     birthDate: string;
     passingDate: string;
-    createdAt?: Timestamp;
 };
 
 
@@ -78,48 +75,21 @@ export async function getMemorialById(id: number): Promise<PetMemorial | null> {
   }
 }
 
-
 /**
  * Salva (cria ou atualiza) um memorial no Firestore.
  */
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
     const docRef = doc(db, 'memorials', pet.id.toString());
     
-    // Helper function to safely convert a string to a Firestore Timestamp.
-    // Returns current Timestamp if the string is invalid or empty.
-    const toTimestamp = (dateString: string | undefined): Timestamp => {
-        if (dateString) {
-           try {
-            // Handles both YYYY-MM-DD and full ISO strings
-            const date = new Date(dateString);
-            if (!isNaN(date.getTime())) {
-                return Timestamp.fromDate(date);
-            }
-           } catch (e) {
-             // Ignore parsing errors and fall through to default
-           }
-        }
-        // Return a default value for invalid or missing dates to prevent crashes.
-        return Timestamp.now();
-    };
-
-    // Convert date strings back to Timestamps before saving
-    const dataToSave: PetMemorial = {
+    const dataToSave = {
         ...pet,
-        images: pet.images.map(({ imageUrl, description, imageHint }) => ({
-            imageUrl: imageUrl || '',
-            description: description || '',
-            imageHint: imageHint || ''
-        })),
-        birthDate: toTimestamp(pet.birthDate),
-        passingDate: toTimestamp(pet.passingDate),
-        // If createdAt exists (it's an edit), keep it. Otherwise (it's new), create it.
-        createdAt: pet.createdAt instanceof Timestamp ? pet.createdAt : Timestamp.now(),
+        birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
+        passingDate: Timestamp.fromDate(new Date(pet.passingDate)),
+        createdAt: pet.createdAt || Timestamp.now(),
     };
 
     await setDoc(docRef, dataToSave, { merge: true });
 }
-
 
 /**
  * Deleta um memorial do Firestore.
@@ -187,4 +157,20 @@ export async function getContent<T>(contentId: string): Promise<T | null> {
   }
 }
 
-    
+// Em um arquivo de serviço Firebase (ex: src/lib/firebase-service.ts)
+
+/**
+ * Faz o upload de um arquivo para o Firebase Storage.
+ * @param file O arquivo a ser enviado.
+ * @param path O caminho no Storage onde o arquivo será salvo (ex: 'memorials/').
+ * @returns A URL de download do arquivo.
+ */
+// export async function uploadFile(file: File, path: string): Promise<string> {
+//   const storage = getStorage(app);
+//   const fileName = `${Date.now()}-${file.name}`;
+//   const storageRef = ref(storage, `${path}${fileName}`);
+
+//   const snapshot = await uploadBytes(storageRef, file);
+//   const downloadURL = await getDownloadURL(snapshot.ref);
+//   return downloadURL;
+// }

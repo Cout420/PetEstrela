@@ -1,461 +1,446 @@
-
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useState } from 'react';
+import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import Image from 'next/image';
-import { Loader2, PlusCircle, Trash2, X, Upload, LogOut, Edit } from 'lucide-react';
-import { format } from 'date-fns';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { app } from '@/lib/firebase-config';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { homePageContent as initialHomePageContent } from '@/lib/home-content';
+import { aboutPageContent as initialAboutContent } from '@/lib/about-content';
+import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-content';
+import { plans } from '@/lib/mock-data';
+import { memorialPageContent } from '@/lib/memorial-content';
 
-import { 
-  getMemorials, 
-  saveMemorial, 
-  deleteMemorial, 
-  getNextMemorialId,
-  PetMemorial,
-  PetMemorialWithDatesAsString
-} from '@/lib/firebase-service';
-import { shortenLink } from '@/ai/flows/shorten-link-flow';
-
-// --- Zod Schema for Validation ---
-const petImageSchema = z.object({
-  imageUrl: z.string().min(1, 'URL da imagem é obrigatória.'),
-  description: z.string().optional(),
-  imageHint: z.string().optional(),
+// Zod Schemas for each content type
+const heroSlideSchema = z.object({
+  imageUrl: z.string().url(),
+  title: z.string(),
+  subtitle: z.string(),
 });
 
-const petMemorialSchema = z.object({
-  id: z.number(),
-  name: z.string().min(1, 'Nome é obrigatório.'),
-  species: z.string().min(1, 'Espécie é obrigatória.'),
-  sexo: z.string().min(1, 'Sexo é obrigatória.'),
-  age: z.string().min(1, 'Idade é obrigatória.'),
-  family: z.string().min(1, 'Família é obrigatória.'),
-  birthDate: z.string().min(1, 'Data de nascimento é obrigatória.'),
-  passingDate: z.string().min(1, 'Data de falecimento é obrigatória.'),
-  arvore: z.string().min(1, 'Árvore é obrigatória.'),
-  local: z.string().min(1, 'Local é obrigatória.'),
-  tutores: z.string().min(1, 'Tutores são obrigatórios.'),
-  text: z.string().min(1, 'Texto da homenagem é obrigatório.'),
-  images: z.array(petImageSchema).min(1, 'É necessário pelo menos uma imagem.'),
-  qrCodeUrl: z.string().url().optional().or(z.literal('')),
+const whyChooseUsItemSchema = z.object({
+  icon: z.string(),
+  title: z.string(),
+  description: z.string(),
 });
 
-const storage = getStorage(app);
+const processStepSchema = z.object({
+  step: z.string(),
+  title: z.string(),
+  description: z.string(),
+});
 
-// Helper para converter Timestamp para string 'yyyy-MM-dd'
-const timestampToString = (ts: any): string => {
-  if (!ts) return '';
-  try {
-    return format(ts.toDate(), 'yyyy-MM-dd');
-  } catch (e) {
-    // Se já for uma string (durante a edição), apenas retorne
-    if (typeof ts === 'string') return ts;
-    return '';
-  }
-};
+const homePageSchema = z.object({
+  heroSlides: z.array(heroSlideSchema),
+  whyChooseUs: z.object({
+    title: z.string(),
+    description: z.string(),
+    items: z.array(whyChooseUsItemSchema),
+  }),
+  cremationProcess: z.object({
+    title: z.string(),
+    description: z.string(),
+    steps: z.array(processStepSchema),
+  }),
+  allPetsSection: z.object({
+    title: z.string(),
+    description: z.string(),
+    imageUrl: z.string().url(),
+    petsList: z.array(z.string()),
+  }),
+});
 
+const aboutPageSchema = z.object({
+  headerTitle: z.string(),
+  headerDescription: z.string(),
+  missionTitle: z.string(),
+  missionDescription: z.string(),
+  missionImageUrl: z.string().url(),
+  historyTitle: z.string(),
+  historyDescription: z.string(),
+  historyImageUrl: z.string().url(),
+});
 
-const AdminMemorialsPage = () => {
+const galleryItemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  imageUrl: z.string().url(),
+});
+
+const ourSpacePageSchema = z.object({
+  headerTitle: z.string(),
+  headerDescription: z.string(),
+  gallery: z.array(galleryItemSchema),
+});
+
+const planFeatureSchema = z.string();
+
+const planSchema = z.object({
+  name: z.string(),
+  price: z.string(),
+  description: z.string(),
+  features: z.array(planFeatureSchema),
+  isMostChosen: z.boolean(),
+  pricingDetails: z.array(z.string()).optional(),
+  optional: z.string().optional(),
+});
+
+const plansPageSchema = z.object({
+  plans: z.array(planSchema),
+});
+
+const memorialPageSchema = z.object({
+    heroImageUrl: z.string(),
+    heroTitle: z.string(),
+    heroDescription1: z.string(),
+    heroDescription2: z.string(),
+    createMemorialTitle: z.string(),
+    createMemorialDescription: z.string(),
+})
+
+const generalContentSchema = z.object({
+    whatsappLink: z.string().url(),
+    whatsappNumber: z.string(),
+    phone: z.string(),
+    address: z.string(),
+    instagramLink: z.string().url(),
+})
+
+const AdminPage = () => {
   const { toast } = useToast();
-  const router = useRouter();
-  const [memorials, setMemorials] = useState<PetMemorial[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingMemorial, setEditingMemorial] = useState<PetMemorialWithDatesAsString | null>(null);
 
-  const form = useForm<PetMemorialWithDatesAsString>({
-    resolver: zodResolver(petMemorialSchema),
-    mode: 'onChange',
+  const homeForm = useForm({
+    resolver: zodResolver(homePageSchema),
+    defaultValues: initialHomePageContent,
   });
 
-  const { control, handleSubmit, reset, setValue, getValues } = form;
-  const { fields, append, remove, update } = useFieldArray({ control, name: "images" });
+  const aboutForm = useForm({
+    resolver: zodResolver(aboutPageSchema),
+    defaultValues: initialAboutContent,
+  });
 
-  const loadMemorials = useCallback(async () => {
-    setIsLoading(true);
+  const ourSpaceForm = useForm({
+    resolver: zodResolver(ourSpacePageSchema),
+    defaultValues: initialOurSpaceContent,
+  });
+
+  const plansForm = useForm({
+      resolver: zodResolver(plansPageSchema),
+      defaultValues: { plans: plans }
+  })
+
+  const memorialForm = useForm({
+      resolver: zodResolver(memorialPageSchema),
+      defaultValues: memorialPageContent
+  })
+
+  const generalForm = useForm({
+      resolver: zodResolver(generalContentSchema),
+      defaultValues: {
+        whatsappLink: 'https://wa.me/551142405253',
+        whatsappNumber: '1142405253',
+        phone: '(11) 4240-5253',
+        address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
+        instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
+      }
+  })
+
+  const onSubmit = async (data: any, contentId: string) => {
+    toast({
+      title: `Salvando ${contentId}...`,
+      description: 'Aguarde enquanto os dados são enviados.',
+    });
     try {
-      const data = await getMemorials();
-      setMemorials(data);
-    } catch (error) {
-      toast({
-        title: 'Erro ao carregar memoriais',
-        description: 'Não foi possível buscar os dados. Tente novamente.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    loadMemorials();
-  }, [loadMemorials]);
-
-  const handleSignOut = () => {
-    toast({ title: 'Você saiu da sua conta.' });
-    router.push('/login');
-  };
-
-  const handleOpenDialog = async (memorial: PetMemorial | null) => {
-    if (memorial) {
-      // Editando
-      const memorialWithStringDates = {
-        ...memorial,
-        birthDate: timestampToString(memorial.birthDate),
-        passingDate: timestampToString(memorial.passingDate),
-        qrCodeUrl: memorial.qrCodeUrl || '',
-      };
-      setEditingMemorial(memorialWithStringDates);
-      reset(memorialWithStringDates);
-    } else {
-      // Criando
-      const nextId = await getNextMemorialId();
-      const newMemorial: PetMemorialWithDatesAsString = {
-        id: nextId,
-        name: '',
-        species: '',
-        sexo: '',
-        age: '',
-        family: '',
-        birthDate: '',
-        passingDate: '',
-        arvore: '',
-        local: '',
-        tutores: '',
-        text: '',
-        images: [],
-        qrCodeUrl: '',
-      };
-      setEditingMemorial(newMemorial);
-      reset(newMemorial);
-    }
-    setIsDialogOpen(true);
-  };
-  
-  const handleDelete = async (id: number) => {
-    try {
-      await deleteMemorial(id);
+    //   await saveContent(contentId, data);
       toast({
         title: 'Sucesso!',
-        description: `Memorial #${id} deletado com sucesso.`,
+        description: `Conteúdo da página "${contentId}" salvo com sucesso.`,
       });
-      loadMemorials(); // Recarrega a lista
     } catch (error) {
       toast({
-        title: 'Erro ao deletar',
-        description: 'Não foi possível remover o memorial. Tente novamente.',
+        title: 'Erro ao salvar!',
+        description: `Não foi possível salvar o conteúdo. Erro: ${(error as Error).message}`,
         variant: 'destructive',
       });
     }
   };
-
-  const handleFileUpload = async (file: File) => {
-    if (!file) return;
-
-    // Create a temporary ID for the placeholder
-    const tempId = `temp_${Date.now()}`;
-    const newImageIndex = getValues('images').length;
-
-    // --- Step 1: Show local preview immediately ---
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const tempUrl = reader.result as string;
-      // Append a placeholder with the local data URI
-      append({ imageUrl: tempUrl, description: tempId, imageHint: '' }); // Using description as temp ID
-    };
-
-    // --- Step 2: Upload to Firebase in the background ---
-    try {
-       const fileName = `memorials/${Date.now()}-${file.name}`;
-       const storageRef = ref(storage, fileName);
-       const snapshot = await uploadBytes(storageRef, file);
-       const downloadURL = await getDownloadURL(snapshot.ref);
-
-      // --- Step 3: Update the form with the real URL ---
-      const currentImages = getValues('images');
-      const imageIndexToUpdate = currentImages.findIndex(img => img.description === tempId);
-      
-      if (imageIndexToUpdate !== -1) {
-          update(imageIndexToUpdate, {
-            imageUrl: downloadURL,
-            description: '', // Clear the temp ID
-            imageHint: ''
-          });
-      }
-
-      toast({
-        title: 'Upload Concluído',
-        description: 'A imagem foi carregada com sucesso.',
-      });
-    } catch (error) {
-      console.error("Upload error:", error);
-       // Remove the temporary placeholder if upload fails
-      const currentImages = getValues('images');
-      const imageIndexToRemove = currentImages.findIndex(img => img.description === tempId);
-      if (imageIndexToRemove !== -1) {
-          remove(imageIndexToRemove);
-      }
-      toast({
-        title: 'Falha no Upload',
-        description: 'Não foi possível carregar a imagem. Verifique o console.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-
-  const onSubmit = async (data: PetMemorialWithDatesAsString) => {
-    setIsSubmitting(true);
-
-     // Check if any image is still a temporary local URL (upload in progress)
-    if (data.images.some(img => img.imageUrl.startsWith('data:'))) {
-        toast({
-            title: 'Aguarde o Upload',
-            description: 'Uma ou mais imagens ainda estão sendo enviadas. Por favor, aguarde.',
-            variant: 'destructive',
-        });
-        setIsSubmitting(false);
-        return;
-    }
-
-    try {
-      // Gera o shortlink/QR code URL se não existir
-      let finalData = { ...data };
-      if (!finalData.qrCodeUrl) {
-          const { shortUrl } = await shortenLink({ memorialId: data.id });
-          finalData.qrCodeUrl = shortUrl;
-      }
-      
-      await saveMemorial(finalData);
-      
-      toast({
-        title: 'Sucesso!',
-        description: `Memorial para ${data.name} foi salvo com sucesso.`,
-      });
-      
-      setIsDialogOpen(false);
-      setEditingMemorial(null);
-      loadMemorials();
-
-    } catch (error) {
-      console.error("Failed to save memorial:", error);
-      toast({
-        title: 'Erro ao Salvar',
-        description: 'Não foi possível salvar o memorial. Verifique o console para detalhes.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (isLoading && memorials.length === 0) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-muted/40 p-4 sm:p-8">
-      <div className="container mx-auto">
-        <header className="mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Gerenciador de Memoriais</h1>
-            <p className="text-muted-foreground">Adicione, edite ou remova os memoriais dos pets.</p>
-          </div>
-          <div className='flex items-center gap-4'>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                 <Button onClick={() => handleOpenDialog(null)}>
-                  <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Novo Memorial
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{editingMemorial?.id ? `Editando Memorial #${editingMemorial.id}` : 'Criar Novo Memorial'}</DialogTitle>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Campos do formulário */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField name="name" control={control} render={({ field }) => (
-                        <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField name="species" control={control} render={({ field }) => (
-                        <FormItem><FormLabel>Espécie/Raça</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField name="sexo" control={control} render={({ field }) => (
-                        <FormItem><FormLabel>Sexo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                       <FormField name="age" control={control} render={({ field }) => (
-                        <FormItem><FormLabel>Idade</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField name="family" control={control} render={({ field }) => (
-                        <FormItem><FormLabel>Família</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                       <FormField name="tutores" control={control} render={({ field }) => (
-                        <FormItem><FormLabel>Tutores</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField name="birthDate" control={control} render={({ field }) => (
-                        <FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField name="passingDate" control={control} render={({ field }) => (
-                        <FormItem><FormLabel>Data de Falecimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                       <FormField name="arvore" control={control} render={({ field }) => (
-                        <FormItem><FormLabel>Árvore Plantada</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField name="local" control={control} render={({ field }) => (
-                        <FormItem><FormLabel>Local</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-                    <FormField name="text" control={control} render={({ field }) => (
-                      <FormItem><FormLabel>Texto da Homenagem</FormLabel><FormControl><Textarea rows={5} {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
+    <div className="container mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-6">Painel Administrativo</h1>
+      <Tabs defaultValue="general">
+        <TabsList>
+          <TabsTrigger value="general">Geral</TabsTrigger>
+          <TabsTrigger value="home">Home</TabsTrigger>
+          <TabsTrigger value="memorial">Memorial</TabsTrigger>
+          <TabsTrigger value="plans">Planos</TabsTrigger>
+          <TabsTrigger value="about">Sobre Nós</TabsTrigger>
+          <TabsTrigger value="our-space">Nosso Espaço</TabsTrigger>
+        </TabsList>
+        <TabsContent value="general">
+            <FormProvider {...generalForm}>
+                 <form onSubmit={generalForm.handleSubmit(data => onSubmit(data, 'generalContent'))}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Conteúdo Geral</CardTitle>
+                            <CardDescription>Links e informações que aparecem em todo o site.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <FormField name="whatsappLink" render={({field}) => <FormItem><FormLabel>Link do WhatsApp</FormLabel><Input {...field} /><FormMessage/></FormItem>} />
+                            <FormField name="whatsappNumber" render={({field}) => <FormItem><FormLabel>Número do WhatsApp (texto)</FormLabel><Input {...field} /><FormMessage/></FormItem>} />
+                            <FormField name="phone" render={({field}) => <FormItem><FormLabel>Telefone (texto)</FormLabel><Input {...field} /><FormMessage/></FormItem>} />
+                            <FormField name="address" render={({field}) => <FormItem><FormLabel>Endereço</FormLabel><Textarea {...field} /><FormMessage/></FormItem>} />
+                            <FormField name="instagramLink" render={({field}) => <FormItem><FormLabel>Link do Instagram</FormLabel><Input {...field} /><FormMessage/></FormItem>} />
+                        </CardContent>
+                    </Card>
+                    <Button type="submit" className="mt-4">Salvar Conteúdo Geral</Button>
+                </form>
+            </FormProvider>
+        </TabsContent>
 
-                    {/* Gerenciamento de Imagens */}
-                    <div className="space-y-4">
-                      <FormLabel>Imagens</FormLabel>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {fields.map((item, index) => (
-                           <div key={item.id} className="relative group">
-                            { item.imageUrl.startsWith('data:') && 
-                              <div className='absolute inset-0 bg-black/50 flex items-center justify-center rounded-md'>
-                                <Loader2 className="h-8 w-8 animate-spin text-white" />
-                              </div>
-                            }
-                            <Image src={item.imageUrl} alt={`Imagem ${index+1}`} width={150} height={150} className="rounded-md object-cover aspect-square w-full" />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => remove(index)}
-                              disabled={isSubmitting}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                           </div>
-                        ))}
-                         <label className="flex flex-col items-center justify-center w-full h-full aspect-square rounded-md border-2 border-dashed border-muted-foreground/50 cursor-pointer hover:bg-muted">
-                            <Upload className="h-8 w-8 text-muted-foreground" />
-                           <span className="text-sm text-muted-foreground mt-2 text-center">
-                             Adicionar Imagem
-                           </span>
-                           <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])} disabled={isSubmitting} />
-                         </label>
-                      </div>
-                      <FormMessage>{form.formState.errors.images?.message || form.formState.errors.images?.root?.message}</FormMessage>
-                    </div>
+        <TabsContent value="home">
+          <FormProvider {...homeForm}>
+            <form onSubmit={homeForm.handleSubmit(data => onSubmit(data, 'homePageContent'))} className="space-y-6">
+              {/* Hero Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Seção Herói</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FieldArrayComponent name="heroSlides" form={homeForm} fieldsConfig={{
+                    imageUrl: 'URL da Imagem',
+                    title: 'Título',
+                    subtitle: 'Subtítulo',
+                  }} />
+                </CardContent>
+              </Card>
 
-                    <DialogFooter>
-                      <DialogClose asChild><Button type="button" variant="outline" disabled={isSubmitting}>Cancelar</Button></DialogClose>
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Salvar
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+              {/* Why Choose Us */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Por que nos escolher?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField name="whyChooseUs.title" render={({field}) => <FormItem><FormLabel>Título</FormLabel><Input {...field} /></FormItem>} />
+                  <FormField name="whyChooseUs.description" render={({field}) => <FormItem><FormLabel>Descrição</FormLabel><Textarea {...field} /></FormItem>} />
+                  <h3 className="font-semibold mt-4">Itens</h3>
+                   <FieldArrayComponent name="whyChooseUs.items" form={homeForm} fieldsConfig={{
+                    icon: 'Ícone (nome do Lucide)',
+                    title: 'Título',
+                    description: 'Descrição',
+                  }} />
+                </CardContent>
+              </Card>
 
-            <Button onClick={handleSignOut} variant="outline">
-              <LogOut className="mr-2 h-4 w-4" /> Sair
-            </Button>
-          </div>
-        </header>
+              {/* Process Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Nosso Processo</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField name="cremationProcess.title" render={({field}) => <FormItem><FormLabel>Título</FormLabel><Input {...field} /></FormItem>} />
+                  <FormField name="cremationProcess.description" render={({field}) => <FormItem><FormLabel>Descrição</FormLabel><Textarea {...field} /></FormItem>} />
+                  <h3 className="font-semibold mt-4">Passos</h3>
+                  <FieldArrayComponent name="cremationProcess.steps" form={homeForm} fieldsConfig={{
+                    step: 'Passo (ex: 01)',
+                    title: 'Título',
+                    description: 'Descrição',
+                  }} />
+                </CardContent>
+              </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Memoriais Cadastrados</CardTitle>
-            <CardDescription>Lista de todos os memoriais de pets no sistema.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px]">ID</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Espécie</TableHead>
-                  <TableHead>Família</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading && memorials.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="text-center h-24">Carregando memoriais...</TableCell></TableRow>
-                ) : memorials.length === 0 ? (
-                   <TableRow><TableCell colSpan={5} className="text-center h-24">Nenhum memorial encontrado.</TableCell></TableRow>
-                ) : (
-                  memorials.map((memorial) => (
-                    <TableRow key={memorial.id}>
-                      <TableCell className="font-mono">#{String(memorial.id).padStart(3, '0')}</TableCell>
-                      <TableCell className="font-medium">{memorial.name}</TableCell>
-                      <TableCell>{memorial.species}</TableCell>
-                      <TableCell>{memorial.family}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(memorial)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta ação não pode ser desfeita. Isso irá deletar permanentemente o memorial de <strong>{memorial.name}</strong>.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(memorial.id)}>Deletar</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+              <Button type="submit">Salvar Página Home</Button>
+            </form>
+          </FormProvider>
+        </TabsContent>
+        <TabsContent value="memorial">
+             <FormProvider {...memorialForm}>
+                <form onSubmit={memorialForm.handleSubmit(data => onSubmit(data, 'memorialPageContent'))} className="space-y-6">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Página do Memorial</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <FormField name="heroImageUrl" render={({ field }) => <FormItem><FormLabel>URL Imagem de Fundo</FormLabel><Input {...field} /></FormItem>} />
+                            <FormField name="heroTitle" render={({ field }) => <FormItem><FormLabel>Título Principal</FormLabel><Input {...field} /></FormItem>} />
+                            <FormField name="heroDescription1" render={({ field }) => <FormItem><FormLabel>Parágrafo 1</FormLabel><Textarea {...field} /></FormItem>} />
+                            <FormField name="heroDescription2" render={({ field }) => <FormItem><FormLabel>Parágrafo 2</FormLabel><Textarea {...field} /></FormItem>} />
+                            <FormField name="createMemorialTitle" render={({ field }) => <FormItem><FormLabel>Título do Card "Criar Memorial"</FormLabel><Input {...field} /></FormItem>} />
+                            <FormField name="createMemorialDescription" render={({ field }) => <FormItem><FormLabel>Descrição do Card "Criar Memorial"</FormLabel><Textarea {...field} /></FormItem>} />
+                        </CardContent>
+                     </Card>
+                     <Button type="submit">Salvar Página Memorial</Button>
+                </form>
+            </FormProvider>
+        </TabsContent>
+        <TabsContent value="plans">
+             <FormProvider {...plansForm}>
+                <form onSubmit={plansForm.handleSubmit(data => onSubmit(data, 'plansPageContent'))} className="space-y-6">
+                    <Card>
+                        <CardHeader><CardTitle>Planos</CardTitle></CardHeader>
+                        <CardContent>
+                            <FieldArrayComponent name="plans" form={plansForm} fieldsConfig={{
+                                name: "Nome do Plano",
+                                price: "Preço (texto)",
+                                description: "Descrição",
+                                features: "Itens Inclusos (separados por vírgula)",
+                                isMostChosen: "É o mais escolhido? (true/false)",
+                                pricingDetails: "Detalhes de Preço (opcional, um por linha)",
+                                optional: "Texto Opcional (opcional)"
+                            }} textAreaFields={['features', 'pricingDetails']} />
+                        </CardContent>
+                    </Card>
+                    <Button type="submit">Salvar Planos</Button>
+                </form>
+             </FormProvider>
+        </TabsContent>
+        <TabsContent value="about">
+          <FormProvider {...aboutForm}>
+            <form onSubmit={aboutForm.handleSubmit(data => onSubmit(data, 'aboutPageContent'))} className="space-y-4">
+                <Card>
+                    <CardHeader><CardTitle>Página Sobre Nós</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField name="headerTitle" render={({ field }) => <FormItem><FormLabel>Título do Cabeçalho</FormLabel><Input {...field} /></FormItem>} />
+                        <FormField name="headerDescription" render={({ field }) => <FormItem><FormLabel>Descrição do Cabeçalho</FormLabel><Textarea {...field} /></FormItem>} />
+                        <FormField name="missionTitle" render={({ field }) => <FormItem><FormLabel>Título da Missão</FormLabel><Input {...field} /></FormItem>} />
+                        <FormField name="missionDescription" render={({ field }) => <FormItem><FormLabel>Descrição da Missão</FormLabel><Textarea {...field} /></FormItem>} />
+                        <FormField name="missionImageUrl" render={({ field }) => <FormItem><FormLabel>URL da Imagem da Missão</FormLabel><Input {...field} /></FormItem>} />
+                        <FormField name="historyTitle" render={({ field }) => <FormItem><FormLabel>Título da História</FormLabel><Input {...field} /></FormItem>} />
+                        <FormField name="historyDescription" render={({ field }) => <FormItem><FormLabel>Descrição da História</FormLabel><Textarea {...field} /></FormItem>} />
+                        <FormField name="historyImageUrl" render={({ field }) => <FormItem><FormLabel>URL da Imagem da História</FormLabel><Input {...field} /></FormItem>} />
+                    </CardContent>
+                </Card>
+                 <Button type="submit">Salvar Página Sobre</Button>
+            </form>
+          </FormProvider>
+        </TabsContent>
+        <TabsContent value="our-space">
+             <FormProvider {...ourSpaceForm}>
+                 <form onSubmit={ourSpaceForm.handleSubmit(data => onSubmit(data, 'ourSpaceContent'))} className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                        <CardTitle>Página Nosso Espaço</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                             <FormField name="headerTitle" render={({ field }) => <FormItem><FormLabel>Título do Cabeçalho</FormLabel><Input {...field} /></FormItem>} />
+                             <FormField name="headerDescription" render={({ field }) => <FormItem><FormLabel>Descrição do Cabeçalho</FormLabel><Textarea {...field} /></FormItem>} />
+                            <h3 className="font-semibold mt-4">Itens da Galeria</h3>
+                             <FieldArrayComponent name="gallery" form={ourSpaceForm} fieldsConfig={{
+                                id: 'ID (ex: space-reception)',
+                                title: 'Título da Imagem',
+                                imageUrl: 'URL da Imagem',
+                            }} />
+                        </CardContent>
+                    </Card>
+                    <Button type="submit">Salvar Página Nosso Espaço</Button>
+                 </form>
+             </FormProvider>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
 
-export default AdminMemorialsPage;
+// Generic component to render array of fields
+const FieldArrayComponent = ({ name, form, fieldsConfig, textAreaFields = [] }: { name: string, form: any, fieldsConfig: Record<string, string>, textAreaFields?: string[] }) => {
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name
+  });
+
+  return (
+    <div className="space-y-4">
+      {fields.map((item, index) => (
+        <Card key={item.id} className="p-4 relative">
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="absolute top-2 right-2"
+            onClick={() => remove(index)}
+          >
+            Remover
+          </Button>
+          <div className="space-y-2">
+            {Object.keys(fieldsConfig).map(fieldName => (
+               <FormField
+                key={fieldName}
+                control={form.control}
+                name={`${name}.${index}.${fieldName}`}
+                render={({ field }) => {
+                    const value = field.value;
+                    const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                        let newValue: string | string[] | boolean = e.target.value;
+                        if (typeof value === 'boolean') {
+                            newValue = newValue.toLowerCase() === 'true';
+                        }
+                        if (Array.isArray(value)) {
+                            newValue = newValue.split(',').map(s => s.trim());
+                        }
+                        field.onChange(newValue);
+                    };
+
+                    const inputValue = Array.isArray(value) ? value.join(', ') : String(value);
+
+                    return (
+                        <FormItem>
+                            <FormLabel>{fieldsConfig[fieldName]}</FormLabel>
+                            {textAreaFields.includes(fieldName) ? (
+                                <Textarea
+                                {...field}
+                                value={Array.isArray(field.value) ? field.value.join('\\n') : field.value}
+                                onChange={(e) => field.onChange(e.target.value.split('\\n'))}
+                                />
+                            ) : (
+                                <Input
+                                {...field}
+                                value={inputValue}
+                                onChange={onChange}
+                                />
+                            )}
+                            <FormMessage />
+                        </FormItem>
+                    );
+                }}
+              />
+            ))}
+          </div>
+        </Card>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+            const newObject = Object.keys(fieldsConfig).reduce((acc, key) => {
+                // @ts-ignore
+                const defaultValue = form.defaultValues?.[name]?.[0]?.[key];
+                if (typeof defaultValue === 'boolean') {
+                    // @ts-ignore
+                    acc[key] = false;
+                } else if (Array.isArray(defaultValue)) {
+                     // @ts-ignore
+                    acc[key] = [];
+                }
+                else {
+                     // @ts-ignore
+                    acc[key] = '';
+                }
+                return acc;
+            }, {});
+            append(newObject);
+        }}
+      >
+        Adicionar Item
+      </Button>
+    </div>
+  );
+};
 
 
-    
+export default AdminPage;
