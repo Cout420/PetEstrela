@@ -78,7 +78,6 @@ const AdminMemorialsPage = () => {
   const [memorials, setMemorials] = useState<PetMemorial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMemorial, setEditingMemorial] = useState<PetMemorialWithDatesAsString | null>(null);
 
@@ -87,8 +86,8 @@ const AdminMemorialsPage = () => {
     mode: 'onChange',
   });
 
-  const { control, handleSubmit, reset, setValue } = form;
-  const { fields, append, remove } = useFieldArray({ control, name: "images" });
+  const { control, handleSubmit, reset, setValue, getValues } = form;
+  const { fields, append, remove, update } = useFieldArray({ control, name: "images" });
 
   const loadMemorials = useCallback(async () => {
     setIsLoading(true);
@@ -170,33 +169,74 @@ const AdminMemorialsPage = () => {
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
-    
-    setIsUploading(true);
+
+    // Create a temporary ID for the placeholder
+    const tempId = `temp_${Date.now()}`;
+    const newImageIndex = getValues('images').length;
+
+    // --- Step 1: Show local preview immediately ---
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const tempUrl = reader.result as string;
+      // Append a placeholder with the local data URI
+      append({ imageUrl: tempUrl, description: tempId, imageHint: '' }); // Using description as temp ID
+    };
+
+    // --- Step 2: Upload to Firebase in the background ---
     try {
        const fileName = `memorials/${Date.now()}-${file.name}`;
        const storageRef = ref(storage, fileName);
        const snapshot = await uploadBytes(storageRef, file);
        const downloadURL = await getDownloadURL(snapshot.ref);
 
-      append({ imageUrl: downloadURL, description: '', imageHint: '' });
+      // --- Step 3: Update the form with the real URL ---
+      const currentImages = getValues('images');
+      const imageIndexToUpdate = currentImages.findIndex(img => img.description === tempId);
+      
+      if (imageIndexToUpdate !== -1) {
+          update(imageIndexToUpdate, {
+            imageUrl: downloadURL,
+            description: '', // Clear the temp ID
+            imageHint: ''
+          });
+      }
+
       toast({
         title: 'Upload Concluído',
         description: 'A imagem foi carregada com sucesso.',
       });
     } catch (error) {
       console.error("Upload error:", error);
+       // Remove the temporary placeholder if upload fails
+      const currentImages = getValues('images');
+      const imageIndexToRemove = currentImages.findIndex(img => img.description === tempId);
+      if (imageIndexToRemove !== -1) {
+          remove(imageIndexToRemove);
+      }
       toast({
         title: 'Falha no Upload',
         description: 'Não foi possível carregar a imagem. Verifique o console.',
         variant: 'destructive',
       });
-    } finally {
-      setIsUploading(false);
     }
   };
 
+
   const onSubmit = async (data: PetMemorialWithDatesAsString) => {
     setIsSubmitting(true);
+
+     // Check if any image is still a temporary local URL (upload in progress)
+    if (data.images.some(img => img.imageUrl.startsWith('data:'))) {
+        toast({
+            title: 'Aguarde o Upload',
+            description: 'Uma ou mais imagens ainda estão sendo enviadas. Por favor, aguarde.',
+            variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+    }
+
     try {
       // Gera o shortlink/QR code URL se não existir
       let finalData = { ...data };
@@ -300,6 +340,11 @@ const AdminMemorialsPage = () => {
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {fields.map((item, index) => (
                            <div key={item.id} className="relative group">
+                            { item.imageUrl.startsWith('data:') && 
+                              <div className='absolute inset-0 bg-black/50 flex items-center justify-center rounded-md'>
+                                <Loader2 className="h-8 w-8 animate-spin text-white" />
+                              </div>
+                            }
                             <Image src={item.imageUrl} alt={`Imagem ${index+1}`} width={150} height={150} className="rounded-md object-cover aspect-square w-full" />
                             <Button
                               type="button"
@@ -307,22 +352,18 @@ const AdminMemorialsPage = () => {
                               size="icon"
                               className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={() => remove(index)}
-                              disabled={isSubmitting || isUploading}
+                              disabled={isSubmitting}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                            </div>
                         ))}
                          <label className="flex flex-col items-center justify-center w-full h-full aspect-square rounded-md border-2 border-dashed border-muted-foreground/50 cursor-pointer hover:bg-muted">
-                           {isUploading ? (
-                              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                           ) : (
-                              <Upload className="h-8 w-8 text-muted-foreground" />
-                           )}
+                            <Upload className="h-8 w-8 text-muted-foreground" />
                            <span className="text-sm text-muted-foreground mt-2 text-center">
-                             {isUploading ? 'Enviando...' : 'Adicionar Imagem'}
+                             Adicionar Imagem
                            </span>
-                           <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])} disabled={isSubmitting || isUploading} />
+                           <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])} disabled={isSubmitting} />
                          </label>
                       </div>
                       <FormMessage>{form.formState.errors.images?.message || form.formState.errors.images?.root?.message}</FormMessage>
@@ -330,7 +371,7 @@ const AdminMemorialsPage = () => {
 
                     <DialogFooter>
                       <DialogClose asChild><Button type="button" variant="outline" disabled={isSubmitting}>Cancelar</Button></DialogClose>
-                      <Button type="submit" disabled={isSubmitting || isUploading}>
+                      <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Salvar
                       </Button>
@@ -415,5 +456,6 @@ const AdminMemorialsPage = () => {
 };
 
 export default AdminMemorialsPage;
+
 
     
