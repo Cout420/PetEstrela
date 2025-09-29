@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/logo';
 import { cn } from '@/lib/utils';
@@ -54,9 +54,6 @@ const Header = () => {
         </nav>
 
         <div className="hidden items-center gap-4 md:flex">
-          <Button asChild variant="ghost">
-            <Link href="/login">Entrar</Link>
-          </Button>
           <Button asChild className="btn-whatsapp">
             <a href={whatsappLink} target="_blank">
               Contato
@@ -91,13 +88,6 @@ const Header = () => {
                       {link.label}
                     </Link>
                   ))}
-                  <Link
-                    href="/login"
-                    className="text-lg font-medium text-muted-foreground"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Entrar
-                  </Link>
                 </nav>
                 <div className="mt-auto">
                    <Button asChild className="btn-whatsapp w-full">
