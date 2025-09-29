@@ -42,13 +42,13 @@ const petMemorialSchema = z.object({
   id: z.number(),
   name: z.string().min(1, 'Nome é obrigatório.'),
   species: z.string().min(1, 'Espécie é obrigatória.'),
-  sexo: z.string().min(1, 'Sexo é obrigatório.'),
+  sexo: z.string().min(1, 'Sexo é obrigatória.'),
   age: z.string().min(1, 'Idade é obrigatória.'),
   family: z.string().min(1, 'Família é obrigatória.'),
   birthDate: z.string().min(1, 'Data de nascimento é obrigatória.'),
   passingDate: z.string().min(1, 'Data de falecimento é obrigatória.'),
   arvore: z.string().min(1, 'Árvore é obrigatória.'),
-  local: z.string().min(1, 'Local é obrigatório.'),
+  local: z.string().min(1, 'Local é obrigatória.'),
   tutores: z.string().min(1, 'Tutores são obrigatórios.'),
   text: z.string().min(1, 'Texto da homenagem é obrigatório.'),
   images: z.array(petImageSchema).min(1, 'É necessário pelo menos uma imagem.'),
@@ -119,7 +119,7 @@ const AdminMemorialsPage = () => {
         ...memorial,
         birthDate: timestampToString(memorial.birthDate),
         passingDate: timestampToString(memorial.passingDate),
-        qrCodeUrl: memorial.qrCodeUrl || '', // Garante que qrCodeUrl seja sempre uma string
+        qrCodeUrl: memorial.qrCodeUrl || '',
       };
       setEditingMemorial(memorialWithStringDates);
       reset(memorialWithStringDates);
@@ -408,5 +408,3 @@ const AdminMemorialsPage = () => {
 };
 
 export default AdminMemorialsPage;
-
-    
