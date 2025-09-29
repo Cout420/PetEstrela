@@ -1,7 +1,8 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
+import { useState, useEffect, useCallback } from 'react';
+import { useForm, FormProvider, useFieldArray, useFormContext } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -11,14 +12,81 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { getContent, saveContent } from '@/lib/firebase-service';
+import { getContent, saveContent, uploadFile } from '@/lib/firebase-service';
 import { homePageContent as initialHomePageContent } from '@/lib/home-content';
 import { aboutPageContent as initialAboutContent } from '@/lib/about-content';
 import { memorialPageContent as initialMemorialContent } from '@/lib/memorial-content';
 import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-content';
 import { plans as initialPlans } from '@/lib/mock-data';
-import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Upload, Paperclip } from 'lucide-react';
 import { getAdminApp } from '@/lib/firebase-admin';
+import { Progress } from '@/components/ui/progress';
+
+// --- Image Upload Component ---
+const ImageUploadField = ({ name }: { name: string }) => {
+  const { control, setValue } = useFormContext();
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setProgress(0);
+
+    try {
+      // Simulate progress for better UX
+      const progressInterval = setInterval(() => {
+        setProgress(prev => (prev < 90 ? prev + 10 : prev));
+      }, 200);
+
+      const downloadURL = await uploadFile(file, 'site-content/');
+      
+      clearInterval(progressInterval);
+      setProgress(100);
+      setValue(name, downloadURL, { shouldValidate: true });
+      
+    } catch (error) {
+      console.error("Upload failed", error);
+    } finally {
+      setTimeout(() => {
+        setUploading(false);
+      }, 1000)
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <FormField
+        control={control}
+        name={name}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{name.split('.').pop()?.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</FormLabel>
+            <div className="flex items-center gap-2">
+              <Input {...field} placeholder="https://..." />
+              <Button type="button" variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept="image/*"
+              />
+            </div>
+             <FormMessage />
+          </FormItem>
+        )}
+      />
+      {uploading && <Progress value={progress} className="w-full h-2" />}
+    </div>
+  );
+};
+
 
 // --- Zod Schemas ---
 const heroSlideSchema = z.object({
@@ -253,28 +321,34 @@ const AdminPage = () => {
         {fieldArray.map((field: any, index: number) => (
           <Card key={field.id} className="p-4">
             <div className="space-y-2">
-              {Object.keys(fieldSchema).map(key => (
-                 key !== 'isMostChosen' && (
-                <FormField
-                  key={key}
-                  control={form.control}
-                  name={`${namePrefix}.${index}.${key}`}
-                  render={({ field: formField }) => (
-                    <FormItem>
-                      <FormLabel>{key.charAt(0).toUpperCase() + key.slice(1)}</FormLabel>
-                      <FormControl>
-                        {Array.isArray(formField.value) ? (
-                            <Textarea {...formField} value={formField.value.join('\n')} onChange={e => formField.onChange(e.target.value.split('\n'))} />
-                        ) : (
-                            <Input {...formField} />
+              {Object.keys(fieldSchema).map(key => {
+                 if (key === 'imageUrl') {
+                   return <ImageUploadField key={key} name={`${namePrefix}.${index}.${key}`} />;
+                 }
+                 if (key !== 'isMostChosen') {
+                    return (
+                        <FormField
+                        key={key}
+                        control={form.control}
+                        name={`${namePrefix}.${index}.${key}`}
+                        render={({ field: formField }) => (
+                            <FormItem>
+                            <FormLabel>{key.charAt(0).toUpperCase() + key.slice(1)}</FormLabel>
+                            <FormControl>
+                                {Array.isArray(formField.value) ? (
+                                    <Textarea {...formField} value={formField.value.join('\n')} onChange={e => formField.onChange(e.target.value.split('\n'))} />
+                                ) : (
+                                    <Input {...formField} />
+                                )}
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
                         )}
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 )
-              ))}
+                        />
+                    )
+                 }
+                 return null;
+              })}
                {fieldSchema.isMostChosen !== undefined && (
                  <FormField
                   control={form.control}
@@ -329,6 +403,14 @@ const AdminPage = () => {
               
               <TabsContent value="home" className="space-y-6">
                  {renderArrayField('Slides do Herói', heroSlidesFields, appendHeroSlide, removeHeroSlide, heroSlideSchema.shape, 'heroSlides')}
+                 <Card>
+                    <CardHeader><CardTitle>Seção "Todos os Pets"</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField control={form.control} name="allPetsSection.title" render={({ field }) => <FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                        <FormField control={form.control} name="allPetsSection.description" render={({ field }) => <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
+                        <ImageUploadField name="allPetsSection.imageUrl" />
+                    </CardContent>
+                 </Card>
                  {renderArrayField('Itens "Por Que Escolher-nos?"', whyChooseUsItemsFields, appendWhyChooseUsItem, removeWhyChooseUsItem, whyChooseUsItemSchema.shape, 'whyChooseUs.items')}
                  {renderArrayField('Passos do Processo', processStepsFields, appendProcessStep, removeProcessStep, processStepSchema.shape, 'cremationProcess.steps')}
               </TabsContent>
@@ -339,16 +421,16 @@ const AdminPage = () => {
                   <FormField control={form.control} name="headerDescription" render={({ field }) => <FormItem><FormLabel>Descrição do Cabeçalho</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
                   <FormField control={form.control} name="missionTitle" render={({ field }) => <FormItem><FormLabel>Título da Missão</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
                   <FormField control={form.control} name="missionDescription" render={({ field }) => <FormItem><FormLabel>Descrição da Missão</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
-                  <FormField control={form.control} name="missionImageUrl" render={({ field }) => <FormItem><FormLabel>URL da Imagem da Missão</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                  <ImageUploadField name="missionImageUrl" />
                   <FormField control={form.control} name="historyTitle" render={({ field }) => <FormItem><FormLabel>Título da História</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
                   <FormField control={form.control} name="historyDescription" render={({ field }) => <FormItem><FormLabel>Descrição da História</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
-                  <FormField control={form.control} name="historyImageUrl" render={({ field }) => <FormItem><FormLabel>URL da Imagem da História</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                  <ImageUploadField name="historyImageUrl" />
                 </CardContent></Card>
               </TabsContent>
 
               <TabsContent value="memorial" className="space-y-6">
                 <Card><CardHeader><CardTitle>Conteúdo da Página Memorial</CardTitle></CardHeader><CardContent className="space-y-4">
-                   <FormField control={form.control} name="heroImageUrl" render={({ field }) => <FormItem><FormLabel>URL da Imagem do Herói</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                   <ImageUploadField name="heroImageUrl" />
                    <FormField control={form.control} name="heroTitle" render={({ field }) => <FormItem><FormLabel>Título do Herói</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
                    <FormField control={form.control} name="heroDescription1" render={({ field }) => <FormItem><FormLabel>Descrição do Herói (Parágrafo 1)</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
                    <FormField control={form.control} name="heroDescription2" render={({ field }) => <FormItem><FormLabel>Descrição do Herói (Parágrafo 2)</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />

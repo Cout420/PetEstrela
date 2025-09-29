@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, query, orderBy, limit, writeBatch, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
@@ -169,7 +170,7 @@ export async function getContent<T>(contentId: string): Promise<T | null> {
  */
 export async function uploadFile(file: File, path: string): Promise<string> {
   const storage = getStorage(app);
-  const fileName = `${Date.now()}-${file.name}`;
+  const fileName = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
   const storageRef = ref(storage, `${path}${fileName}`);
 
   const snapshot = await uploadBytes(storageRef, file);
