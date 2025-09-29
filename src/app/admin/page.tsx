@@ -289,27 +289,14 @@ const AdminPage = () => {
         const contentId = contentIdMap[activeTab as SchemaMapKeys];
         
         let dataToSave: { [key: string]: any } = {};
-
-        if (activeTab === 'plans') {
-            dataToSave = { plans: data.plans };
-        } else if (activeTab === 'general') {
-             dataToSave = {
-                whatsappLink: data.whatsappLink,
-                whatsappNumber: data.whatsappNumber,
-                phone: data.phone,
-                address: data.address,
-                instagramLink: data.instagramLink
-             };
-        } 
-        else {
-            const currentSchema = schemaMap[activeTab as SchemaMapKeys];
-            const fieldsForCurrentTab = Object.keys(currentSchema.shape);
-            fieldsForCurrentTab.forEach(field => {
-                if (data[field] !== undefined) {
-                    dataToSave[field] = data[field];
-                }
-            });
-        }
+        const currentSchema = schemaMap[activeTab as SchemaMapKeys];
+        const fieldsForCurrentTab = Object.keys(currentSchema.shape);
+        
+        fieldsForCurrentTab.forEach(field => {
+            if (data[field] !== undefined) {
+                dataToSave[field] = data[field];
+            }
+        });
         
         await saveContent(contentId, dataToSave);
 
