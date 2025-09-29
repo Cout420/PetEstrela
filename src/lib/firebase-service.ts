@@ -1,3 +1,4 @@
+
 'use server';
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -21,6 +22,13 @@ const db = getFirestore(app);
 const memorialsCollection = collection(db, 'memorials');
 const contentCollection = collection(db, 'siteContent');
 
+type PetImage = {
+  imageUrl: string;
+  description?: string;
+  imageHint?: string;
+};
+
+
 // --- Tipos ---
 // The representation in Firestore
 export interface PetMemorial {
@@ -36,12 +44,7 @@ export interface PetMemorial {
   local: string;
   tutores: string;
   text: string;
-  images: {
-      id: string;
-      imageUrl: string;
-      description?: string;
-      imageHint?: string;
-  }[];
+  images: PetImage[];
   qrCodeUrl: string;
   createdAt: Timestamp;
 };
@@ -114,7 +117,6 @@ export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<v
     // Convert date strings back to Timestamps before saving
     const dataToSave: PetMemorial = {
         ...pet,
-        images: pet.images.map(img => ({...img, imageUrl: img.imageUrl || ''})),
         birthDate: toTimestamp(pet.birthDate),
         passingDate: toTimestamp(pet.passingDate),
         createdAt: pet.createdAt || Timestamp.now(),

@@ -32,8 +32,10 @@ import { Timestamp } from 'firebase/firestore';
 const isValidImageUrl = (url: string | undefined | null): boolean => {
     if (!url) return false;
     try {
-        const parsedUrl = new URL(url);
-        return ['http:', 'https:', 'data:'].includes(parsedUrl.protocol);
+        // This is a simple check. It doesn't guarantee the URL is a valid image,
+        // but it's a good first pass for client-side feedback.
+        // The server-side error was because `new URL()` is a browser API.
+        return url.startsWith('http:') || url.startsWith('https:') || url.startsWith('data:');
     } catch (e) {
         return false;
     }
@@ -61,7 +63,7 @@ const petSchema = z.object({
   tutores: z.string().min(1, "Os tutores são obrigatórios."),
   text: z.string().min(10, "O texto do memorial deve ter pelo menos 10 caracteres."),
   images: z.array(z.object({
-      id: z.string(),
+      id: z.string(), // ID is only for react-hook-form key, not saved to DB
       imageUrl: directImageUrlSchema.or(z.literal('')),
       description: z.string().optional(),
       imageHint: z.string().optional()
@@ -360,6 +362,12 @@ export default function AdminPage() {
       if (editingPet) {
         petForm.reset({
           ...editingPet,
+          images: editingPet.images.map((img, index) => ({
+             id: `img-${editingPet.id}-${index}`, // Create a stable unique id for the form fields
+             imageUrl: img.imageUrl,
+             description: img.description || '',
+             imageHint: img.imageHint || ''
+          })),
           birthDate: formatDateForInput(editingPet.birthDate),
           passingDate: formatDateForInput(editingPet.passingDate),
         });
@@ -369,7 +377,7 @@ export default function AdminPage() {
           id: nextId,
           name: '', species: '', sexo: '', age: '', family: '', birthDate: '', passingDate: '',
           arvore: '', local: '', tutores: '', text: '', 
-          images: Array(5).fill(null).map(()=>({ id: `img-${Date.now()}-${Math.random()}`, imageUrl: '' })),
+          images: Array(5).fill(null).map(()=>({ id: `img-${Date.now()}-${Math.random()}`, imageUrl: '', description: '', imageHint: '' })),
           qrCodeUrl: '',
         });
       }
@@ -406,9 +414,14 @@ export default function AdminPage() {
           return;
       }
       
+      // Ensure we only send the data needed by the PetMemorial type.
       const petToSave: PetMemorialWithDatesAsString = {
         ...data,
-        images: validImages,
+        images: validImages.map(({ imageUrl, description, imageHint }) => ({
+            imageUrl: imageUrl || '',
+            description: description || '',
+            imageHint: imageHint || ''
+        })),
         qrCodeUrl: shortUrl,
         createdAt: editingPet?.createdAt || Timestamp.now(),
       };
