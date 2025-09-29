@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { app } from '@/lib/firebase-config';
+import { getApps } from 'firebase/app';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +29,7 @@ const LoginPage = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const auth = getApp() ? getAuth(app) : null;
+  const auth = getApps().length ? getAuth(app) : null;
 
 
   const form = useForm<LoginFormValues>({
@@ -150,5 +151,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-
-    

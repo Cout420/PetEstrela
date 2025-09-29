@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
+import { useForm, useFieldArray, FormProvider, useFormContext } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -15,7 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-import { app } from '@/lib/firebase-config'; // Import 'app' from firebase-config
+import { getApps } from 'firebase/app';
+import { app } from '@/lib/firebase-config'; 
 import { getContent, saveContent, uploadImage } from '@/lib/firebase-service';
 
 import { homePageContent as initialHomePageContent } from '@/lib/home-content';
@@ -120,15 +121,14 @@ const memorialPageSchema = z.object({
   createMemorialDescription: z.string().min(1, 'Descrição para criar memorial é obrigatória.'),
 });
 
-// Union schema for all forms
-const adminSchema = z.union([
-  generalContentSchema,
-  homePageSchema,
-  aboutPageSchema,
-  ourSpacePageSchema,
-  plansPageSchema,
-  memorialPageSchema,
-]);
+const adminSchema = z.object({
+  generalContent: generalContentSchema,
+  homePageContent: homePageSchema,
+  aboutPageContent: aboutPageSchema,
+  ourSpacePageContent: ourSpacePageSchema,
+  plansPageContent: plansPageSchema,
+  memorialPageContent: memorialPageSchema,
+});
 
 type GeneralContent = z.infer<typeof generalContentSchema>;
 type HomePageContent = z.infer<typeof homePageSchema>;
@@ -140,7 +140,7 @@ type MemorialPageContent = z.infer<typeof memorialPageSchema>;
 const AdminPage = () => {
   const { toast } = useToast();
   const router = useRouter();
-  const auth = getApp() ? getAuth(app) : null;
+  const auth = getApps().length ? getAuth(app) : null;
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
   const [activeTab, setActiveTab] = useState('general');
@@ -149,6 +149,14 @@ const AdminPage = () => {
   const methods = useForm({
     resolver: zodResolver(adminSchema),
     mode: 'onChange',
+    defaultValues: {
+      generalContent: { whatsappLink: '', whatsappNumber: '', phone: '', address: '', instagramLink: '' },
+      homePageContent: initialHomePageContent,
+      aboutPageContent: initialAboutPageContent,
+      ourSpacePageContent: initialOurSpaceContent,
+      plansPageContent: { plans: initialPlansData },
+      memorialPageContent: initialMemorialPageContent,
+    }
   });
 
   const { reset, control, setValue, getValues, watch } = methods;
@@ -195,7 +203,6 @@ const AdminPage = () => {
 
   useEffect(() => {
     if (!auth) {
-        // Firebase might not be initialized on first render
         setTimeout(() => router.push('/login'), 100);
         return;
     }
@@ -303,7 +310,7 @@ const AdminPage = () => {
   const renderImagePreview = (url: string) => {
     if (!url || typeof url !== 'string') return null;
     try {
-      new URL(url); // Validate URL
+      new URL(url); 
       return <Image src={url} alt="Preview" width={40} height={40} className="rounded-md object-cover" />;
     } catch {
       return null;
@@ -353,35 +360,35 @@ const AdminPage = () => {
                     <CardDescription>Informações de contato e links globais do site.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <FormField name="generalContent.whatsappLink" render={({ field }) => (
+                    <FormField name="generalContent.whatsappLink" control={control} render={({ field }) => (
                       <FormItem>
                         <FormLabel>Link do WhatsApp</FormLabel>
                         <FormControl><Input {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-                     <FormField name="generalContent.whatsappNumber" render={({ field }) => (
+                     <FormField name="generalContent.whatsappNumber" control={control} render={({ field }) => (
                       <FormItem>
                         <FormLabel>Número do WhatsApp (para exibição)</FormLabel>
                         <FormControl><Input {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-                     <FormField name="generalContent.phone" render={({ field }) => (
+                     <FormField name="generalContent.phone" control={control} render={({ field }) => (
                       <FormItem>
                         <FormLabel>Telefone (para exibição)</FormLabel>
                         <FormControl><Input {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-                     <FormField name="generalContent.address" render={({ field }) => (
+                     <FormField name="generalContent.address" control={control} render={({ field }) => (
                       <FormItem>
                         <FormLabel>Endereço</FormLabel>
                         <FormControl><Textarea {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField name="generalContent.instagramLink" render={({ field }) => (
+                    <FormField name="generalContent.instagramLink" control={control} render={({ field }) => (
                       <FormItem>
                         <FormLabel>Link do Instagram</FormLabel>
                         <FormControl><Input {...field} /></FormControl>
@@ -411,15 +418,15 @@ const AdminPage = () => {
                         name="homePageContent.heroSlides"
                         title="Slides do Herói"
                         description="Adicione, remova ou edite os slides principais."
-                        renderItem={(index) => (
+                        renderItem={(index: number) => (
                             <>
-                                <FormField name={`homePageContent.heroSlides.${index}.title`} render={({ field }) => (
+                                <FormField name={`homePageContent.heroSlides.${index}.title`} control={control} render={({ field }) => (
                                     <FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
-                                <FormField name={`homePageContent.heroSlides.${index}.subtitle`} render={({ field }) => (
+                                <FormField name={`homePageContent.heroSlides.${index}.subtitle`} control={control} render={({ field }) => (
                                     <FormItem><FormLabel>Subtítulo</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
-                                <FormField name={`homePageContent.heroSlides.${index}.imageUrl`} render={({ field }) => (
+                                <FormField name={`homePageContent.heroSlides.${index}.imageUrl`} control={control} render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>URL da Imagem</FormLabel>
                                         <FormControl>
@@ -439,24 +446,24 @@ const AdminPage = () => {
                     
                      {/* Why Choose Us */}
                     <FieldGroup title="Seção 'Por Que Escolher-nos?'">
-                         <FormField name="homePageContent.whyChooseUs.title" render={({ field }) => (
+                         <FormField name="homePageContent.whyChooseUs.title" control={control} render={({ field }) => (
                             <FormItem><FormLabel>Título Principal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
-                        <FormField name="homePageContent.whyChooseUs.description" render={({ field }) => (
+                        <FormField name="homePageContent.whyChooseUs.description" control={control} render={({ field }) => (
                             <FormItem><FormLabel>Descrição Principal</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FieldArraySection
                             name="homePageContent.whyChooseUs.items"
                             title="Itens"
-                            renderItem={(index) => (
+                            renderItem={(index: number) => (
                                 <>
-                                    <FormField name={`homePageContent.whyChooseUs.items.${index}.icon`} render={({ field }) => (
+                                    <FormField name={`homePageContent.whyChooseUs.items.${index}.icon`} control={control} render={({ field }) => (
                                        <FormItem><FormLabel>Ícone (Nome do Lucide Icon)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                     )} />
-                                    <FormField name={`homePageContent.whyChooseUs.items.${index}.title`} render={({ field }) => (
+                                    <FormField name={`homePageContent.whyChooseUs.items.${index}.title`} control={control} render={({ field }) => (
                                        <FormItem><FormLabel>Título do Item</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                     )} />
-                                    <FormField name={`homePageContent.whyChooseUs.items.${index}.description`} render={({ field }) => (
+                                    <FormField name={`homePageContent.whyChooseUs.items.${index}.description`} control={control} render={({ field }) => (
                                        <FormItem><FormLabel>Descrição do Item</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                                     )} />
                                 </>
@@ -479,19 +486,19 @@ const AdminPage = () => {
                     <Card>
                         <CardHeader><CardTitle>Página Sobre</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
-                             <FormField name="aboutPageContent.headerTitle" render={({ field }) => (
+                             <FormField name="aboutPageContent.headerTitle" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Título do Cabeçalho</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                             <FormField name="aboutPageContent.headerDescription" render={({ field }) => (
+                             <FormField name="aboutPageContent.headerDescription" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Descrição do Cabeçalho</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                            <FormField name="aboutPageContent.missionTitle" render={({ field }) => (
+                            <FormField name="aboutPageContent.missionTitle" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Título da Missão</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                             <FormField name="aboutPageContent.missionDescription" render={({ field }) => (
+                             <FormField name="aboutPageContent.missionDescription" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Descrição da Missão</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                             <FormField name={`aboutPageContent.missionImageUrl`} render={({ field }) => (
+                             <FormField name={`aboutPageContent.missionImageUrl`} control={control} render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>URL da Imagem da Missão</FormLabel>
                                     <FormControl>
@@ -504,13 +511,13 @@ const AdminPage = () => {
                                     <FormMessage />
                                 </FormItem>
                             )} />
-                             <FormField name="aboutPageContent.historyTitle" render={({ field }) => (
+                             <FormField name="aboutPageContent.historyTitle" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Título da História</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                             <FormField name="aboutPageContent.historyDescription" render={({ field }) => (
+                             <FormField name="aboutPageContent.historyDescription" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Descrição da História</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                             <FormField name={`aboutPageContent.historyImageUrl`} render={({ field }) => (
+                             <FormField name={`aboutPageContent.historyImageUrl`} control={control} render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>URL da Imagem da História</FormLabel>
                                     <FormControl>
@@ -538,21 +545,21 @@ const AdminPage = () => {
                     <Card>
                         <CardHeader><CardTitle>Página Nosso Espaço</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
-                             <FormField name="ourSpacePageContent.headerTitle" render={({ field }) => (
+                             <FormField name="ourSpacePageContent.headerTitle" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Título do Cabeçalho</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                             <FormField name="ourSpacePageContent.headerDescription" render={({ field }) => (
+                             <FormField name="ourSpacePageContent.headerDescription" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Descrição do Cabeçalho</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FieldArraySection
                                 name="ourSpacePageContent.gallery"
                                 title="Galeria de Imagens"
-                                renderItem={(index) => (
+                                renderItem={(index: number) => (
                                     <>
-                                        <FormField name={`ourSpacePageContent.gallery.${index}.title`} render={({ field }) => (
+                                        <FormField name={`ourSpacePageContent.gallery.${index}.title`} control={control} render={({ field }) => (
                                            <FormItem><FormLabel>Título da Imagem</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
-                                        <FormField name={`ourSpacePageContent.gallery.${index}.imageUrl`} render={({ field }) => (
+                                        <FormField name={`ourSpacePageContent.gallery.${index}.imageUrl`} control={control} render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>URL da Imagem</FormLabel>
                                                 <FormControl>
@@ -587,18 +594,18 @@ const AdminPage = () => {
                              <FieldArraySection
                                 name="plansPageContent.plans"
                                 title="Planos de Cremação"
-                                renderItem={(planIndex) => (
+                                renderItem={(planIndex: number) => (
                                     <>
-                                        <FormField name={`plansPageContent.plans.${planIndex}.name`} render={({ field }) => (
+                                        <FormField name={`plansPageContent.plans.${planIndex}.name`} control={control} render={({ field }) => (
                                            <FormItem><FormLabel>Nome do Plano</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
-                                         <FormField name={`plansPageContent.plans.${planIndex}.price`} render={({ field }) => (
+                                         <FormField name={`plansPageContent.plans.${planIndex}.price`} control={control} render={({ field }) => (
                                            <FormItem><FormLabel>Preço</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
-                                         <FormField name={`plansPageContent.plans.${planIndex}.description`} render={({ field }) => (
+                                         <FormField name={`plansPageContent.plans.${planIndex}.description`} control={control} render={({ field }) => (
                                            <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
-                                        <FormField name={`plansPageContent.plans.${planIndex}.isMostChosen`} render={({ field }) => (
+                                        <FormField name={`plansPageContent.plans.${planIndex}.isMostChosen`} control={control} render={({ field }) => (
                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                                <div className="space-y-0.5"><FormLabel>É o mais escolhido?</FormLabel></div>
                                                <FormControl><input type="checkbox" checked={field.value} onChange={field.onChange} className="form-checkbox h-5 w-5 text-primary" /></FormControl>
@@ -607,8 +614,8 @@ const AdminPage = () => {
                                         <FieldArraySection
                                             name={`plansPageContent.plans.${planIndex}.features`}
                                             title="Características"
-                                            renderItem={(featureIndex) => (
-                                                <FormField name={`plansPageContent.plans.${planIndex}.features.${featureIndex}`} render={({ field }) => (
+                                            renderItem={(featureIndex: number) => (
+                                                <FormField name={`plansPageContent.plans.${planIndex}.features.${featureIndex}`} control={control} render={({ field }) => (
                                                     <FormItem><FormLabel>Característica</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                                 )} />
                                             )}
@@ -634,7 +641,7 @@ const AdminPage = () => {
                     <Card>
                         <CardHeader><CardTitle>Página do Memorial</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
-                            <FormField name="memorialPageContent.heroImageUrl" render={({ field }) => (
+                            <FormField name="memorialPageContent.heroImageUrl" control={control} render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>URL da Imagem do Herói</FormLabel>
                                     <FormControl>
@@ -647,19 +654,19 @@ const AdminPage = () => {
                                     <FormMessage />
                                 </FormItem>
                             )} />
-                            <FormField name="memorialPageContent.heroTitle" render={({ field }) => (
+                            <FormField name="memorialPageContent.heroTitle" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Título do Herói</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                            <FormField name="memorialPageContent.heroDescription1" render={({ field }) => (
+                            <FormField name="memorialPageContent.heroDescription1" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Descrição 1</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                            <FormField name="memorialPageContent.heroDescription2" render={({ field }) => (
+                            <FormField name="memorialPageContent.heroDescription2" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Descrição 2</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                            <FormField name="memorialPageContent.createMemorialTitle" render={({ field }) => (
+                            <FormField name="memorialPageContent.createMemorialTitle" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Título do Card "Criar Memorial"</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                            <FormField name="memorialPageContent.createMemorialDescription" render={({ field }) => (
+                            <FormField name="memorialPageContent.createMemorialDescription" control={control} render={({ field }) => (
                                 <FormItem><FormLabel>Descrição do Card "Criar Memorial"</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                         </CardContent>
@@ -730,5 +737,3 @@ const FieldArraySection = ({ name, title, description, renderItem, defaultItem, 
 
 
 export default AdminPage;
-
-    
