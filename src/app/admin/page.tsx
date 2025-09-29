@@ -51,19 +51,15 @@ const petSchema = z.object({
   sexo: z.string().min(1, "O sexo é obrigatório."),
   age: z.string().min(1, "A idade é obrigatória."),
   family: z.string().min(1, "A família é obrigatória."),
-  birthDate: z.string().refine((val) => !val || !isNaN(Date.parse(val)), {
-    message: "Data de nascimento inválida.",
-  }),
-  passingDate: z.string().refine((val) => !val || !isNaN(Date.parse(val)), {
-    message: "Data de falecimento inválida.",
-  }),
+  birthDate: z.string().optional(),
+  passingDate: z.string().optional(),
   arvore: z.string().min(1, "A árvore é obrigatória."),
   local: z.string().min(1, "O local é obrigatório."),
   tutores: z.string().min(1, "Os tutores são obrigatórios."),
   text: z.string().min(10, "O texto do memorial deve ter pelo menos 10 caracteres."),
   images: z.array(z.object({
       id: z.string(), // ID is only for react-hook-form key, not saved to DB
-      imageUrl: directImageUrlSchema.or(z.literal('')),
+      imageUrl: z.string().url("URL da imagem inválida ou vazia.").min(1, "URL da imagem é obrigatória"),
       description: z.string().optional(),
       imageHint: z.string().optional()
   })).min(5, "É necessário adicionar pelo menos 5 imagens válidas."),
@@ -78,10 +74,10 @@ const aboutPageSchema = z.object({
   headerDescription: z.string().min(1, "Descrição do cabeçalho é obrigatória."),
   missionTitle: z.string().min(1, "Título da missão é obrigatório."),
   missionDescription: z.string().min(1, "Descrição da missão é obrigatória."),
-  missionImageUrl: directImageUrlSchema.optional().or(z.literal('')),
+  missionImageUrl: z.string().optional(),
   historyTitle: z.string().min(1, "Título da história é obrigatório."),
   historyDescription: z.string().min(1, "Descrição da história é obrigatória."),
-  historyImageUrl: directImageUrlSchema.optional().or(z.literal('')),
+  historyImageUrl: z.string().optional(),
 });
 
 type AboutPageContent = z.infer<typeof aboutPageSchema>;
@@ -113,7 +109,7 @@ const plansPageSchema = z.object({
 type PlansPageContent = z.infer<typeof plansPageSchema>;
 
 const heroSlideSchema = z.object({
-    imageUrl: directImageUrlSchema.optional().or(z.literal('')),
+    imageUrl: z.string().optional(),
     title: z.string().min(1, 'Título é obrigatório'),
     subtitle: z.string().min(1, 'Subtítulo é obrigatório'),
 });
@@ -130,7 +126,7 @@ const cremationProcessStepSchema = z.object({
 const allPetsSectionSchema = z.object({
     title: z.string().min(1, 'Título é obrigatório'),
     description: z.string().min(1, 'Descrição é obrigatória'),
-    imageUrl: directImageUrlSchema.optional().or(z.literal('')),
+    imageUrl: z.string().optional(),
     petsList: z.array(z.string().min(1, 'O item da lista não pode ser vazio')),
 });
 
@@ -154,7 +150,7 @@ type HomePageContent = z.infer<typeof homePageSchema>;
 const galleryItemSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Título da imagem é obrigatório."),
-  imageUrl: directImageUrlSchema.optional().or(z.literal('')),
+  imageUrl: z.string().optional(),
 });
 
 const ourSpaceSchema = z.object({
@@ -167,7 +163,7 @@ type OurSpaceContent = z.infer<typeof ourSpaceSchema>;
 
 
 const memorialPageSchema = z.object({
-  heroImageUrl: directImageUrlSchema.optional().or(z.literal('')),
+  heroImageUrl: z.string().optional(),
   heroTitle: z.string().min(1, "Título é obrigatório."),
   heroDescription1: z.string().min(1, "Primeiro parágrafo da descrição é obrigatório."),
   heroDescription2: z.string().min(1, "Segundo parágrafo da descrição é obrigatória."),
