@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
@@ -168,7 +169,7 @@ const memorialPageSchema = z.object({
   heroImageUrl: directImageUrlSchema.optional().or(z.literal('')),
   heroTitle: z.string().min(1, "Título é obrigatório."),
   heroDescription1: z.string().min(1, "Primeiro parágrafo da descrição é obrigatório."),
-  heroDescription2: z.string().min(1, "Segundo parágrafo da descrição é obrigatório."),
+  heroDescription2: z.string().min(1, "Segundo parágrafo da descrição é obrigatória."),
   createMemorialTitle: z.string().min(1, "Título do card 'Criar Memorial' é obrigatório."),
   createMemorialDescription: z.string().min(1, "Descrição do card 'Criar Memorial' é obrigatória."),
 });
@@ -394,7 +395,7 @@ export default function AdminPage() {
     try {
       const { shortUrl } = await shortenLink({ memorialId: data.id });
       
-      const validImages = data.images.filter(image => image.imageUrl && isValidImageUrl(image.imageUrl));
+      const validImages = data.images.filter(image => image.imageUrl);
       
       if (validImages.length < 5) {
           petForm.setError("images", { 
