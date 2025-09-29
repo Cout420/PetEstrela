@@ -132,7 +132,7 @@ type HomePageContent = z.infer<typeof homePageSchema>;
 type AboutPageContent = z.infer<typeof aboutPageSchema>;
 type OurSpacePageContent = z.infer<typeof ourSpacePageSchema>;
 type PlansPageContent = z.infer<typeof plansPageSchema>;
-type MemorialPageContent = z.infer<typeof memorialPageSchema>;
+type MemorialPageContent = z.infer<typeof MemorialPageSchema>;
 
 const AdminPage = () => {
   const { toast } = useToast();
@@ -155,7 +155,7 @@ const AdminPage = () => {
     }
   });
 
-  const { reset, control, setValue, getValues } = methods;
+  const { reset, control, setValue, getValues, handleSubmit } = methods;
 
   const loadContent = useCallback(async () => {
     setIsLoading(true);
@@ -244,16 +244,19 @@ const AdminPage = () => {
 
   const FileUploadButton = ({ fieldName }: { fieldName: string }) => {
     const isUploading = uploadingState[fieldName];
+    // Create a unique ID for the file input to avoid conflicts
+    const inputId = `file-upload-${fieldName}`;
+    
     return (
         <div className="relative flex items-center gap-2">
             <Button asChild size="sm" variant="outline" className="flex-shrink-0" disabled={isUploading}>
-                <label htmlFor={fieldName}>
+                <label htmlFor={inputId}>
                     {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                     Trocar Imagem
                 </label>
             </Button>
             <input
-                id={fieldName}
+                id={inputId}
                 type="file"
                 accept="image/png, image/jpeg, image/gif, image/webp"
                 className="sr-only"
@@ -264,9 +267,8 @@ const AdminPage = () => {
     );
 };
 
-  const onSubmit = async () => {
+  const onSubmit = async (data: any) => {
     setIsSubmitting(true);
-    const data = getValues();
     try {
       await Promise.all([
         saveContent('generalContent', data.generalContent),
@@ -338,7 +340,7 @@ const AdminPage = () => {
             
             {/* General Content Form */}
             <TabsContent value="general">
-              <form onSubmit={methods.handleSubmit(onSubmit)}>
+              <form onSubmit={handleSubmit(onSubmit)}>
                 <Card>
                   <CardHeader>
                     <CardTitle>Configurações Gerais</CardTitle>
@@ -391,7 +393,7 @@ const AdminPage = () => {
 
             {/* Home Page Form */}
             <TabsContent value="home">
-              <form onSubmit={methods.handleSubmit(onSubmit)}>
+              <form onSubmit={handleSubmit(onSubmit)}>
                 <Card>
                   <CardHeader>
                     <CardTitle>Página Home</CardTitle>
@@ -414,13 +416,13 @@ const AdminPage = () => {
                                 <FormField name={`homePageContent.heroSlides.${index}.imageUrl`} control={control} render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>URL da Imagem</FormLabel>
-                                        <FormControl>
-                                             <div className='flex items-center gap-2'>
-                                               <Input {...field} />
-                                               {renderImagePreview(field.value)}
-                                               <FileUploadButton fieldName={`homePageContent.heroSlides.${index}.imageUrl`} />
-                                             </div>
-                                        </FormControl>
+                                        <div className='flex items-center gap-2'>
+                                            <FormControl>
+                                                <Input {...field} />
+                                            </FormControl>
+                                            {renderImagePreview(field.value)}
+                                            <FileUploadButton fieldName={`homePageContent.heroSlides.${index}.imageUrl`} />
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )} />
@@ -493,15 +495,15 @@ const AdminPage = () => {
                             <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField name={`homePageContent.allPetsSection.imageUrl`} control={control} render={({ field }) => (
-                            <FormItem>
+                           <FormItem>
                                 <FormLabel>URL da Imagem</FormLabel>
-                                <FormControl>
-                                    <div className='flex items-center gap-2'>
-                                    <Input {...field} />
+                                <div className='flex items-center gap-2'>
+                                    <FormControl>
+                                        <Input {...field} />
+                                    </FormControl>
                                     {renderImagePreview(field.value)}
                                     <FileUploadButton fieldName={`homePageContent.allPetsSection.imageUrl`} />
-                                    </div>
-                                </FormControl>
+                                </div>
                                 <FormMessage />
                             </FormItem>
                         )} />
@@ -528,7 +530,7 @@ const AdminPage = () => {
 
              {/* About Page Form */}
             <TabsContent value="about">
-                <form onSubmit={methods.handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit)}>
                     <Card>
                         <CardHeader><CardTitle>Página Sobre</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
@@ -547,13 +549,13 @@ const AdminPage = () => {
                              <FormField name={`aboutPageContent.missionImageUrl`} control={control} render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>URL da Imagem da Missão</FormLabel>
-                                    <FormControl>
-                                         <div className='flex items-center gap-2'>
-                                           <Input {...field} />
-                                            {renderImagePreview(field.value)}
-                                            <FileUploadButton fieldName={`aboutPageContent.missionImageUrl`} />
-                                         </div>
-                                    </FormControl>
+                                    <div className='flex items-center gap-2'>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        {renderImagePreview(field.value)}
+                                        <FileUploadButton fieldName={`aboutPageContent.missionImageUrl`} />
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )} />
@@ -566,13 +568,13 @@ const AdminPage = () => {
                              <FormField name={`aboutPageContent.historyImageUrl`} control={control} render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>URL da Imagem da História</FormLabel>
-                                    <FormControl>
-                                         <div className='flex items-center gap-2'>
-                                           <Input {...field} />
-                                           {renderImagePreview(field.value)}
-                                            <FileUploadButton fieldName={`aboutPageContent.historyImageUrl`} />
-                                         </div>
-                                    </FormControl>
+                                    <div className='flex items-center gap-2'>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        {renderImagePreview(field.value)}
+                                        <FileUploadButton fieldName={`aboutPageContent.historyImageUrl`} />
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )} />
@@ -587,7 +589,7 @@ const AdminPage = () => {
             
             {/* Our Space Page Form */}
             <TabsContent value="our-space">
-                <form onSubmit={methods.handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit)}>
                     <Card>
                         <CardHeader><CardTitle>Página Nosso Espaço</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
@@ -608,13 +610,13 @@ const AdminPage = () => {
                                         <FormField name={`ourSpacePageContent.gallery.${index}.imageUrl`} control={control} render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>URL da Imagem</FormLabel>
-                                                <FormControl>
-                                                     <div className='flex items-center gap-2'>
-                                                       <Input {...field} />
-                                                       {renderImagePreview(field.value)}
-                                                        <FileUploadButton fieldName={`ourSpacePageContent.gallery.${index}.imageUrl`} />
-                                                     </div>
-                                                </FormControl>
+                                                <div className='flex items-center gap-2'>
+                                                    <FormControl>
+                                                        <Input {...field} />
+                                                    </FormControl>
+                                                    {renderImagePreview(field.value)}
+                                                    <FileUploadButton fieldName={`ourSpacePageContent.gallery.${index}.imageUrl`} />
+                                                </div>
                                                 <FormMessage />
                                             </FormItem>
                                         )} />
@@ -633,7 +635,7 @@ const AdminPage = () => {
 
             {/* Plans Page Form */}
              <TabsContent value="plans">
-                <form onSubmit={methods.handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit)}>
                     <Card>
                         <CardHeader><CardTitle>Página de Planos</CardTitle></CardHeader>
                         <CardContent>
@@ -683,20 +685,20 @@ const AdminPage = () => {
             
             {/* Memorial Page Form */}
             <TabsContent value="memorial">
-                <form onSubmit={methods.handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit)}>
                     <Card>
                         <CardHeader><CardTitle>Página do Memorial</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
                             <FormField name="memorialPageContent.heroImageUrl" control={control} render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>URL da Imagem do Herói</FormLabel>
-                                    <FormControl>
-                                        <div className='flex items-center gap-2'>
+                                    <div className='flex items-center gap-2'>
+                                        <FormControl>
                                             <Input {...field} />
-                                            {renderImagePreview(field.value)}
-                                            <FileUploadButton fieldName="memorialPageContent.heroImageUrl" />
-                                        </div>
-                                    </FormControl>
+                                        </FormControl>
+                                        {renderImagePreview(field.value)}
+                                        <FileUploadButton fieldName="memorialPageContent.heroImageUrl" />
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )} />
