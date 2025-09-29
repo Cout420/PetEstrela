@@ -98,20 +98,28 @@ export async function getMemorialById(id: number): Promise<PetMemorial | null> {
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
     const docRef = doc(db, 'memorials', pet.id.toString());
     
+    // Helper function to safely convert a string to a Firestore Timestamp.
+    // Returns current Timestamp if the string is invalid or empty.
     const toTimestamp = (dateString: string | undefined): Timestamp => {
-        if (!dateString || isNaN(Date.parse(dateString))) {
-            return Timestamp.now();
+        if (dateString && !isNaN(Date.parse(dateString))) {
+            return Timestamp.fromDate(new Date(dateString));
         }
-        const date = new Date(dateString);
-        return Timestamp.fromDate(date);
+        // Return a default value for invalid or missing dates to prevent crashes.
+        return Timestamp.now();
     };
 
     // Convert date strings back to Timestamps before saving
     const dataToSave: PetMemorial = {
         ...pet,
+        images: pet.images.map(({ imageUrl, description, imageHint }) => ({
+            imageUrl: imageUrl || '',
+            description: description || '',
+            imageHint: imageHint || ''
+        })),
         birthDate: toTimestamp(pet.birthDate),
         passingDate: toTimestamp(pet.passingDate),
-        createdAt: pet.createdAt || Timestamp.now(),
+        // If createdAt exists (it's an edit), keep it. Otherwise (it's new), create it.
+        createdAt: pet.createdAt instanceof Timestamp ? pet.createdAt : Timestamp.now(),
     };
 
     await setDoc(docRef, dataToSave, { merge: true });

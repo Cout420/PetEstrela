@@ -32,6 +32,8 @@ import { Timestamp } from 'firebase/firestore';
 const isValidImageUrl = (url: string | undefined | null): boolean => {
     if (!url) return false;
     try {
+        // Basic check for http/https/data protocols.
+        // The browser will handle the actual validation on render.
         return url.startsWith('http:') || url.startsWith('https:') || url.startsWith('data:');
     } catch (e) {
         return false;
@@ -420,7 +422,7 @@ export default function AdminPage() {
             imageHint: imageHint || ''
         })),
         qrCodeUrl: shortUrl,
-        createdAt: editingPet?.createdAt || Timestamp.now(),
+        createdAt: editingPet?.createdAt, // Pass the original createdAt timestamp if editing
       };
 
       await saveMemorial(petToSave);
