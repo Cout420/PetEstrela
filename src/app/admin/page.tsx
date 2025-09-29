@@ -41,9 +41,7 @@ const isDirectImageLink = (url: string) => {
     return /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
 };
 
-const directImageUrlSchema = z.string().url("URL inválida.").refine(isDirectImageLink, {
-    message: "URL inválida. Deve ser um link direto para uma imagem (jpg, png, etc.)."
-});
+const directImageUrlSchema = z.string().url("URL inválida.");
 
 
 // Zod schema for client-side form validation (dates are strings)
@@ -399,12 +397,12 @@ export default function AdminPage() {
     try {
       const { shortUrl } = await shortenLink({ memorialId: data.id });
       
-      const validImages = data.images.filter(image => image.imageUrl && isDirectImageLink(image.imageUrl));
+      const validImages = data.images.filter(image => image.imageUrl && isValidImageUrl(image.imageUrl));
       
       if (validImages.length < 5) {
           petForm.setError("images", { 
               type: "manual", 
-              message: "Por favor, forneça pelo menos 5 URLs de imagem válidas e diretas (jpg, png, etc)." 
+              message: "Por favor, forneça pelo menos 5 URLs de imagem válidas." 
           });
           setIsSaving(false);
           return;
