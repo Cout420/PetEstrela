@@ -9,6 +9,8 @@ import { z } from 'zod';
 import Image from 'next/image';
 import { Loader2, PlusCircle, Trash2, X, Upload, LogOut, Edit } from 'lucide-react';
 import { format } from 'date-fns';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,13 +21,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { app } from '@/lib/firebase-config';
 
 import { 
   getMemorials, 
   saveMemorial, 
   deleteMemorial, 
   getNextMemorialId,
-  uploadImage,
   PetMemorial,
   PetMemorialWithDatesAsString
 } from '@/lib/firebase-service';
@@ -55,6 +57,7 @@ const petMemorialSchema = z.object({
   qrCodeUrl: z.string().url().optional().or(z.literal('')),
 });
 
+const storage = getStorage(app);
 
 // Helper para converter Timestamp para string 'yyyy-MM-dd'
 const timestampToString = (ts: any): string => {
@@ -170,8 +173,12 @@ const AdminMemorialsPage = () => {
     
     setIsUploading(true);
     try {
-      const imageUrl = await uploadImage(file, 'memorials');
-      append({ imageUrl, description: '', imageHint: '' });
+       const fileName = `memorials/${Date.now()}-${file.name}`;
+       const storageRef = ref(storage, fileName);
+       const snapshot = await uploadBytes(storageRef, file);
+       const downloadURL = await getDownloadURL(snapshot.ref);
+
+      append({ imageUrl: downloadURL, description: '', imageHint: '' });
       toast({
         title: 'Upload Concluído',
         description: 'A imagem foi carregada com sucesso.',
@@ -408,3 +415,5 @@ const AdminMemorialsPage = () => {
 };
 
 export default AdminMemorialsPage;
+
+    

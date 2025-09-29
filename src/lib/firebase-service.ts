@@ -2,11 +2,9 @@
 'use server';
 
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, query, orderBy, limit, writeBatch, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { app } from './firebase-config'; // Import configured app
 
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 const memorialsCollection = collection(db, 'memorials');
 const contentCollection = collection(db, 'siteContent');
@@ -48,31 +46,6 @@ export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'pass
 
 
 // --- Funções do Serviço ---
-
-/**
- * Uploads an image to Firebase Storage and returns its public URL.
- * @param file The image file to upload.
- * @param path The path in storage to upload the file to (e.g., 'memorials/images').
- * @returns The public URL of the uploaded image.
- */
-export async function uploadImage(file: File, path: string): Promise<string> {
-  if (!file) {
-    throw new Error('No file provided for upload.');
-  }
-  
-  // Create a unique file name to prevent overwrites
-  const fileName = `${path}/${Date.now()}-${file.name}`;
-  const storageRef = ref(storage, fileName);
-
-  try {
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
-  } catch (error) {
-    console.error(`Error uploading image to ${path}:`, error);
-    throw new Error('Failed to upload image.');
-  }
-}
 
 /**
  * Busca todos os memoriais do Firestore, ordenados por data de criação.
@@ -213,3 +186,5 @@ export async function getContent<T>(contentId: string): Promise<T | null> {
     return null;
   }
 }
+
+    
