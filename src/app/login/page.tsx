@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAuth } from 'firebase/auth';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -56,17 +56,36 @@ const LoginPage = () => {
       return;
     }
     
-    // The Firebase auth part is not strictly necessary if we are just
-    // checking against env variables. We can simply redirect.
-    // This simplifies setup as it doesn't require enabling auth providers.
-    
-    toast({
-      title: 'Login bem-sucedido!',
-      description: 'Redirecionando para o painel...',
-    });
-    router.push('/admin');
+    if (!auth) {
+        toast({
+            title: 'Erro de Configuração',
+            description: 'A autenticação do Firebase não está disponível.',
+            variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+    }
 
-    // Keep setIsLoading(false) out of the happy path to avoid flicker
+    try {
+        // Sign in anonymously to create a persistent session
+        await signInAnonymously(auth);
+        
+        toast({
+          title: 'Login bem-sucedido!',
+          description: 'Redirecionando para o painel...',
+        });
+        
+        router.push('/admin');
+
+    } catch (error) {
+        console.error("Anonymous sign-in failed:", error);
+        toast({
+            title: 'Falha no Login',
+            description: 'Não foi possível iniciar uma sessão segura. Tente novamente.',
+            variant: 'destructive',
+        });
+        setIsLoading(false);
+    }
   };
 
   return (

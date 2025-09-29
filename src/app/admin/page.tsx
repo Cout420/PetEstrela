@@ -203,8 +203,8 @@ const AdminPage = () => {
 
   useEffect(() => {
     if (!auth) {
-        // Fallback in case Firebase app isn't ready
-        setTimeout(() => router.push('/login'), 100);
+        setIsAuthenticating(false);
+        router.push('/login');
         return;
     }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -799,7 +799,3 @@ const FieldArraySection = ({ name, title, description, renderItem, defaultItem, 
 
 
 export default AdminPage;
-
-    
-
-    
