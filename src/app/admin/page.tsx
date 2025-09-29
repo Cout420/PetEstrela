@@ -138,6 +138,7 @@ const AdminPage = () => {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [uploadingState, setUploadingState] = useState<{ [key: string]: boolean }>({});
 
@@ -154,7 +155,7 @@ const AdminPage = () => {
     }
   });
 
-  const { reset, control, setValue, getValues, formState: { isSubmitting } } = methods;
+  const { reset, control, setValue, getValues } = methods;
 
   const loadContent = useCallback(async () => {
     setIsLoading(true);
@@ -180,7 +181,7 @@ const AdminPage = () => {
             homePageContent: homeContent || initialHomePageContent,
             aboutPageContent: aboutContent || initialAboutPageContent,
             ourSpacePageContent: ourSpaceContent || initialOurSpaceContent,
-            plansPageContent: plansContent || { plans: initialPlansData },
+            plansPageContent: (plansContent && plansContent.plans) ? plansContent : { plans: initialPlansData },
             memorialPageContent: memorialContent || initialMemorialPageContent,
         });
     } catch (error) {
@@ -210,7 +211,6 @@ const AdminPage = () => {
   }, [loadContent]);
 
   const handleSignOut = async () => {
-    // For now, just redirects to login. In a real auth scenario, you would sign out from the provider.
     toast({ title: 'Você saiu da sua conta.' });
     router.push('/login');
   };
@@ -265,6 +265,7 @@ const AdminPage = () => {
 };
 
   const onSubmit = async () => {
+    setIsSubmitting(true);
     const data = getValues();
     try {
       await Promise.all([
@@ -286,6 +287,8 @@ const AdminPage = () => {
         description: 'Não foi possível salvar o conteúdo. Verifique o console para mais detalhes.',
         variant: 'destructive',
       });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
