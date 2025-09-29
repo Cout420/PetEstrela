@@ -3,21 +3,11 @@
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, query, orderBy, limit, writeBatch, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { app } from './firebase-config'; // Import configured app
 
-
-// Sua configuração do Firebase virá do .env.local
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-// Inicializa o Firebase para uso no lado do cliente/servidor quando o admin SDK não é necessário.
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 const memorialsCollection = collection(db, 'memorials');
 const contentCollection = collection(db, 'siteContent');
@@ -61,6 +51,31 @@ export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'pass
 // --- Funções do Serviço ---
 
 /**
+ * Uploads an image to Firebase Storage and returns its public URL.
+ * @param file The image file to upload.
+ * @param path The path in storage to upload the file to (e.g., 'memorials/images').
+ * @returns The public URL of the uploaded image.
+ */
+export async function uploadImage(file: File, path: string): Promise<string> {
+  if (!file) {
+    throw new Error('No file provided for upload.');
+  }
+  
+  // Create a unique file name to prevent overwrites
+  const fileName = `${path}/${Date.now()}-${file.name}`;
+  const storageRef = ref(storage, fileName);
+
+  try {
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return downloadURL;
+  } catch (error) {
+    console.error(`Error uploading image to ${path}:`, error);
+    throw new Error('Failed to upload image.');
+  }
+}
+
+/**
  * Busca todos os memoriais do Firestore, ordenados por data de criação.
  */
 export async function getMemorials(): Promise<PetMemorial[]> {
@@ -102,7 +117,7 @@ export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<v
     // Returns current Timestamp if the string is invalid or empty.
     const toTimestamp = (dateString: string | undefined): Timestamp => {
         if (dateString && !isNaN(Date.parse(dateString))) {
-            return Timestamp.fromDate(new Date(dateString));
+            return Timestamp.fromDate(new Date(dateValue + 'T00:00:00'));
         }
         // Return a default value for invalid or missing dates to prevent crashes.
         return Timestamp.now();
@@ -191,3 +206,5 @@ export async function getContent<T>(contentId: string): Promise<T | null> {
     return null;
   }
 }
+
+    

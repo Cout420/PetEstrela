@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu } from 'lucide-react';
+import { Menu, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/logo';
 import { cn } from '@/lib/utils';
@@ -53,12 +54,17 @@ const Header = () => {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
           <Button asChild className="btn-whatsapp">
             <a href={whatsappLink} target="_blank">
               Contato
             </a>
           </Button>
+           <Button asChild variant="outline" size="icon">
+              <Link href="/login" aria-label="Painel do Administrador">
+                <LogIn className="h-4 w-4" />
+              </Link>
+            </Button>
         </div>
 
         <div className="md:hidden">
@@ -88,6 +94,13 @@ const Header = () => {
                       {link.label}
                     </Link>
                   ))}
+                   <Link
+                      href="/login"
+                      className='text-lg font-medium text-muted-foreground transition-colors hover:text-foreground'
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Admin
+                    </Link>
                 </nav>
                 <div className="mt-auto">
                    <Button asChild className="btn-whatsapp w-full">
@@ -106,3 +119,5 @@ const Header = () => {
 };
 
 export default Header;
+
+    
