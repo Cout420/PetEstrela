@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import { useForm, FormProvider, useFieldArray, useFormContext } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,11 +23,12 @@ import { getAdminApp } from '@/lib/firebase-admin';
 import { Progress } from '@/components/ui/progress';
 
 // --- Image Upload Component ---
-const ImageUploadField = ({ name }: { name: string }) => {
-  const { control, setValue } = useFormContext();
+const ImageUploadField = ({ name, label }: { name: string, label: string }) => {
+  const { control, setValue, watch } = useFormContext();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageUrl = watch(name);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -64,11 +65,11 @@ const ImageUploadField = ({ name }: { name: string }) => {
         name={name}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{name.split('.').pop()?.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</FormLabel>
+            <FormLabel>{label}</FormLabel>
             <div className="flex items-center gap-2">
-              <Input {...field} placeholder="https://..." />
+              <Input {...field} placeholder="https://..." value={field.value || ''} />
               <Button type="button" variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                <Paperclip className="h-4 w-4" />
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
               </Button>
               <input
                 type="file"
@@ -83,6 +84,7 @@ const ImageUploadField = ({ name }: { name: string }) => {
         )}
       />
       {uploading && <Progress value={progress} className="w-full h-2" />}
+      {imageUrl && !uploading && <img src={imageUrl} alt="preview" className="mt-2 h-20 w-auto rounded-md object-cover" />}
     </div>
   );
 };
@@ -161,11 +163,13 @@ const ourSpaceContentSchema = z.object({
   gallery: z.array(galleryItemSchema),
 });
 
+const planFeatureSchema = z.string();
+
 const planSchema = z.object({
-  name: z.string(),
-  price: z.string(),
-  description: z.string(),
-  features: z.array(z.string()),
+  name: z.string().min(1, "Nome é obrigatório"),
+  price: z.string().min(1, "Preço é obrigatório"),
+  description: z.string().min(1, "Descrição é obrigatória"),
+  features: z.array(planFeatureSchema),
   pricingDetails: z.array(z.string()).optional(),
   optional: z.string().optional(),
   isMostChosen: z.boolean(),
@@ -241,8 +245,8 @@ const AdminPage = () => {
           getContent('plansPageContent'),
           getContent('generalContent'),
         ]);
-
-        form.reset({
+        
+        const mergedData = {
           ...initialHomePageContent,
           ...(homeData as any),
           ...initialAboutContent,
@@ -252,12 +256,14 @@ const AdminPage = () => {
           ...initialOurSpaceContent,
           ...(ourSpaceData as any),
           plans: (plansData as any)?.plans || initialPlans,
-          whatsappLink: (generalData as any)?.whatsappLink || '',
-          whatsappNumber: (generalData as any)?.whatsappNumber || '',
-          phone: (generalData as any)?.phone || '',
-          address: (generalData as any)?.address || '',
-          instagramLink: (generalData as any)?.instagramLink || '',
-        });
+          whatsappLink: (generalData as any)?.whatsappLink || 'https://wa.me/551142405253',
+          whatsappNumber: (generalData as any)?.whatsappNumber || '1142405253',
+          phone: (generalData as any)?.phone || '(11) 4240-5253',
+          address: (generalData as any)?.address || 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
+          instagramLink: (generalData as any)?.instagramLink || 'https://www.instagram.com/petestrelacrematorio/',
+        };
+
+        form.reset(mergedData);
 
       } catch (error) {
         toast({ title: 'Erro ao carregar conteúdo', description: (error as Error).message, variant: 'destructive' });
@@ -272,7 +278,6 @@ const AdminPage = () => {
 
   const onSubmit = async (data: any) => {
     try {
-        const currentSchema = schemaMap[activeTab as SchemaMapKeys];
         const contentIdMap = {
             home: 'homePageContent',
             about: 'aboutPageContent',
@@ -283,20 +288,29 @@ const AdminPage = () => {
         };
         const contentId = contentIdMap[activeTab as SchemaMapKeys];
         
-        // Extract only the fields relevant to the current tab
-        const fieldsForCurrentTab = Object.keys(currentSchema.shape);
-        const dataToSave: { [key: string]: any } = {};
+        let dataToSave: { [key: string]: any } = {};
 
         if (activeTab === 'plans') {
-            dataToSave['plans'] = data.plans;
-        } else {
+            dataToSave = { plans: data.plans };
+        } else if (activeTab === 'general') {
+             dataToSave = {
+                whatsappLink: data.whatsappLink,
+                whatsappNumber: data.whatsappNumber,
+                phone: data.phone,
+                address: data.address,
+                instagramLink: data.instagramLink
+             };
+        } 
+        else {
+            const currentSchema = schemaMap[activeTab as SchemaMapKeys];
+            const fieldsForCurrentTab = Object.keys(currentSchema.shape);
             fieldsForCurrentTab.forEach(field => {
                 if (data[field] !== undefined) {
                     dataToSave[field] = data[field];
                 }
             });
         }
-
+        
         await saveContent(contentId, dataToSave);
 
         toast({ title: 'Sucesso!', description: `Conteúdo da aba '${activeTab}' salvo com sucesso.` });
@@ -307,10 +321,10 @@ const AdminPage = () => {
 
   const renderArrayField = (
     title: string,
-    fieldArray: any,
+    fieldArray: any[],
     appendFn: (value: any) => void,
     removeFn: (index: number) => void,
-    fieldSchema: any,
+    fieldSchema: z.ZodRawShape,
     namePrefix: string
     ) => (
     <Card>
@@ -322,10 +336,11 @@ const AdminPage = () => {
           <Card key={field.id} className="p-4">
             <div className="space-y-2">
               {Object.keys(fieldSchema).map(key => {
-                 if (key === 'imageUrl') {
-                   return <ImageUploadField key={key} name={`${namePrefix}.${index}.${key}`} />;
+                 if (key === 'imageUrl' || key.toLowerCase().includes('imageurl')) {
+                   const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                   return <ImageUploadField key={key} name={`${namePrefix}.${index}.${key}`} label={label} />;
                  }
-                 if (key !== 'isMostChosen') {
+                 if (key !== 'isMostChosen' && key !== 'id') {
                     return (
                         <FormField
                         key={key}
@@ -335,10 +350,10 @@ const AdminPage = () => {
                             <FormItem>
                             <FormLabel>{key.charAt(0).toUpperCase() + key.slice(1)}</FormLabel>
                             <FormControl>
-                                {Array.isArray(formField.value) ? (
-                                    <Textarea {...formField} value={formField.value.join('\n')} onChange={e => formField.onChange(e.target.value.split('\n'))} />
+                                {key === 'features' || key === 'pricingDetails' ? (
+                                    <Textarea {...formField} value={(formField.value || []).join('\n')} onChange={e => formField.onChange(e.target.value.split('\n'))} />
                                 ) : (
-                                    <Input {...formField} />
+                                    <Input {...formField} value={formField.value || ''}/>
                                 )}
                             </FormControl>
                             <FormMessage />
@@ -354,10 +369,10 @@ const AdminPage = () => {
                   control={form.control}
                   name={`${namePrefix}.${index}.isMostChosen`}
                   render={({ field: formField }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-2">
                       <FormLabel>É o mais escolhido?</FormLabel>
                       <FormControl>
-                        <Input type="checkbox" checked={formField.value} onChange={formField.onChange} className="h-4 w-4" />
+                        <input type="checkbox" checked={formField.value} onChange={formField.onChange} className="h-4 w-4" />
                       </FormControl>
                     </FormItem>
                   )}
@@ -370,14 +385,50 @@ const AdminPage = () => {
             </Button>
           </Card>
         ))}
-        <Button onClick={() => appendFn(
-            Object.keys(fieldSchema).reduce((acc, key) => ({...acc, [key]: Array.isArray(fieldSchema[key]) ? [] : ''}), {})
-        )}>
+        <Button onClick={() => {
+            const newObject = Object.keys(fieldSchema).reduce((acc, key) => {
+                if(key === 'id') {
+                    // @ts-ignore
+                    acc[key] = `new_${Date.now()}`;
+                } else if (fieldSchema[key] instanceof z.ZodArray) {
+                    // @ts-ignore
+                    acc[key] = [];
+                } else if (fieldSchema[key] instanceof z.ZodBoolean) {
+                    // @ts-ignore
+                    acc[key] = false;
+                }
+                else {
+                    // @ts-ignore
+                    acc[key] = '';
+                }
+                return acc;
+            }, {});
+            appendFn(newObject);
+        }}>
           <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
         </Button>
       </CardContent>
     </Card>
   );
+
+  const renderSimpleField = (name: string, label: string, type: 'input' | 'textarea' = 'input') => {
+      const Component = type === 'input' ? Input : Textarea;
+      return (
+        <FormField
+            control={form.control}
+            name={name}
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>{label}</FormLabel>
+                    <FormControl>
+                        <Component {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+      );
+  }
 
   return (
     <div className="container mx-auto py-10">
@@ -404,43 +455,76 @@ const AdminPage = () => {
               <TabsContent value="home" className="space-y-6">
                  {renderArrayField('Slides do Herói', heroSlidesFields, appendHeroSlide, removeHeroSlide, heroSlideSchema.shape, 'heroSlides')}
                  <Card>
-                    <CardHeader><CardTitle>Seção "Todos os Pets"</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>Seção "Por Que Escolher-nos?"</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
-                        <FormField control={form.control} name="allPetsSection.title" render={({ field }) => <FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
-                        <FormField control={form.control} name="allPetsSection.description" render={({ field }) => <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
-                        <ImageUploadField name="allPetsSection.imageUrl" />
+                        {renderSimpleField('whyChooseUs.title', 'Título', 'input')}
+                        {renderSimpleField('whyChooseUs.description', 'Descrição', 'textarea')}
                     </CardContent>
                  </Card>
                  {renderArrayField('Itens "Por Que Escolher-nos?"', whyChooseUsItemsFields, appendWhyChooseUsItem, removeWhyChooseUsItem, whyChooseUsItemSchema.shape, 'whyChooseUs.items')}
+                 <Card>
+                    <CardHeader><CardTitle>Seção "Processo de Cremação"</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        {renderSimpleField('cremationProcess.title', 'Título', 'input')}
+                        {renderSimpleField('cremationProcess.description', 'Descrição', 'textarea')}
+                    </CardContent>
+                 </Card>
                  {renderArrayField('Passos do Processo', processStepsFields, appendProcessStep, removeProcessStep, processStepSchema.shape, 'cremationProcess.steps')}
+                 <Card>
+                    <CardHeader><CardTitle>Seção "Todos os Pets"</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        {renderSimpleField('allPetsSection.title', 'Título', 'input')}
+                        {renderSimpleField('allPetsSection.description', 'Descrição', 'textarea')}
+                        <ImageUploadField name="allPetsSection.imageUrl" label="Imagem de Fundo da Seção" />
+                        <FormField 
+                          control={form.control}
+                          name="allPetsSection.petsList"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Lista de Pets (um por linha)</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} value={(field.value || []).join('\n')} onChange={(e) => field.onChange(e.target.value.split('\n'))} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                    </CardContent>
+                 </Card>
               </TabsContent>
 
               <TabsContent value="about" className="space-y-6">
                 <Card><CardHeader><CardTitle>Conteúdo "Sobre Nós"</CardTitle></CardHeader><CardContent className="space-y-4">
-                  <FormField control={form.control} name="headerTitle" render={({ field }) => <FormItem><FormLabel>Título do Cabeçalho</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
-                  <FormField control={form.control} name="headerDescription" render={({ field }) => <FormItem><FormLabel>Descrição do Cabeçalho</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
-                  <FormField control={form.control} name="missionTitle" render={({ field }) => <FormItem><FormLabel>Título da Missão</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
-                  <FormField control={form.control} name="missionDescription" render={({ field }) => <FormItem><FormLabel>Descrição da Missão</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
-                  <ImageUploadField name="missionImageUrl" />
-                  <FormField control={form.control} name="historyTitle" render={({ field }) => <FormItem><FormLabel>Título da História</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
-                  <FormField control={form.control} name="historyDescription" render={({ field }) => <FormItem><FormLabel>Descrição da História</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
-                  <ImageUploadField name="historyImageUrl" />
+                  {renderSimpleField("headerTitle", "Título do Cabeçalho")}
+                  {renderSimpleField("headerDescription", "Descrição do Cabeçalho", "textarea")}
+                  {renderSimpleField("missionTitle", "Título da Missão")}
+                  {renderSimpleField("missionDescription", "Descrição da Missão", "textarea")}
+                  <ImageUploadField name="missionImageUrl" label="Imagem da Missão" />
+                  {renderSimpleField("historyTitle", "Título da História")}
+                  {renderSimpleField("historyDescription", "Descrição da História", "textarea")}
+                  <ImageUploadField name="historyImageUrl" label="Imagem da História" />
                 </CardContent></Card>
               </TabsContent>
 
               <TabsContent value="memorial" className="space-y-6">
                 <Card><CardHeader><CardTitle>Conteúdo da Página Memorial</CardTitle></CardHeader><CardContent className="space-y-4">
-                   <ImageUploadField name="heroImageUrl" />
-                   <FormField control={form.control} name="heroTitle" render={({ field }) => <FormItem><FormLabel>Título do Herói</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
-                   <FormField control={form.control} name="heroDescription1" render={({ field }) => <FormItem><FormLabel>Descrição do Herói (Parágrafo 1)</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
-                   <FormField control={form.control} name="heroDescription2" render={({ field }) => <FormItem><FormLabel>Descrição do Herói (Parágrafo 2)</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
-                   <FormField control={form.control} name="createMemorialTitle" render={({ field }) => <FormItem><FormLabel>Título do Card "Criar Memorial"</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
-                   <FormField control={form.control} name="createMemorialDescription" render={({ field }) => <FormItem><FormLabel>Descrição do Card "Criar Memorial"</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
+                   <ImageUploadField name="heroImageUrl" label="Imagem de Fundo do Herói" />
+                   {renderSimpleField("heroTitle", "Título do Herói")}
+                   {renderSimpleField("heroDescription1", "Descrição do Herói (Parágrafo 1)", "textarea")}
+                   {renderSimpleField("heroDescription2", "Descrição do Herói (Parágrafo 2)", "textarea")}
+                   {renderSimpleField("createMemorialTitle", "Título do Card 'Criar Memorial'")}
+                   {renderSimpleField("createMemorialDescription", "Descrição do Card 'Criar Memorial'", "textarea")}
                 </CardContent></Card>
               </TabsContent>
 
                <TabsContent value="ourSpace" className="space-y-6">
-                 {renderArrayField('Itens da Galeria "Nosso Espaço"', galleryItemsFields, appendGalleryItem, removeGalleryItem, galleryItemSchema.shape, 'gallery')}
+                <Card>
+                    <CardHeader><CardTitle>Cabeçalho da Página "Nosso Espaço"</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        {renderSimpleField('headerTitle', 'Título do Cabeçalho')}
+                        {renderSimpleField('headerDescription', 'Descrição do Cabeçalho', 'textarea')}
+                    </CardContent>
+                </Card>
+                 {renderArrayField('Itens da Galeria', galleryItemsFields, appendGalleryItem, removeGalleryItem, galleryItemSchema.shape, 'gallery')}
               </TabsContent>
 
               <TabsContent value="plans" className="space-y-6">
@@ -449,11 +533,11 @@ const AdminPage = () => {
               
               <TabsContent value="general" className="space-y-6">
                  <Card><CardHeader><CardTitle>Configurações Gerais</CardTitle></CardHeader><CardContent className="space-y-4">
-                   <FormField control={form.control} name="whatsappLink" render={({ field }) => <FormItem><FormLabel>Link do WhatsApp</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
-                   <FormField control={form.control} name="whatsappNumber" render={({ field }) => <FormItem><FormLabel>Número do WhatsApp (texto)</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
-                   <FormField control={form.control} name="phone" render={({ field }) => <FormItem><FormLabel>Telefone (texto)</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
-                   <FormField control={form.control} name="address" render={({ field }) => <FormItem><FormLabel>Endereço</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
-                   <FormField control={form.control} name="instagramLink" render={({ field }) => <FormItem><FormLabel>Link do Instagram</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                   {renderSimpleField("whatsappLink", "Link do WhatsApp")}
+                   {renderSimpleField("whatsappNumber", "Número do WhatsApp (texto)")}
+                   {renderSimpleField("phone", "Telefone (texto)")}
+                   {renderSimpleField("address", "Endereço", "textarea")}
+                   {renderSimpleField("instagramLink", "Link do Instagram")}
                 </CardContent></Card>
               </TabsContent>
             </Tabs>

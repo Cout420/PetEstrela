@@ -168,8 +168,9 @@ export async function getContent<T>(contentId: string): Promise<T | null> {
  * @param path O caminho no Storage onde o arquivo será salvo (ex: 'memorials/').
  * @returns A URL de download do arquivo.
  */
-export async function uploadFile(file: File, path: string): Promise<string> {
+export async function uploadFile(file: Blob | Uint8Array | ArrayBuffer, path: string): Promise<string> {
   const storage = getStorage(app);
+  // @ts-ignore
   const fileName = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
   const storageRef = ref(storage, `${path}${fileName}`);
 
