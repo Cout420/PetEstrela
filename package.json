@@ -45,6 +45,7 @@
     "firebase": "^10.12.3",
     "firebase-admin": "^12.2.0",
     "genkit": "^1.14.1",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.475.0",
     "next": "15.3.3",
     "patch-package": "^8.0.0",
@@ -59,6 +60,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.6",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^18",
@@ -69,3 +71,5 @@
     "typescript": "^5"
   }
 }
+
+    
