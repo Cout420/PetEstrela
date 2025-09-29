@@ -38,6 +38,7 @@ const LoginPage = () => {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
 
+    // These should be stored in environment variables for security.
     const validUsername = process.env.NEXT_PUBLIC_ADMIN_USERNAME;
     const validPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
@@ -52,15 +53,12 @@ const LoginPage = () => {
     }
     
     try {
-        // Since we are not using a real auth provider for this simple case,
-        // we can consider the login successful if credentials match.
-        // We'll use router to redirect.
-        
         toast({
           title: 'Login bem-sucedido!',
           description: 'Redirecionando para o painel...',
         });
         
+        // Redirect to admin panel on successful "login"
         router.push('/admin');
 
     } catch (error) {
@@ -126,3 +124,5 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+
+    

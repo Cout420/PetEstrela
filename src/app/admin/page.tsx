@@ -159,49 +159,58 @@ const AdminPage = () => {
   const loadContent = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [
-        generalContent,
-        homeContent,
-        aboutContent,
-        ourSpaceContent,
-        plansContent,
-        memorialContent,
-      ] = await Promise.all([
-        getContent<GeneralContent>('generalContent'),
-        getContent<HomePageContent>('homePageContent'),
-        getContent<AboutPageContent>('aboutPageContent'),
-        getContent<OurSpacePageContent>('ourSpaceContent'),
-        getContent<PlansPageContent>('plansPageContent'),
-        getContent<MemorialPageContent>('memorialPageContent'),
-      ]);
+        const [
+            generalContent,
+            homeContent,
+            aboutContent,
+            ourSpaceContent,
+            plansContent,
+            memorialContent,
+        ] = await Promise.all([
+            getContent<GeneralContent>('generalContent'),
+            getContent<HomePageContent>('homePageContent'),
+            getContent<AboutPageContent>('aboutPageContent'),
+            getContent<OurSpacePageContent>('ourSpacePageContent'),
+            getContent<PlansPageContent>('plansPageContent'),
+            getContent<MemorialPageContent>('memorialPageContent'),
+        ]);
 
-      reset({
-        generalContent: generalContent || { whatsappLink: '', whatsappNumber: '', phone: '', address: '', instagramLink: '' },
-        homePageContent: homeContent || initialHomePageContent,
-        aboutPageContent: aboutContent || initialAboutPageContent,
-        ourSpacePageContent: ourSpaceContent || initialOurSpaceContent,
-        plansPageContent: plansContent || { plans: initialPlansData },
-        memorialPageContent: memorialContent || initialMemorialPageContent,
-      });
-
+        reset({
+            generalContent: generalContent || { whatsappLink: '', whatsappNumber: '', phone: '', address: '', instagramLink: '' },
+            homePageContent: homeContent || initialHomePageContent,
+            aboutPageContent: aboutContent || initialAboutPageContent,
+            ourSpacePageContent: ourSpaceContent || initialOurSpaceContent,
+            plansPageContent: plansContent || { plans: initialPlansData },
+            memorialPageContent: memorialContent || initialMemorialPageContent,
+        });
     } catch (error) {
-      console.error("Failed to load content:", error);
-      toast({
-        title: 'Erro ao Carregar Conteúdo',
-        description: 'Não foi possível carregar os dados do site. Tente recarregar a página.',
-        variant: 'destructive',
-      });
+        console.error("Failed to load content:", error);
+        toast({
+            title: 'Erro ao Carregar Conteúdo',
+            description: 'Não foi possível carregar os dados do site. Usando dados padrão.',
+            variant: 'destructive',
+        });
+        // Reset to initial values on error to ensure app stability
+        reset({
+            generalContent: { whatsappLink: '', whatsappNumber: '', phone: '', address: '', instagramLink: '' },
+            homePageContent: initialHomePageContent,
+            aboutPageContent: initialAboutPageContent,
+            ourSpacePageContent: initialOurSpaceContent,
+            plansPageContent: { plans: initialPlansData },
+            memorialPageContent: initialMemorialPageContent,
+        });
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  }, [reset, toast]);
+}, [reset, toast]);
+
 
   useEffect(() => {
     loadContent();
   }, [loadContent]);
 
   const handleSignOut = async () => {
-    // Since we are not using a real auth provider, we just redirect to login
+    // For now, just redirects to login. In a real auth scenario, you would sign out from the provider.
     toast({ title: 'Você saiu da sua conta.' });
     router.push('/login');
   };
@@ -771,3 +780,5 @@ const FieldArraySection = ({ name, title, description, renderItem, defaultItem, 
 
 
 export default AdminPage;
+
+    
