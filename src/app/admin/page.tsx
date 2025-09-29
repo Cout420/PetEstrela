@@ -38,7 +38,7 @@ const generalContentSchema = z.object({
 });
 
 const heroSlideSchema = z.object({
-  imageUrl: z.string().url({ message: 'URL da imagem inválida.' }),
+  imageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem inválida.' }),
   title: z.string().min(1, 'Título é obrigatório.'),
   subtitle: z.string().min(1, 'Subtítulo é obrigatório.'),
 });
@@ -70,7 +70,7 @@ const homePageSchema = z.object({
   allPetsSection: z.object({
     title: z.string().min(1, 'Título é obrigatório.'),
     description: z.string().min(1, 'Descrição é obrigatória.'),
-    imageUrl: z.string().url({ message: 'URL da imagem inválida.' }),
+    imageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem inválida.' }),
     petsList: z.array(z.string().min(1, 'Nome do pet é obrigatório.')),
   }),
 });
@@ -80,16 +80,16 @@ const aboutPageSchema = z.object({
   headerDescription: z.string().min(1, 'Descrição do cabeçalho é obrigatória.'),
   missionTitle: z.string().min(1, 'Título da missão é obrigatório.'),
   missionDescription: z.string().min(1, 'Descrição da missão é obrigatória.'),
-  missionImageUrl: z.string().url({ message: 'URL da imagem da missão inválida.' }),
+  missionImageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem da missão inválida.' }),
   historyTitle: z.string().min(1, 'Título da história é obrigatório.'),
   historyDescription: z.string().min(1, 'Descrição da história é obrigatória.'),
-  historyImageUrl: z.string().url({ message: 'URL da imagem da história inválida.' }),
+  historyImageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem da história inválida.' }),
 });
 
 const ourSpaceGalleryItemSchema = z.object({
   id: z.string(),
   title: z.string().min(1, 'Título é obrigatório.'),
-  imageUrl: z.string().url({ message: 'URL da imagem inválida.' }),
+  imageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem inválida.' }),
 });
 
 const ourSpacePageSchema = z.object({
@@ -113,7 +113,7 @@ const plansPageSchema = z.object({
 });
 
 const memorialPageSchema = z.object({
-  heroImageUrl: z.string().url({ message: 'URL da imagem do herói inválida.' }),
+  heroImageUrl: z.string().min(1, 'URL da imagem é obrigatória.').url({ message: 'URL da imagem do herói inválida.' }),
   heroTitle: z.string().min(1, 'Título do herói é obrigatório.'),
   heroDescription1: z.string().min(1, 'Descrição 1 do herói é obrigatória.'),
   heroDescription2: z.string().min(1, 'Descrição 2 do herói é obrigatória.'),
@@ -159,7 +159,7 @@ const AdminPage = () => {
     }
   });
 
-  const { reset, control, setValue, getValues, watch } = methods;
+  const { reset, control, setValue, getValues, formState: { isSubmitting } } = methods;
 
   const loadContent = useCallback(async () => {
     setIsLoading(true);
@@ -203,6 +203,7 @@ const AdminPage = () => {
 
   useEffect(() => {
     if (!auth) {
+        // Fallback in case Firebase app isn't ready
         setTimeout(() => router.push('/login'), 100);
         return;
     }
@@ -240,7 +241,7 @@ const AdminPage = () => {
     setUploadingState(prev => ({ ...prev, [fieldName]: true }));
 
     try {
-        const directory = `site-content/${fieldName.split('.').slice(0, -1).join('/')}`;
+        const directory = 'site-content/images';
         const imageUrl = await uploadImage(file, directory);
         setValue(fieldName, imageUrl, { shouldValidate: true, shouldDirty: true });
         toast({
@@ -264,7 +265,7 @@ const AdminPage = () => {
     const isUploading = uploadingState[fieldName];
     return (
         <div className="relative flex items-center gap-2">
-            <Button asChild size="sm" variant="outline" className="flex-shrink-0">
+            <Button asChild size="sm" variant="outline" className="flex-shrink-0" disabled={isUploading}>
                 <label htmlFor={fieldName}>
                     {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                     Trocar Imagem
@@ -397,8 +398,8 @@ const AdminPage = () => {
                     )} />
                   </CardContent>
                 </Card>
-                <Button type="submit" className="mt-6 w-full sm:w-auto" disabled={methods.formState.isSubmitting}>
-                    {methods.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                <Button type="submit" className="mt-6 w-full sm:w-auto" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Salvar Configurações Gerais
                 </Button>
               </form>
@@ -471,10 +472,71 @@ const AdminPage = () => {
                             defaultItem={{ icon: 'Heart', title: '', description: '' }}
                         />
                     </FieldGroup>
+                     {/* Cremation Process */}
+                    <FieldGroup title="Seção 'Processo de Cremação'">
+                        <FormField name="homePageContent.cremationProcess.title" control={control} render={({ field }) => (
+                            <FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField name="homePageContent.cremationProcess.description" control={control} render={({ field }) => (
+                            <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                         <FieldArraySection
+                            name="homePageContent.cremationProcess.steps"
+                            title="Passos"
+                            renderItem={(index: number) => (
+                                <>
+                                    <FormField name={`homePageContent.cremationProcess.steps.${index}.step`} control={control} render={({ field }) => (
+                                       <FormItem><FormLabel>Passo (ex: 01)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField name={`homePageContent.cremationProcess.steps.${index}.title`} control={control} render={({ field }) => (
+                                       <FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField name={`homePageContent.cremationProcess.steps.${index}.description`} control={control} render={({ field }) => (
+                                       <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                </>
+                            )}
+                            defaultItem={{ step: '', title: '', description: '' }}
+                        />
+                    </FieldGroup>
+                    
+                    {/* All Pets Section */}
+                    <FieldGroup title="Seção 'Acolhemos Todos os Pets'">
+                         <FormField name="homePageContent.allPetsSection.title" control={control} render={({ field }) => (
+                            <FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField name="homePageContent.allPetsSection.description" control={control} render={({ field }) => (
+                            <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField name={`homePageContent.allPetsSection.imageUrl`} control={control} render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>URL da Imagem</FormLabel>
+                                <FormControl>
+                                    <div className='flex items-center gap-2'>
+                                    <Input {...field} />
+                                    {renderImagePreview(field.value)}
+                                    <FileUploadButton fieldName={`homePageContent.allPetsSection.imageUrl`} />
+                                    </div>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FieldArraySection
+                            name="homePageContent.allPetsSection.petsList"
+                            title="Lista de Pets"
+                            renderItem={(index: number) => (
+                                <FormField name={`homePageContent.allPetsSection.petsList.${index}`} control={control} render={({ field }) => (
+                                    <FormItem><FormLabel>Nome do Pet</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                            )}
+                            defaultItem={""}
+                            isSub
+                        />
+                    </FieldGroup>
                   </CardContent>
                 </Card>
-                 <Button type="submit" className="mt-6 w-full sm:w-auto" disabled={methods.formState.isSubmitting}>
-                    {methods.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                 <Button type="submit" className="mt-6 w-full sm:w-auto" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Salvar Página Home
                 </Button>
               </form>
@@ -532,8 +594,8 @@ const AdminPage = () => {
                             )} />
                         </CardContent>
                     </Card>
-                    <Button type="submit" className="mt-6 w-full sm:w-auto" disabled={methods.formState.isSubmitting}>
-                        {methods.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    <Button type="submit" className="mt-6 w-full sm:w-auto" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Salvar Página Sobre
                     </Button>
                 </form>
@@ -578,8 +640,8 @@ const AdminPage = () => {
                             />
                         </CardContent>
                     </Card>
-                    <Button type="submit" className="mt-6 w-full sm:w-auto" disabled={methods.formState.isSubmitting}>
-                        {methods.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    <Button type="submit" className="mt-6 w-full sm:w-auto" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Salvar Página Nosso Espaço
                     </Button>
                 </form>
@@ -628,8 +690,8 @@ const AdminPage = () => {
                             />
                         </CardContent>
                     </Card>
-                    <Button type="submit" className="mt-6" disabled={methods.formState.isSubmitting}>
-                         {methods.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    <Button type="submit" className="mt-6" disabled={isSubmitting}>
+                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                          Salvar Página de Planos
                     </Button>
                 </form>
@@ -671,8 +733,8 @@ const AdminPage = () => {
                             )} />
                         </CardContent>
                     </Card>
-                    <Button type="submit" className="mt-6" disabled={methods.formState.isSubmitting}>
-                        {methods.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    <Button type="submit" className="mt-6" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Salvar Página do Memorial
                     </Button>
                 </form>
@@ -737,3 +799,7 @@ const FieldArraySection = ({ name, title, description, renderItem, defaultItem, 
 
 
 export default AdminPage;
+
+    
+
+    
