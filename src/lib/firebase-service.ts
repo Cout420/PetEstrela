@@ -1,7 +1,6 @@
 
 'use server';
 
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, query, orderBy, limit, writeBatch, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { app } from './firebase-config'; // Import configured app

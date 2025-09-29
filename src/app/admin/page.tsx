@@ -75,6 +75,7 @@ const AdminMemorialsPage = () => {
   const [memorials, setMemorials] = useState<PetMemorial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMemorial, setEditingMemorial] = useState<PetMemorialWithDatesAsString | null>(null);
 
@@ -114,16 +115,13 @@ const AdminMemorialsPage = () => {
   const handleOpenDialog = async (memorial: PetMemorial | null) => {
     if (memorial) {
       // Editando
-      setEditingMemorial({
+      const memorialWithStringDates = {
         ...memorial,
         birthDate: timestampToString(memorial.birthDate),
         passingDate: timestampToString(memorial.passingDate),
-      });
-      reset({
-        ...memorial,
-        birthDate: timestampToString(memorial.birthDate),
-        passingDate: timestampToString(memorial.passingDate),
-      });
+      };
+      setEditingMemorial(memorialWithStringDates);
+      reset(memorialWithStringDates);
     } else {
       // Criando
       const nextId = await getNextMemorialId();
@@ -169,7 +167,7 @@ const AdminMemorialsPage = () => {
   const handleFileUpload = async (file: File) => {
     if (!file) return;
     
-    setIsSubmitting(true);
+    setIsUploading(true);
     try {
       const imageUrl = await uploadImage(file, 'memorials');
       append({ imageUrl, description: '', imageHint: '' });
@@ -178,13 +176,14 @@ const AdminMemorialsPage = () => {
         description: 'A imagem foi carregada com sucesso.',
       });
     } catch (error) {
+      console.error("Upload error:", error);
       toast({
         title: 'Falha no Upload',
-        description: 'Não foi possível carregar a imagem.',
+        description: 'Não foi possível carregar a imagem. Verifique o console.',
         variant: 'destructive',
       });
     } finally {
-      setIsSubmitting(false);
+      setIsUploading(false);
     }
   };
 
@@ -300,23 +299,30 @@ const AdminMemorialsPage = () => {
                               size="icon"
                               className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={() => remove(index)}
+                              disabled={isSubmitting || isUploading}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                            </div>
                         ))}
                          <label className="flex flex-col items-center justify-center w-full h-full aspect-square rounded-md border-2 border-dashed border-muted-foreground/50 cursor-pointer hover:bg-muted">
-                           <Upload className="h-8 w-8 text-muted-foreground" />
-                           <span className="text-sm text-muted-foreground mt-2 text-center">Adicionar Imagem</span>
-                           <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])} disabled={isSubmitting} />
+                           {isUploading ? (
+                              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                           ) : (
+                              <Upload className="h-8 w-8 text-muted-foreground" />
+                           )}
+                           <span className="text-sm text-muted-foreground mt-2 text-center">
+                             {isUploading ? 'Enviando...' : 'Adicionar Imagem'}
+                           </span>
+                           <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])} disabled={isSubmitting || isUploading} />
                          </label>
                       </div>
                       <FormMessage>{form.formState.errors.images?.message || form.formState.errors.images?.root?.message}</FormMessage>
                     </div>
 
                     <DialogFooter>
-                      <DialogClose asChild><Button type="button" variant="outline">Cancelar</Button></DialogClose>
-                      <Button type="submit" disabled={isSubmitting}>
+                      <DialogClose asChild><Button type="button" variant="outline" disabled={isSubmitting}>Cancelar</Button></DialogClose>
+                      <Button type="submit" disabled={isSubmitting || isUploading}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Salvar
                       </Button>
@@ -401,5 +407,3 @@ const AdminMemorialsPage = () => {
 };
 
 export default AdminMemorialsPage;
-
-    
