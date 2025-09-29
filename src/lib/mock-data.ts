@@ -35,11 +35,11 @@ export const memorialPets: PetMemorial[] = [
     tutores: 'Maria e João Silva',
     text: 'Nosso eterno companheiro de quatro patas. Bento trouxe luz e alegria para nossas vidas. Suas corridas no parque e seu olhar carinhoso jamais serão esquecidos. Você foi o melhor amigo que poderíamos ter. Te amaremos para sempre.',
     images: [
-      { id: 'img-1', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },
-      { id: 'img-2', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-luna')?.imageUrl || '' },
-      { id: 'img-3', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-max')?.imageUrl || '' },
-      { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
-      { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-luna')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-max')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
     qrCodeUrl: '',
     createdAt: Timestamp.fromDate(new Date('2024-05-22T10:00:00'))
@@ -58,11 +58,11 @@ export const memorialPets: PetMemorial[] = [
     tutores: 'Ana Santos',
     text: 'Nossa rainha Luna, dona de uma elegância e personalidade únicas. Cada miado, cada ronronar e cada momento de preguiça no sol estão guardados em nossos corações. Sentiremos saudades da sua presença marcante.',
      images: [
-      { id: 'img-1', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-luna')?.imageUrl || '' },
-      { id: 'img-2', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },
-      { id: 'img-3', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-max')?.imageUrl || '' },
-      { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
-      { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-luna')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-max')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
     qrCodeUrl: '',
     createdAt: Timestamp.fromDate(new Date('2024-06-18T10:00:00'))
@@ -81,11 +81,11 @@ export const memorialPets: PetMemorial[] = [
     tutores: 'Carlos e Bia Costa',
     text: 'Max, nosso protetor fiel e amigo para todas as horas. Sua lealdade era infinita e sua alegria contagiante. As bolinhas perderam a graça sem você. Obrigado por uma década de amor incondicional.',
      images: [
-      { id: 'img-1', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-max')?.imageUrl || '' },
-      { id: 'img-2', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },
-      { id: 'img-3', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-luna')?.imageUrl || '' },
-      { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
-      { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-max')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-luna')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
     qrCodeUrl: '',
     createdAt: Timestamp.fromDate(new Date('2024-04-01T10:00:00'))
@@ -104,11 +104,11 @@ export const memorialPets: PetMemorial[] = [
     tutores: 'Sra. Oliveira',
     text: 'Nossa doce e peluda Mimi. Quinze anos de puro amor e companheirismo. Seu jeitinho calmo e seu olhar meigo nos trouxeram paz. Você foi uma parte essencial da nossa família e sua ausência é sentida a cada dia.',
      images: [
-      { id: 'img-1', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
-      { id: 'img-2', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },
-      { id: 'img-3', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-luna')?.imageUrl || '' },
-      { id: 'img-4', imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-max')?.imageUrl || '' },
-      { id: 'img-5', imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-mimi')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-bento')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-luna')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'pet-max')?.imageUrl || '' },
+      { imageUrl: PlaceHolderImages.find((img) => img.id === 'hero-garden')?.imageUrl || '' },
     ],
     qrCodeUrl: '',
     createdAt: Timestamp.fromDate(new Date('2024-03-30T10:00:00'))
@@ -201,3 +201,5 @@ export const servicesData = [
   { name: 'Harmonia', value: 22 },
   { name: 'Eternus', value: 5 },
 ];
+
+    

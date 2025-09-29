@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -9,301 +9,386 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { getMemorials, saveMemorial, deleteMemorial, getNextMemorialId, PetMemorialWithDatesAsString } from '@/lib/firebase-service';
-import { Upload, Trash2, Edit, PlusCircle, Loader2, Image as ImageIcon, X } from 'lucide-react';
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import Image from 'next/image';
-import { Timestamp } from 'firebase/firestore';
+import { getContent, saveContent } from '@/lib/firebase-service';
+import { homePageContent as initialHomePageContent } from '@/lib/home-content';
+import { aboutPageContent as initialAboutContent } from '@/lib/about-content';
+import { memorialPageContent as initialMemorialContent } from '@/lib/memorial-content';
+import { ourSpaceContent as initialOurSpaceContent } from '@/lib/our-space-content';
+import { plans as initialPlans } from '@/lib/mock-data';
+import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
+import { getAdminApp } from '@/lib/firebase-admin';
 
-const petImageSchema = z.object({
-  imageUrl: z.string().url(),
-  description: z.string().optional(),
-  imageHint: z.string().optional(),
+// --- Zod Schemas ---
+const heroSlideSchema = z.object({
+  imageUrl: z.string().url('URL inválida'),
+  title: z.string().min(1, 'Título é obrigatório'),
+  subtitle: z.string(),
 });
 
-const petMemorialSchema = z.object({
-  id: z.number(),
-  name: z.string().min(1, 'Nome é obrigatório'),
-  specie: z.string().min(1, 'Espécie é obrigatória'),
-  sexo: z.string().optional(),
-  age: z.string().optional(),
-  family: z.string().optional(),
-  birthDate: z.string().optional(),
-  passingDate: z.string().optional(),
-  arvore: z.string().optional(),
-  local: z.string().optional(),
-  tutores: z.string().optional(),
-  text: z.string().optional(),
-  images: z.array(petImageSchema).optional().default([]),
-  qrCodeUrl: z.string().url().optional(),
+const whyChooseUsItemSchema = z.object({
+  icon: z.string(),
+  title: z.string().min(1, 'Título é obrigatório'),
+  description: z.string(),
 });
 
+const processStepSchema = z.object({
+  step: z.string(),
+  title: z.string().min(1, 'Título é obrigatório'),
+  description: z.string(),
+});
 
-const AdminMemorialsPage = () => {
-  const [memorials, setMemorials] = useState<PetMemorialWithDatesAsString[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [editingMemorial, setEditingMemorial] = useState<PetMemorialWithDatesAsString | null>(null);
+const allPetsSectionSchema = z.object({
+  title: z.string().min(1, 'Título é obrigatório'),
+  description: z.string(),
+  imageUrl: z.string().url('URL inválida'),
+  petsList: z.array(z.string()),
+});
+
+const homeContentSchema = z.object({
+  heroSlides: z.array(heroSlideSchema),
+  whyChooseUs: z.object({
+    title: z.string(),
+    description: z.string(),
+    items: z.array(whyChooseUsItemSchema),
+  }),
+  cremationProcess: z.object({
+    title: z.string(),
+    description: z.string(),
+    steps: z.array(processStepSchema),
+  }),
+  allPetsSection: allPetsSectionSchema,
+});
+
+const aboutContentSchema = z.object({
+  headerTitle: z.string(),
+  headerDescription: z.string(),
+  missionTitle: z.string(),
+  missionDescription: z.string(),
+  missionImageUrl: z.string().url('URL inválida'),
+  historyTitle: z.string(),
+  historyDescription: z.string(),
+  historyImageUrl: z.string().url('URL inválida'),
+});
+
+const memorialContentSchema = z.object({
+  heroImageUrl: z.string().url('URL inválida'),
+  heroTitle: z.string(),
+  heroDescription1: z.string(),
+  heroDescription2: z.string(),
+  createMemorialTitle: z.string(),
+  createMemorialDescription: z.string(),
+});
+
+const galleryItemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  imageUrl: z.string().url('URL inválida'),
+});
+
+const ourSpaceContentSchema = z.object({
+  headerTitle: z.string(),
+  headerDescription: z.string(),
+  gallery: z.array(galleryItemSchema),
+});
+
+const planSchema = z.object({
+  name: z.string(),
+  price: z.string(),
+  description: z.string(),
+  features: z.array(z.string()),
+  pricingDetails: z.array(z.string()).optional(),
+  optional: z.string().optional(),
+  isMostChosen: z.boolean(),
+});
+
+const plansContentSchema = z.object({
+  plans: z.array(planSchema),
+});
+
+const generalContentSchema = z.object({
+  whatsappLink: z.string().url(),
+  whatsappNumber: z.string(),
+  phone: z.string(),
+  address: z.string(),
+  instagramLink: z.string().url(),
+});
+
+type CombinedSchemaType = z.infer<typeof homeContentSchema> &
+  z.infer<typeof aboutContentSchema> &
+  z.infer<typeof memorialContentSchema> &
+  z.infer<typeof ourSpaceContentSchema> &
+  z.infer<typeof plansContentSchema> &
+  z.infer<typeof generalContentSchema>;
+
+
+const AdminPage = () => {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('home');
 
-  const form = useForm<PetMemorialWithDatesAsString>({
-    resolver: zodResolver(petMemorialSchema),
+  const form = useForm({
+    // We will set the resolver dynamically
     defaultValues: {
-      images: [],
+      ...initialHomePageContent,
+      ...initialAboutContent,
+      ...initialMemorialContent,
+      ...initialOurSpaceContent,
+      plans: initialPlans,
+      whatsappLink: 'https://wa.me/551142405253',
+      whatsappNumber: '1142405253',
+      phone: '(11) 4240-5253',
+      address: 'Av. Adília Barbosa Neves, 2740, Centro Industrial, Arujá - SP, CEP: 07432-575',
+      instagramLink: 'https://www.instagram.com/petestrelacrematorio/',
     },
   });
 
-  const fetchMemorials = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await getMemorials();
-      const memorialsWithDatesAsString = data.map(m => ({
-        ...m,
-        birthDate: timestampToString(m.birthDate),
-        passingDate: timestampToString(m.passingDate),
-        createdAt: timestampToString(m.createdAt),
-      }));
-      setMemorials(memorialsWithDatesAsString as any);
-    } catch (error) {
-      toast({ title: 'Erro ao buscar memoriais', description: (error as Error).message, variant: 'destructive' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  const { fields: heroSlidesFields, append: appendHeroSlide, remove: removeHeroSlide } = useFieldArray({ control: form.control, name: 'heroSlides' });
+  const { fields: whyChooseUsItemsFields, append: appendWhyChooseUsItem, remove: removeWhyChooseUsItem } = useFieldArray({ control: form.control, name: 'whyChooseUs.items' });
+  const { fields: processStepsFields, append: appendProcessStep, remove: removeProcessStep } = useFieldArray({ control: form.control, name: 'cremationProcess.steps' });
+  const { fields: galleryItemsFields, append: appendGalleryItem, remove: removeGalleryItem } = useFieldArray({ control: form.control, name: 'gallery' });
+  const { fields: plansFields, append: appendPlan, remove: removePlan } = useFieldArray({ control: form.control, name: 'plans' });
+
+  const schemaMap = {
+    home: homeContentSchema,
+    about: aboutContentSchema,
+    memorial: memorialContentSchema,
+    ourSpace: ourSpaceContentSchema,
+    plans: plansContentSchema,
+    general: generalContentSchema,
+  };
+  
+  type SchemaMapKeys = keyof typeof schemaMap;
 
   useEffect(() => {
-    fetchMemorials();
-  }, [fetchMemorials]);
-  
-  const timestampToString = (ts: Timestamp | undefined) => {
-    if (!ts) return '';
-    return ts.toDate().toISOString().split('T')[0];
-  };
+    const loadContent = async () => {
+      setIsLoading(true);
+      try {
+        const [homeData, aboutData, memorialData, ourSpaceData, plansData, generalData] = await Promise.all([
+          getContent('homePageContent'),
+          getContent('aboutPageContent'),
+          getContent('memorialPageContent'),
+          getContent('ourSpaceContent'),
+          getContent('plansPageContent'),
+          getContent('generalContent'),
+        ]);
 
-  const handleOpenDialog = async (memorial: PetMemorialWithDatesAsString | null) => {
-    if (memorial) {
-      setEditingMemorial(memorial);
-      form.reset({
-        ...memorial,
-        birthDate: memorial.birthDate,
-        passingDate: memorial.passingDate,
-      });
-    } else {
-      const nextId = await getNextMemorialId();
-      const newMemorial = {
-        id: nextId,
-        name: '',
-        specie: '',
-        sexo: '',
-        age: '',
-        family: '',
-        birthDate: '',
-        passingDate: '',
-        arvore: '',
-        local: '',
-        tutores: '',
-        text: '',
-        images: [],
-        qrCodeUrl: '',
-        createdAt: new Date().toISOString(),
-      };
-      setEditingMemorial(newMemorial);
-      form.reset(newMemorial);
-    }
-    setIsDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setEditingMemorial(null);
-    form.reset({ images: [] });
-  };
-
-  const onSubmit = async (data: PetMemorialWithDatesAsString) => {
-    try {
-      await saveMemorial(data);
-      toast({ title: 'Sucesso!', description: 'Memorial salvo com sucesso.' });
-      handleCloseDialog();
-      fetchMemorials();
-    } catch (error) {
-      toast({ title: 'Erro ao salvar', description: (error as Error).message, variant: 'destructive' });
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      await deleteMemorial(id);
-      toast({ title: 'Sucesso!', description: 'Memorial deletado com sucesso.' });
-      fetchMemorials();
-    } catch (error) {
-      toast({ title: 'Erro ao deletar', description: (error as Error).message, variant: 'destructive' });
-    }
-  };
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const storage = getStorage();
-      const storageRef = ref(storage, `memorials/${Date.now()}-${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-
-      const currentImages = form.getValues('images') || [];
-      form.setValue('images', [...currentImages, { imageUrl: downloadURL, description: '', imageHint: '' }]);
-      toast({ title: 'Imagem carregada!' });
-    } catch (error) {
-      toast({ title: 'Erro no upload', description: (error as Error).message, variant: 'destructive' });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-  
-  const handleRemoveImage = (indexToRemove: number) => {
-    const currentImages = form.getValues('images') || [];
-    const imageToRemove = currentImages[indexToRemove];
-    
-    // Optional: Delete from Firebase Storage
-    if (imageToRemove.imageUrl.includes('firebasestorage')) {
-        const storage = getStorage();
-        const imageRef = ref(storage, imageToRemove.imageUrl);
-        deleteObject(imageRef).catch(error => {
-            console.error("Failed to delete image from storage:", error);
-            toast({ title: 'Erro', description: 'Não foi possível remover a imagem do armazenamento.', variant: 'destructive' })
+        form.reset({
+          ...initialHomePageContent,
+          ...(homeData as any),
+          ...initialAboutContent,
+          ...(aboutData as any),
+          ...initialMemorialContent,
+          ...(memorialData as any),
+          ...initialOurSpaceContent,
+          ...(ourSpaceData as any),
+          plans: (plansData as any)?.plans || initialPlans,
+          whatsappLink: (generalData as any)?.whatsappLink || '',
+          whatsappNumber: (generalData as any)?.whatsappNumber || '',
+          phone: (generalData as any)?.phone || '',
+          address: (generalData as any)?.address || '',
+          instagramLink: (generalData as any)?.instagramLink || '',
         });
-    }
 
-    form.setValue('images', currentImages.filter((_, index) => index !== indexToRemove));
+      } catch (error) {
+        toast({ title: 'Erro ao carregar conteúdo', description: (error as Error).message, variant: 'destructive' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadContent();
+  }, [form, toast]);
+
+
+  const onSubmit = async (data: any) => {
+    try {
+        const currentSchema = schemaMap[activeTab as SchemaMapKeys];
+        const contentIdMap = {
+            home: 'homePageContent',
+            about: 'aboutPageContent',
+            memorial: 'memorialPageContent',
+            ourSpace: 'ourSpaceContent',
+            plans: 'plansPageContent',
+            general: 'generalContent',
+        };
+        const contentId = contentIdMap[activeTab as SchemaMapKeys];
+        
+        // Extract only the fields relevant to the current tab
+        const fieldsForCurrentTab = Object.keys(currentSchema.shape);
+        const dataToSave: { [key: string]: any } = {};
+
+        if (activeTab === 'plans') {
+            dataToSave['plans'] = data.plans;
+        } else {
+            fieldsForCurrentTab.forEach(field => {
+                if (data[field] !== undefined) {
+                    dataToSave[field] = data[field];
+                }
+            });
+        }
+
+        await saveContent(contentId, dataToSave);
+
+        toast({ title: 'Sucesso!', description: `Conteúdo da aba '${activeTab}' salvo com sucesso.` });
+    } catch (error) {
+        toast({ title: 'Erro ao salvar', description: (error as Error).message, variant: 'destructive' });
+    }
   };
 
+  const renderArrayField = (
+    title: string,
+    fieldArray: any,
+    appendFn: (value: any) => void,
+    removeFn: (index: number) => void,
+    fieldSchema: any,
+    namePrefix: string
+    ) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {fieldArray.map((field: any, index: number) => (
+          <Card key={field.id} className="p-4">
+            <div className="space-y-2">
+              {Object.keys(fieldSchema).map(key => (
+                 key !== 'isMostChosen' && (
+                <FormField
+                  key={key}
+                  control={form.control}
+                  name={`${namePrefix}.${index}.${key}`}
+                  render={({ field: formField }) => (
+                    <FormItem>
+                      <FormLabel>{key.charAt(0).toUpperCase() + key.slice(1)}</FormLabel>
+                      <FormControl>
+                        {Array.isArray(formField.value) ? (
+                            <Textarea {...formField} value={formField.value.join('\n')} onChange={e => formField.onChange(e.target.value.split('\n'))} />
+                        ) : (
+                            <Input {...formField} />
+                        )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 )
+              ))}
+               {fieldSchema.isMostChosen !== undefined && (
+                 <FormField
+                  control={form.control}
+                  name={`${namePrefix}.${index}.isMostChosen`}
+                  render={({ field: formField }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <FormLabel>É o mais escolhido?</FormLabel>
+                      <FormControl>
+                        <Input type="checkbox" checked={formField.value} onChange={formField.onChange} className="h-4 w-4" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+               )}
+
+            </div>
+            <Button variant="destructive" size="sm" onClick={() => removeFn(index)} className="mt-2">
+              <Trash2 className="mr-2 h-4 w-4" /> Remover
+            </Button>
+          </Card>
+        ))}
+        <Button onClick={() => appendFn(
+            Object.keys(fieldSchema).reduce((acc, key) => ({...acc, [key]: Array.isArray(fieldSchema[key]) ? [] : ''}), {})
+        )}>
+          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
+        </Button>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-            <h1 className="text-3xl font-bold">Gerenciador de Memoriais</h1>
-            <p className="text-muted-foreground">Crie, edite e remova os memoriais dos pets.</p>
+      <h1 className="text-3xl font-bold">Gerenciador de Conteúdo do Site</h1>
+      <p className="text-muted-foreground">Edite o conteúdo das páginas do seu site.</p>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-12 w-12 animate-spin" />
         </div>
-        <Button onClick={() => handleOpenDialog(null)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Novo Memorial
-        </Button>
-      </div>
+      ) : (
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+              <TabsList>
+                <TabsTrigger value="home">Home</TabsTrigger>
+                <TabsTrigger value="about">Sobre Nós</TabsTrigger>
+                <TabsTrigger value="memorial">Memorial</TabsTrigger>
+                <TabsTrigger value="ourSpace">Nosso Espaço</TabsTrigger>
+                <TabsTrigger value="plans">Planos</TabsTrigger>
+                <TabsTrigger value="general">Geral</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="home" className="space-y-6">
+                 {renderArrayField('Slides do Herói', heroSlidesFields, appendHeroSlide, removeHeroSlide, heroSlideSchema.shape, 'heroSlides')}
+                 {renderArrayField('Itens "Por Que Escolher-nos?"', whyChooseUsItemsFields, appendWhyChooseUsItem, removeWhyChooseUsItem, whyChooseUsItemSchema.shape, 'whyChooseUs.items')}
+                 {renderArrayField('Passos do Processo', processStepsFields, appendProcessStep, removeProcessStep, processStepSchema.shape, 'cremationProcess.steps')}
+              </TabsContent>
 
-      <Card>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Espécie</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow><TableCell colSpan={4} className="text-center">Carregando...</TableCell></TableRow>
-              ) : memorials.length === 0 ? (
-                 <TableRow><TableCell colSpan={4} className="text-center">Nenhum memorial encontrado.</TableCell></TableRow>
-              ) : (
-                memorials.map((memorial) => (
-                  <TableRow key={memorial.id}>
-                    <TableCell>#{memorial.id.toString().padStart(3, '0')}</TableCell>
-                    <TableCell>{memorial.name}</TableCell>
-                    <TableCell>{memorial.specie}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(memorial)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                             <Button variant="ghost" size="icon" className='text-destructive hover:text-destructive'>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                              <AlertDialogHeader>
-                                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                                  <AlertDialogDescription>Essa ação não pode ser desfeita. Isso irá deletar permanentemente o memorial de <strong>{memorial.name}</strong>.</AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDelete(memorial.id)} className='bg-destructive hover:bg-destructive/90'>Deletar</AlertDialogAction>
-                              </AlertDialogFooter>
-                          </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              <TabsContent value="about" className="space-y-6">
+                <Card><CardHeader><CardTitle>Conteúdo "Sobre Nós"</CardTitle></CardHeader><CardContent className="space-y-4">
+                  <FormField control={form.control} name="headerTitle" render={({ field }) => <FormItem><FormLabel>Título do Cabeçalho</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                  <FormField control={form.control} name="headerDescription" render={({ field }) => <FormItem><FormLabel>Descrição do Cabeçalho</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
+                  <FormField control={form.control} name="missionTitle" render={({ field }) => <FormItem><FormLabel>Título da Missão</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                  <FormField control={form.control} name="missionDescription" render={({ field }) => <FormItem><FormLabel>Descrição da Missão</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
+                  <FormField control={form.control} name="missionImageUrl" render={({ field }) => <FormItem><FormLabel>URL da Imagem da Missão</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                  <FormField control={form.control} name="historyTitle" render={({ field }) => <FormItem><FormLabel>Título da História</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                  <FormField control={form.control} name="historyDescription" render={({ field }) => <FormItem><FormLabel>Descrição da História</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
+                  <FormField control={form.control} name="historyImageUrl" render={({ field }) => <FormItem><FormLabel>URL da Imagem da História</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                </CardContent></Card>
+              </TabsContent>
 
-      <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingMemorial?.id ? 'Editar' : 'Adicionar'} Memorial</DialogTitle>
-          </DialogHeader>
-          <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <FormField control={form.control} name="name" render={({ field }) => <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
-                 <FormField control={form.control} name="specie" render={({ field }) => <FormItem><FormLabel>Espécie</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
-                 <FormField control={form.control} name="sexo" render={({ field }) => <FormItem><FormLabel>Sexo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
-                 <FormField control={form.control} name="age" render={({ field }) => <FormItem><FormLabel>Idade</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
-                 <FormField control={form.control} name="family" render={({ field }) => <FormItem><FormLabel>Família</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
-                 <FormField control={form.control} name="tutores" render={({ field }) => <FormItem><FormLabel>Tutores</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
-                 <FormField control={form.control} name="birthDate" render={({ field }) => <FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>} />
-                 <FormField control={form.control} name="passingDate" render={({ field }) => <FormItem><FormLabel>Data de Falecimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>} />
-                 <FormField control={form.control} name="arvore" render={({ field }) => <FormItem><FormLabel>Árvore Plantada</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
-                 <FormField control={form.control} name="local" render={({ field }) => <FormItem><FormLabel>Local</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
-                 <FormField control={form.control} name="qrCodeUrl" render={({ field }) => <FormItem><FormLabel>URL do QR Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
-              </div>
-               <FormField control={form.control} name="text" render={({ field }) => <FormItem><FormLabel>Texto da Homenagem</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>} />
+              <TabsContent value="memorial" className="space-y-6">
+                <Card><CardHeader><CardTitle>Conteúdo da Página Memorial</CardTitle></CardHeader><CardContent className="space-y-4">
+                   <FormField control={form.control} name="heroImageUrl" render={({ field }) => <FormItem><FormLabel>URL da Imagem do Herói</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                   <FormField control={form.control} name="heroTitle" render={({ field }) => <FormItem><FormLabel>Título do Herói</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                   <FormField control={form.control} name="heroDescription1" render={({ field }) => <FormItem><FormLabel>Descrição do Herói (Parágrafo 1)</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
+                   <FormField control={form.control} name="heroDescription2" render={({ field }) => <FormItem><FormLabel>Descrição do Herói (Parágrafo 2)</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
+                   <FormField control={form.control} name="createMemorialTitle" render={({ field }) => <FormItem><FormLabel>Título do Card "Criar Memorial"</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                   <FormField control={form.control} name="createMemorialDescription" render={({ field }) => <FormItem><FormLabel>Descrição do Card "Criar Memorial"</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
+                </CardContent></Card>
+              </TabsContent>
 
-              <div>
-                <FormLabel>Imagens</FormLabel>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-                    {form.watch('images')?.map((image, index) => (
-                        <div key={index} className="relative group">
-                            <Image src={image.imageUrl} alt={`preview ${index}`} width={150} height={150} className="rounded-md object-cover w-full aspect-square" />
-                            <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleRemoveImage(index)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
-                    <label className="flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            {isUploading ? <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /> : <Upload className="h-8 w-8 text-muted-foreground" />}
-                            <p className="text-xs text-muted-foreground mt-2">Adicionar Imagem</p>
-                        </div>
-                        <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" disabled={isUploading} />
-                    </label>
-                </div>
-              </div>
+               <TabsContent value="ourSpace" className="space-y-6">
+                 {renderArrayField('Itens da Galeria "Nosso Espaço"', galleryItemsFields, appendGalleryItem, removeGalleryItem, galleryItemSchema.shape, 'gallery')}
+              </TabsContent>
 
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={handleCloseDialog}>Cancelar</Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                   {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                   Salvar
-                </Button>
-              </DialogFooter>
-            </form>
-          </FormProvider>
-        </DialogContent>
-      </Dialog>
+              <TabsContent value="plans" className="space-y-6">
+                  {renderArrayField('Planos', plansFields, appendPlan, removePlan, planSchema.shape, 'plans')}
+              </TabsContent>
+              
+              <TabsContent value="general" className="space-y-6">
+                 <Card><CardHeader><CardTitle>Configurações Gerais</CardTitle></CardHeader><CardContent className="space-y-4">
+                   <FormField control={form.control} name="whatsappLink" render={({ field }) => <FormItem><FormLabel>Link do WhatsApp</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                   <FormField control={form.control} name="whatsappNumber" render={({ field }) => <FormItem><FormLabel>Número do WhatsApp (texto)</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                   <FormField control={form.control} name="phone" render={({ field }) => <FormItem><FormLabel>Telefone (texto)</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                   <FormField control={form.control} name="address" render={({ field }) => <FormItem><FormLabel>Endereço</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>} />
+                   <FormField control={form.control} name="instagramLink" render={({ field }) => <FormItem><FormLabel>Link do Instagram</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} />
+                </CardContent></Card>
+              </TabsContent>
+            </Tabs>
+
+            <div className="mt-8 flex justify-end">
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar Conteúdo da Aba
+              </Button>
+            </div>
+          </form>
+        </FormProvider>
+      )}
     </div>
   );
 };
 
-export default AdminMemorialsPage;
+export default AdminPage;
+
+    

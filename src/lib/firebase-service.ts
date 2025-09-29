@@ -2,6 +2,7 @@
 
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, query, orderBy, limit, writeBatch, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
 import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { firebaseConfig } from './firebase-config';
 
 // Initialize Firebase
@@ -36,9 +37,10 @@ export interface PetMemorial {
   createdAt: Timestamp;
 }
 
-export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'passingDate'> & {
+export type PetMemorialWithDatesAsString = Omit<PetMemorial, 'birthDate' | 'passingDate' | 'createdAt'> & {
     birthDate: string;
     passingDate: string;
+    createdAt: string;
 };
 
 
@@ -81,15 +83,17 @@ export async function getMemorialById(id: number): Promise<PetMemorial | null> {
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
     const docRef = doc(db, 'memorials', pet.id.toString());
     
+    // Convert date strings back to Timestamps
     const dataToSave = {
         ...pet,
-        birthDate: Timestamp.fromDate(new Date(pet.birthDate)),
-        passingDate: Timestamp.fromDate(new Date(pet.passingDate)),
-        createdAt: pet.createdAt || Timestamp.now(),
+        birthDate: pet.birthDate ? Timestamp.fromDate(new Date(pet.birthDate)) : Timestamp.now(),
+        passingDate: pet.passingDate ? Timestamp.fromDate(new Date(pet.passingDate)) : Timestamp.now(),
+        createdAt: pet.createdAt ? Timestamp.fromDate(new Date(pet.createdAt)) : Timestamp.now(),
     };
 
     await setDoc(docRef, dataToSave, { merge: true });
 }
+
 
 /**
  * Deleta um memorial do Firestore.
@@ -157,20 +161,20 @@ export async function getContent<T>(contentId: string): Promise<T | null> {
   }
 }
 
-// Em um arquivo de serviço Firebase (ex: src/lib/firebase-service.ts)
-
 /**
  * Faz o upload de um arquivo para o Firebase Storage.
  * @param file O arquivo a ser enviado.
  * @param path O caminho no Storage onde o arquivo será salvo (ex: 'memorials/').
  * @returns A URL de download do arquivo.
  */
-// export async function uploadFile(file: File, path: string): Promise<string> {
-//   const storage = getStorage(app);
-//   const fileName = `${Date.now()}-${file.name}`;
-//   const storageRef = ref(storage, `${path}${fileName}`);
+export async function uploadFile(file: File, path: string): Promise<string> {
+  const storage = getStorage(app);
+  const fileName = `${Date.now()}-${file.name}`;
+  const storageRef = ref(storage, `${path}${fileName}`);
 
-//   const snapshot = await uploadBytes(storageRef, file);
-//   const downloadURL = await getDownloadURL(snapshot.ref);
-//   return downloadURL;
-// }
+  const snapshot = await uploadBytes(storageRef, file);
+  const downloadURL = await getDownloadURL(snapshot.ref);
+  return downloadURL;
+}
+
+    
