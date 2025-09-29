@@ -3,7 +3,7 @@
 
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, query, orderBy, limit, writeBatch, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, UploadTaskSnapshot } from 'firebase/storage';
 import { firebaseConfig } from './firebase-config';
 
 // Initialize Firebase
@@ -163,20 +163,42 @@ export async function getContent<T>(contentId: string): Promise<T | null> {
 }
 
 /**
- * Faz o upload de um arquivo para o Firebase Storage.
+ * Faz o upload de um arquivo para o Firebase Storage com controle de progresso.
  * @param file O arquivo a ser enviado.
  * @param path O caminho no Storage onde o arquivo será salvo (ex: 'memorials/').
+ * @param onProgress Callback para o progresso do upload.
  * @returns A URL de download do arquivo.
  */
-export async function uploadFile(file: Blob | Uint8Array | ArrayBuffer, path: string): Promise<string> {
-  const storage = getStorage(app);
-  // @ts-ignore
-  const fileName = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-  const storageRef = ref(storage, `${path}${fileName}`);
+export async function uploadFile(
+  file: File, 
+  path: string,
+  onProgress?: (progress: number) => void
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const storage = getStorage(app);
+    const fileName = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
+    const storageRef = ref(storage, `${path}${fileName}`);
 
-  const snapshot = await uploadBytes(storageRef, file);
-  const downloadURL = await getDownloadURL(snapshot.ref);
-  return downloadURL;
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on('state_changed', 
+      (snapshot: UploadTaskSnapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        if (onProgress) {
+          onProgress(progress);
+        }
+      }, 
+      (error) => {
+        console.error("Upload failed:", error);
+        reject(error);
+      }, 
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          resolve(downloadURL);
+        }).catch(reject);
+      }
+    );
+  });
 }
 
     
