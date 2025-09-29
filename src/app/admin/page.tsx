@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
@@ -35,10 +36,6 @@ const isValidImageUrl = (url: string | undefined | null): boolean => {
     } catch (e) {
         return false;
     }
-};
-
-const isDirectImageLink = (url: string) => {
-    return /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
 };
 
 const directImageUrlSchema = z.string().url("URL inválida.");
@@ -1082,3 +1079,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
