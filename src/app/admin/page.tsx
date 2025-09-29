@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -8,7 +9,6 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { X, PlusCircle, Upload, Loader2, LogOut } from 'lucide-react';
 import { merge } from 'lodash';
-
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,7 +36,7 @@ const generalContentSchema = z.object({
 });
 
 const heroSlideSchema = z.object({
-  imageUrl: z.string().min(1, 'Obrigatório'),
+  imageUrl: z.string().min(1, 'URL da imagem é obrigatória'),
   title: z.string().min(1, 'Obrigatório'),
   subtitle: z.string().min(1, 'Obrigatório'),
 });
@@ -68,7 +68,7 @@ const homePageSchema = z.object({
   allPetsSection: z.object({
     title: z.string().min(1, 'Obrigatório'),
     description: z.string().min(1, 'Obrigatório'),
-    imageUrl: z.string().min(1, 'Obrigatório'),
+    imageUrl: z.string().min(1, 'URL da imagem é obrigatória'),
     petsList: z.array(z.string().min(1, 'Obrigatório')),
   }),
 });
@@ -78,16 +78,16 @@ const aboutPageSchema = z.object({
   headerDescription: z.string().min(1, 'Obrigatório'),
   missionTitle: z.string().min(1, 'Obrigatório'),
   missionDescription: z.string().min(1, 'Obrigatório'),
-  missionImageUrl: z.string().min(1, 'Obrigatório'),
+  missionImageUrl: z.string().min(1, 'URL da imagem é obrigatória'),
   historyTitle: z.string().min(1, 'Obrigatório'),
   historyDescription: z.string().min(1, 'Obrigatório'),
-  historyImageUrl: z.string().min(1, 'Obrigatório'),
+  historyImageUrl: z.string().min(1, 'URL da imagem é obrigatória'),
 });
 
 const ourSpaceGalleryItemSchema = z.object({
   id: z.string(),
   title: z.string().min(1, 'Obrigatório'),
-  imageUrl: z.string().min(1, 'Obrigatório'),
+  imageUrl: z.string().min(1, 'URL da imagem é obrigatória'),
 });
 
 const ourSpacePageSchema = z.object({
@@ -111,7 +111,7 @@ const plansPageSchema = z.object({
 });
 
 const memorialPageSchema = z.object({
-  heroImageUrl: z.string().min(1, 'Obrigatório'),
+  heroImageUrl: z.string().min(1, 'URL da imagem é obrigatória'),
   heroTitle: z.string().min(1, 'Obrigatório'),
   heroDescription1: z.string().min(1, 'Obrigatório'),
   heroDescription2: z.string().min(1, 'Obrigatório'),
@@ -179,7 +179,7 @@ const AdminPage = () => {
         getContent<PlansPageContent>('plansPageContent'),
         getContent<MemorialPageContent>('memorialPageContent'),
       ]);
-
+      
       const loadedData = {
         generalContent: generalContent || initialData.generalContent,
         homePageContent: homeContent || initialData.homePageContent,
@@ -188,9 +188,9 @@ const AdminPage = () => {
         plansPageContent: (plansContent && plansContent.plans) ? plansContent : { plans: initialPlansData },
         memorialPageContent: memorialContent || initialData.memorialPageContent,
       };
-      
-      const mergedData = merge({}, initialData, loadedData);
 
+      const mergedData = merge({}, initialData, loadedData);
+      
       reset(mergedData);
 
     } catch (error) {
@@ -690,10 +690,7 @@ const FieldGroup = ({ title, children }: { title: string, children: React.ReactN
 );
 
 const FieldArraySection = ({ name, title, description, renderItem, defaultItem, isSub = false }: any) => {
-  const { control } = useForm({
-    // This is a dummy useForm, the real one is in the parent.
-    // This is needed because FieldArraySection is not wrapped in FormProvider anymore
-  });
+  const { control } = useFormContext(); // Correctly use context from parent FormProvider
   const { fields, append, remove } = useFieldArray({ control, name });
 
   const cardClass = isSub ? "border-dashed" : "shadow-sm";
@@ -722,11 +719,9 @@ const FieldArraySection = ({ name, title, description, renderItem, defaultItem, 
             >
               <X className="h-4 w-4" />
             </Button>
-            <FormProvider {...useForm()}>
-                <div className="space-y-4">
-                    {renderItem(index)}
-                </div>
-            </FormProvider>
+            <div className="space-y-4">
+                {renderItem(index)}
+            </div>
           </div>
         ))}
         {fields.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum item adicionado.</p>}
@@ -736,5 +731,6 @@ const FieldArraySection = ({ name, title, description, renderItem, defaultItem, 
 };
 
 export default AdminPage;
+
 
     
