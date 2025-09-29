@@ -116,8 +116,16 @@ export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<v
     // Helper function to safely convert a string to a Firestore Timestamp.
     // Returns current Timestamp if the string is invalid or empty.
     const toTimestamp = (dateString: string | undefined): Timestamp => {
-        if (dateString && !isNaN(Date.parse(dateString))) {
-            return Timestamp.fromDate(new Date(dateValue + 'T00:00:00'));
+        if (dateString) {
+           try {
+            // Handles both YYYY-MM-DD and full ISO strings
+            const date = new Date(dateString);
+            if (!isNaN(date.getTime())) {
+                return Timestamp.fromDate(date);
+            }
+           } catch (e) {
+             // Ignore parsing errors and fall through to default
+           }
         }
         // Return a default value for invalid or missing dates to prevent crashes.
         return Timestamp.now();
@@ -206,5 +214,3 @@ export async function getContent<T>(contentId: string): Promise<T | null> {
     return null;
   }
 }
-
-    
