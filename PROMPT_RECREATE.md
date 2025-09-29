@@ -74,8 +74,8 @@
 - **Cor de Fundo Principal:** Cinza muito claro (`#FBFBFB` ou `hsl(0 0% 98%)`).
 - **Cor Primária:** Azul Pet Estrela (`#117EA2` ou `hsl(191 79% 44%)`). Usar em botões principais, links e títulos de destaque.
 - **Cor de Destaque (Accent):** Dourado Luxo (`#E1B15A` ou `hsl(43 74% 66%)`). Usar para selos ("Mais Escolhido") e detalhes de luxo.
-- **Fonte para Títulos (Headline):** `Cormorant Garamond` (serifada e elegante).
-- **Fonte para Corpo de Texto (Body):** `Inter` (sans-serif, limpa e legível).
+- **Fonte para Títulos (Headline):** `Playfair Display` (serifada e elegante). Importar do Google Fonts.
+- **Fonte para Corpo de Texto (Body):** `Inter` (sans-serif, limpa e legível). Importar do Google Fonts.
 - **Estilo Geral da UI:**
     - Usar os componentes pré-estilizados do **ShadCN UI**.
     - Cards e contêineres devem ter cantos arredondados (`rounded-lg`).
@@ -117,7 +117,7 @@ Criar duas coleções principais:
         ```
 
 - **Coleção `siteContent`:** (Opcional, mas usado na implementação original para tornar todo o site gerenciável).
-    - Documentos com IDs fixos para armazenar o conteúdo de cada página (ex: `homePageContent`, `aboutPageContent`). Isso foi removido na última versão focada apenas em memoriais, mas é parte da arquitetura completa.
+    - Documentos com IDs fixos para armazenar o conteúdo de cada página (ex: `homePageContent`, `aboutPageContent`).
 
 ### 4.2. Firebase Storage
 - Todas as imagens dos pets devem ser salvas em uma pasta, por exemplo, `memorials/`.
