@@ -98,19 +98,11 @@ export async function getMemorialById(id: number): Promise<PetMemorial | null> {
 export async function saveMemorial(pet: PetMemorialWithDatesAsString): Promise<void> {
     const docRef = doc(db, 'memorials', pet.id.toString());
     
-    // Helper function to safely convert a string to a Firestore Timestamp.
     const toTimestamp = (dateString: string | undefined): Timestamp => {
-        if (!dateString) {
-            // If the string is empty or undefined, return current time as a fallback.
+        if (!dateString || isNaN(Date.parse(dateString))) {
             return Timestamp.now();
         }
-        // The HTML date input format is YYYY-MM-DD.
-        // new Date() can parse this, but it's safer to use UTC to avoid timezone issues.
-        const date = new Date(`${dateString}T00:00:00Z`);
-        if (isNaN(date.getTime())) {
-            // If the date is invalid, return current time.
-            return Timestamp.now();
-        }
+        const date = new Date(dateString);
         return Timestamp.fromDate(date);
     };
 

@@ -32,9 +32,6 @@ import { Timestamp } from 'firebase/firestore';
 const isValidImageUrl = (url: string | undefined | null): boolean => {
     if (!url) return false;
     try {
-        // This is a simple check. It doesn't guarantee the URL is a valid image,
-        // but it's a good first pass for client-side feedback.
-        // The server-side error was because `new URL()` is a browser API.
         return url.startsWith('http:') || url.startsWith('https:') || url.startsWith('data:');
     } catch (e) {
         return false;
