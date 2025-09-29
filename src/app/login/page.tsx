@@ -67,7 +67,6 @@ const LoginPage = () => {
     }
 
     try {
-        // Sign in anonymously to create a persistent session
         await signInAnonymously(auth);
         
         toast({
@@ -81,7 +80,7 @@ const LoginPage = () => {
         console.error("Anonymous sign-in failed:", error);
         toast({
             title: 'Falha no Login',
-            description: 'Não foi possível iniciar uma sessão segura. Tente novamente.',
+            description: 'Não foi possível iniciar uma sessão segura. Por favor, habilite o login anônimo no seu painel do Firebase.',
             variant: 'destructive',
         });
         setIsLoading(false);
