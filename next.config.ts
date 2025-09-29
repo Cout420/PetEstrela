@@ -57,6 +57,12 @@ const nextConfig: NextConfig = {
         hostname: 'imgur.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'w3.cdn.cl9.cloud',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
