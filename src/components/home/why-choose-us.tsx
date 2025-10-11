@@ -23,7 +23,7 @@ const features = [
     {
         icon: <Users className="w-8 h-8 text-primary" />,
         title: "Cuidado Especial",
-        description: "Tratamos todos os pets com amor.",
+        description: "Tratamos todos os pets com amor e carinho.",
     }
 ];
 
@@ -57,4 +57,5 @@ export function WhyChooseUs() {
     );
 }
     
+
 
