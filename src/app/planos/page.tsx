@@ -14,7 +14,7 @@ const whatsappUrl = "https://wa.me/551142405253?text=Olá!%20Tudo%20bem?%20Gosta
 const PlanCard = ({ plan }: { plan: Plan }) => {
     return (
         <div className="perspective group h-auto sm:h-[550px]">
-            <div className="relative h-full w-full rounded-lg shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+            <div className="relative h-full w-full rounded-lg shadow-xl transition-all duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
                 {/* Front of card */}
                 <div className="absolute inset-0 bg-white rounded-lg p-8 flex flex-col [backface-visibility:hidden]">
                     {plan.isMostChosen && (
@@ -73,7 +73,7 @@ export default function PlanosPage() {
         <div className="bg-background">
             <section className="py-16 text-center bg-white">
                 <div className="container mx-auto max-w-7xl px-4">
-                    <h1 className="font-headline text-4xl md:text-6xl font-bold text-primary">Nossos Planos</h1>
+                    <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Nossos Planos</h1>
                     <p className="mt-4 text-lg text-foreground/80 max-w-2xl mx-auto">
                         Encontre a homenagem que mais se conecta ao seu sentimento e às suas necessidades.
                     </p>
@@ -98,3 +98,4 @@ export default function PlanosPage() {
         </div>
     );
 }
+

@@ -70,10 +70,11 @@ export function TestimonialsCarousel() {
                             </CarouselItem>
                         )})}
                     </CarouselContent>
-                    <CarouselPrevious className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 text-primary bg-white/80 hover:bg-white border-primary/20 h-10 w-10 -translate-x-12 shadow-md" />
-                    <CarouselNext className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 text-primary bg-white/80 hover:bg-white border-primary/20 h-10 w-10 translate-x-12 shadow-md" />
+                    <CarouselPrevious className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 text-primary bg-white/80 hover:bg-white border-primary/20 h-10 w-10 -translate-x-12 shadow-md" />
+                    <CarouselNext className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 text-primary bg-white/80 hover:bg-white border-primary/20 h-10 w-10 translate-x-12 shadow-md" />
                 </Carousel>
             </div>
         </section>
     );
 }
+

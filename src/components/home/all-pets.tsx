@@ -59,8 +59,8 @@ export function AllPets() {
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                             {petTypes.map((pet) => (
-                                <div key={pet.name} className="perspective group">
-                                     <Card className="relative aspect-square flex flex-col items-center justify-center p-4 text-center bg-white shadow-lg rounded-lg transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                                <div key={pet.name} className="perspective">
+                                     <Card className="relative aspect-square flex flex-col items-center justify-center p-4 text-center bg-white shadow-lg rounded-lg transition-all duration-700 [transform-style:preserve-3d] hover:[transform:rotateY(180deg)]">
                                         {/* Front */}
                                         <div className="[backface-visibility:hidden] w-full h-full flex flex-col items-center justify-center">
                                             <div className="bg-primary/10 p-4 rounded-full mb-3 transition-colors">
@@ -104,3 +104,4 @@ export function AllPets() {
     );
 }
     
+

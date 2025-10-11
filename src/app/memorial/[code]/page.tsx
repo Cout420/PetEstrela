@@ -181,7 +181,7 @@ const PetProfilePage = () => {
                                 <p className="text-base text-foreground leading-relaxed">{selectedPet.fullDescription}</p>
 
                                 <Separator />
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
                                   <InfoItem icon={<Hash size={16}/>} label="Protocolo" value={selectedPet.memorialCode} />
                                   <InfoItem icon={<User size={16}/>} label="Tutores" value={selectedPet.tutors} />
                                   <InfoItem icon={selectedPet.sex === 'Macho' ? <Mars size={16}/> : <Venus size={16}/>} label="Sexo" value={selectedPet.sex} />
@@ -201,3 +201,4 @@ const PetProfilePage = () => {
 
 
 export default PetProfilePage;
+

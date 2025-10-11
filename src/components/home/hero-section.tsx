@@ -35,7 +35,7 @@ const whatsappUrl = "https://wa.me/551142405253?text=Olá!%20Tudo%20bem?%20Gosta
 
 export function HeroSection() {
      const plugin = React.useRef(
-        Autoplay({ delay: 5000, stopOnInteraction: true, stopOnMouseEnter: true })
+        Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true })
     );
 
     return (
@@ -87,3 +87,4 @@ export function HeroSection() {
         </section>
     );
 }
+

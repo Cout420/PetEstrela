@@ -94,7 +94,7 @@ ${message}
     <div className="bg-background">
       <section className="py-16 text-center bg-white">
         <div className="container mx-auto max-w-7xl px-4">
-          <h1 className="font-headline text-4xl md:text-6xl font-bold text-primary">Entre em Contato</h1>
+          <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Entre em Contato</h1>
           <p className="mt-4 text-lg text-foreground/80 max-w-2xl mx-auto">
             Estamos aqui para ajudar. Envie sua dúvida, sugestão ou solicitação de atendimento.
           </p>
@@ -201,3 +201,4 @@ ${message}
     </div>
   );
 }
+

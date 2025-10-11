@@ -61,7 +61,7 @@ export function ProcessSteps() {
                                     {step.description}
                                 </CardDescription>
                             </CardContent>
-                             <div className="absolute -bottom-4 -right-4 font-headline text-6xl font-bold text-primary/10 transition-transform duration-300 group-hover:scale-125">
+                             <div className="absolute -bottom-4 -right-4 font-headline text-6xl font-bold text-primary/10 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12">
                                 {step.number}
                             </div>
                         </Card>
@@ -72,3 +72,4 @@ export function ProcessSteps() {
     );
 }
     
+

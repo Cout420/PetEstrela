@@ -182,7 +182,7 @@ export default function MemorialPage() {
                     </div>
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Select value={animalFilter} onValueChange={setAnimalFilter}>
-                            <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectTrigger className="w-full sm:w-auto md:w-[180px]">
                                 <SelectValue placeholder="Filtrar por animal" />
                             </SelectTrigger>
                             <SelectContent>
@@ -192,7 +192,7 @@ export default function MemorialPage() {
                             </SelectContent>
                         </Select>
                         <Select value={sortOrder} onValueChange={setSortOrder}>
-                            <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectTrigger className="w-full sm:w-auto md:w-[200px]">
                                 <SelectValue placeholder="Ordenar por" />
                             </SelectTrigger>
                             <SelectContent>
@@ -263,3 +263,4 @@ export default function MemorialPage() {
         </div>
     );
 }
+
