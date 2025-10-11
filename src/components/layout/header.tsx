@@ -119,16 +119,6 @@ export function Header() {
                             Contato
                         </Link>
                     </SheetClose>
-                     <SheetClose asChild>
-                        <Link
-                            href="/admin/login"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className="flex items-center gap-2 text-gray-700 transition-colors hover:text-primary"
-                        >
-                            <User />
-                            Login
-                        </Link>
-                    </SheetClose>
                 </nav>
                  <div className="mt-auto flex flex-col gap-4">
                     <Button asChild size="lg">
