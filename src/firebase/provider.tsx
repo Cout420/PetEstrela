@@ -161,6 +161,12 @@ export const useFirebaseApp = (): FirebaseApp => {
   return firebaseApp;
 };
 
+/** Hook to access Firebase Storage instance. */
+export const useStorage = (): FirebaseStorage => {
+    const { storage } = useFirebase();
+    return storage;
+}
+
 type MemoFirebase <T> = T & {__memo?: boolean};
 
 export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | (MemoFirebase<T>) {
