@@ -70,6 +70,11 @@ export function Header() {
               Fale Conosco
             </Link>
           </Button>
+           <Button asChild variant="ghost" size="icon" className="group" title="Área do Funcionário">
+            <Link href="/admin">
+              <User className="h-5 w-5 transition-transform group-hover:scale-110" />
+            </Link>
+          </Button>
         </div>
 
         {/* Mobile Navigation */}
@@ -117,6 +122,16 @@ export function Header() {
                             )}
                         >
                             Contato
+                        </Link>
+                    </SheetClose>
+                     <SheetClose asChild>
+                        <Link
+                            href="/admin"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="flex items-center gap-2 text-gray-700 transition-colors hover:text-primary"
+                        >
+                            <User />
+                            Área do Funcionário
                         </Link>
                     </SheetClose>
                 </nav>
