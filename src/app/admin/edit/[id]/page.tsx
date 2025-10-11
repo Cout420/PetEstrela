@@ -24,26 +24,26 @@ import Image from 'next/image';
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const imageSchema = z.union([
-    z.string().url("URL inválida."),
+    z.string().url("URL inválida.").or(z.literal('')),
     z.instanceof(File).refine(
-        (file) => file.size > 0 && ACCEPTED_IMAGE_TYPES.includes(file.type),
+        (file) => file.size === 0 || ACCEPTED_IMAGE_TYPES.includes(file.type),
         "Por favor, selecione um arquivo de imagem válido (JPG, PNG, WEBP)."
     )
 ]);
 
 const formSchema = z.object({
-  name: z.string().min(2, "O nome é obrigatório."),
-  memorialCode: z.string().min(1, "O protocolo é obrigatório.").regex(/^#\d{3,}$/, "O protocolo deve seguir o formato #001."),
-  tutors: z.string().min(2, "O nome do tutor é obrigatório."),
-  animalType: z.string().min(2, "O tipo do animal é obrigatório."),
-  sex: z.enum(['Macho', 'Fêmea']),
-  breed: z.string().min(2, "A raça é obrigatória."),
-  birthDate: z.string().min(1, "A data de nascimento é obrigatória."),
-  cremationDate: z.string().min(1, "A data de cremação é obrigatória."),
-  tree: z.string().min(2, "A árvore memorial é obrigatória."),
-  shortDescription: z.string().min(10, "A descrição curta é obrigatória."),
-  fullDescription: z.string().min(20, "A descrição completa é obrigatória."),
-  images: z.array(z.object({ value: imageSchema })).min(1, "É necessário pelo menos uma imagem."),
+  name: z.string().optional(),
+  memorialCode: z.string().optional(),
+  tutors: z.string().optional(),
+  animalType: z.string().optional(),
+  sex: z.enum(['Macho', 'Fêmea']).optional(),
+  breed: z.string().optional(),
+  birthDate: z.string().optional(),
+  cremationDate: z.string().optional(),
+  tree: z.string().optional(),
+  shortDescription: z.string().optional(),
+  fullDescription: z.string().optional(),
+  images: z.array(z.object({ value: imageSchema })).optional(),
 });
 
 type PetFormValues = z.infer<typeof formSchema>;
@@ -76,7 +76,7 @@ const EditPetPage = () => {
         },
     });
     
-    const { fields, append, remove, update } = useFieldArray({
+    const { fields, append, remove } = useFieldArray({
         name: "images",
         control: form.control,
     });
@@ -131,19 +131,21 @@ const EditPetPage = () => {
         
         try {
             const imageUrls: string[] = [];
-            for (const image of data.images) {
-                if (typeof image.value === 'string' && image.value.startsWith('http')) {
-                    imageUrls.push(image.value);
-                } else if (image.value instanceof File) {
-                    const newUrl = await uploadImage(image.value);
-                    imageUrls.push(newUrl);
+            if (data.images) {
+                for (const image of data.images) {
+                    if (typeof image.value === 'string' && image.value.startsWith('http')) {
+                        imageUrls.push(image.value);
+                    } else if (image.value instanceof File && image.value.size > 0) {
+                        const newUrl = await uploadImage(image.value);
+                        imageUrls.push(newUrl);
+                    }
                 }
             }
 
             const processedData = {
                 ...data,
-                birthDate: new Date(data.birthDate),
-                cremationDate: new Date(data.cremationDate),
+                birthDate: data.birthDate ? new Date(data.birthDate) : null,
+                cremationDate: data.cremationDate ? new Date(data.cremationDate) : null,
                 imageUrls,
                 images: undefined, // Remove 'images' para não ser salvo no Firestore
                 updatedAt: serverTimestamp(),
@@ -252,7 +254,7 @@ const EditPetPage = () => {
                              <FormField control={form.control} name="sex" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Sexo</FormLabel>
-                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                             <SelectTrigger><SelectValue /></SelectTrigger>
                                         </FormControl>
@@ -315,7 +317,7 @@ const EditPetPage = () => {
                             <Label>Imagens</Label>
                             <div className="space-y-4 mt-2">
                                 {fields.map((field, index) => {
-                                    const currentImage = watchedImages[index]?.value;
+                                    const currentImage = watchedImages?.[index]?.value;
                                     const previewUrl = currentImage instanceof File
                                         ? URL.createObjectURL(currentImage)
                                         : (typeof currentImage === 'string' ? currentImage : null);
@@ -389,6 +391,5 @@ export default function GuardedEditPetPage() {
         </AuthGuard>
     );
 }
-
 
     
