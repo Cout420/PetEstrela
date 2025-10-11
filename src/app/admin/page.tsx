@@ -1,7 +1,20 @@
-// This page is no longer necessary as the redirect is handled in next.config.ts
-// You can delete this file if you wish.
-// For now, it will just show a blank page if accessed directly,
-// but the redirect should prevent that.
+"use client";
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+// Esta página redireciona /admin para /admin/login
 export default function AdminPage() {
-    return null;
+    const router = useRouter();
+
+    useEffect(() => {
+        router.replace('/admin/login');
+    }, [router]);
+
+    // Renderiza um estado de carregamento para evitar um flash de página em branco
+    return (
+        <div className="flex items-center justify-center min-h-screen">
+            <p>Redirecionando para o painel...</p>
+        </div>
+    );
 }
