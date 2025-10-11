@@ -7,7 +7,6 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { doc, getDoc, setDoc, addDoc, deleteDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '@/firebase/provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,16 +20,6 @@ import AuthGuard from '@/app/admin/AuthGuard';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-
-const imageSchema = z.union([
-    z.string().url("URL inválida.").or(z.literal('')),
-    z.instanceof(File).refine(
-        (file) => file.size === 0 || ACCEPTED_IMAGE_TYPES.includes(file.type),
-        "Por favor, selecione um arquivo de imagem válido (JPG, PNG, WEBP)."
-    )
-]);
-
 const formSchema = z.object({
   name: z.string().optional(),
   memorialCode: z.string().optional(),
@@ -43,14 +32,14 @@ const formSchema = z.object({
   tree: z.string().optional(),
   shortDescription: z.string().optional(),
   fullDescription: z.string().optional(),
-  images: z.array(z.object({ value: imageSchema })).optional(),
+  images: z.array(z.object({ value: z.any() })).optional(),
 });
 
 type PetFormValues = z.infer<typeof formSchema>;
 
 const EditPetPage = () => {
     const { id } = useParams();
-    const { firestore, storage } = useFirebase();
+    const { firestore } = useFirebase();
     const router = useRouter();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(true);
@@ -118,29 +107,16 @@ const EditPetPage = () => {
         fetchPet();
     }, [id, firestore, form, router, toast, isNew]);
 
-    const uploadImage = async (file: File): Promise<string> => {
-        if (!storage) throw new Error("Firebase Storage não está disponível");
-        const storageRef = ref(storage, `pet_images/${Date.now()}_${file.name}`);
-        await uploadBytes(storageRef, file);
-        return getDownloadURL(storageRef);
-    };
-
     const onSubmit = async (data: PetFormValues) => {
         if (!firestore) return;
         setIsSaving(true);
         
         try {
-            const imageUrls: string[] = [];
-            if (data.images) {
-                for (const image of data.images) {
-                    if (typeof image.value === 'string' && image.value.startsWith('http')) {
-                        imageUrls.push(image.value);
-                    } else if (image.value instanceof File && image.value.size > 0) {
-                        const newUrl = await uploadImage(image.value);
-                        imageUrls.push(newUrl);
-                    }
-                }
-            }
+            // Use a placeholder image if no image is provided
+            const imageUrls = (data.images && data.images.some(img => typeof img.value === 'string' && img.value.startsWith('http')))
+                ? data.images.map(img => img.value).filter(v => typeof v === 'string' && v.startsWith('http'))
+                : [`https://picsum.photos/seed/${Date.now()}/600/600`];
+
 
             const processedData = {
                 ...data,
@@ -315,7 +291,10 @@ const EditPetPage = () => {
 
                         <div>
                             <Label>Imagens</Label>
-                            <div className="space-y-4 mt-2">
+                            <p className="text-sm text-muted-foreground mb-4">
+                                O upload de imagens está desativado para evitar custos. Uma imagem de placeholder será usada no lugar.
+                            </p>
+                            <div className="space-y-4 mt-2 opacity-50 cursor-not-allowed">
                                 {fields.map((field, index) => {
                                     const currentImage = watchedImages?.[index]?.value;
                                     const previewUrl = currentImage instanceof File
@@ -323,45 +302,30 @@ const EditPetPage = () => {
                                         : (typeof currentImage === 'string' ? currentImage : null);
 
                                     return (
-                                        <FormField
-                                            key={field.id}
-                                            control={form.control}
-                                            name={`images.${index}.value`}
-                                            render={({ field: { onChange, ...restField } }) => (
-                                                <FormItem>
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-24 h-24 relative bg-muted rounded-md overflow-hidden flex items-center justify-center">
-                                                            {previewUrl ? (
-                                                                <Image src={previewUrl} alt={`Preview ${index}`} fill className="object-cover" />
-                                                            ) : (
-                                                                <Upload className="text-muted-foreground" />
-                                                            )}
-                                                        </div>
-                                                        <div className="flex-grow">
-                                                            <FormControl>
-                                                                <Input
-                                                                    type="file"
-                                                                    accept="image/*"
-                                                                    onChange={(e) => {
-                                                                        const file = e.target.files?.[0];
-                                                                        if (file) onChange(file);
-                                                                    }}
-                                                                    className="file:text-primary file:font-semibold"
-                                                                />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </div>
-                                                        <Button type="button" variant="ghost" size="icon" onClick={() => fields.length > 1 && remove(index)}>
-                                                            <Trash className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </FormItem>
-                                            )}
-                                        />
+                                        <div key={field.id} className="flex items-center gap-4">
+                                            <div className="w-24 h-24 relative bg-muted rounded-md overflow-hidden flex items-center justify-center">
+                                                {previewUrl ? (
+                                                    <Image src={previewUrl} alt={`Preview ${index}`} fill className="object-cover" />
+                                                ) : (
+                                                    <Upload className="text-muted-foreground" />
+                                                )}
+                                            </div>
+                                            <div className="flex-grow">
+                                                <Input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    disabled
+                                                    className="file:text-primary file:font-semibold"
+                                                />
+                                            </div>
+                                            <Button type="button" variant="ghost" size="icon" disabled>
+                                                <Trash className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     );
                                 })}
                             </div>
-                            <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => append({ value: "" })}>
+                            <Button type="button" variant="outline" size="sm" className="mt-4" disabled>
                                 Adicionar Imagem
                             </Button>
                         </div>
@@ -391,5 +355,3 @@ export default function GuardedEditPetPage() {
         </AuthGuard>
     );
 }
-
-    
