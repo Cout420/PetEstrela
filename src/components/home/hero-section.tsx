@@ -35,7 +35,7 @@ const whatsappUrl = "https://wa.me/551142405253?text=Olá!%20Tudo%20bem?%20Gosta
 
 export function HeroSection() {
      const plugin = React.useRef(
-        Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true })
+        Autoplay({ delay: 5000, stopOnInteraction: true, stopOnMouseEnter: true })
     );
 
     return (
@@ -59,7 +59,7 @@ export function HeroSection() {
                                 />
                                 <div className="absolute inset-0 bg-black/50 flex flex-col justify-center items-center text-center p-4">
                                     <div className="max-w-4xl animate-fade-up">
-                                        <h1 className="font-headline text-4xl md:text-7xl font-bold drop-shadow-md">
+                                        <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold drop-shadow-md">
                                             {slide.title}
                                         </h1>
                                         <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto drop-shadow-sm">

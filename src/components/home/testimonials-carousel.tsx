@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -11,7 +12,7 @@ import { Star } from "lucide-react";
 
 export function TestimonialsCarousel() {
     const plugin = React.useRef(
-        Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true })
+        Autoplay({ delay: 5000, stopOnInteraction: true, stopOnMouseEnter: true })
     );
 
     return (
@@ -38,7 +39,7 @@ export function TestimonialsCarousel() {
                         {testimonials.map((testimonial, index) => {
                             const testimonialImage = PlaceHolderImages.find(p => p.id === testimonial.imageId);
                             return(
-                            <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                            <CarouselItem key={index} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3">
                                 <div className="p-1 h-full">
                                     <Card className="bg-white shadow-lg rounded-xl overflow-visible h-full flex flex-col group transition-all duration-300 hover:shadow-primary/20 hover:-translate-y-2">
                                         <CardContent className="p-8 text-center flex flex-col items-center flex-grow">

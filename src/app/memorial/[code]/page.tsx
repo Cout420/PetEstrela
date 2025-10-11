@@ -172,7 +172,7 @@ const PetProfilePage = () => {
                         </div>
                         <div className="p-8 flex flex-col bg-white">
                             <header className="text-left mb-6">
-                                <h1 className="font-headline text-5xl text-primary mb-2">{selectedPet.name}</h1>
+                                <h1 className="font-headline text-4xl md:text-5xl text-primary mb-2">{selectedPet.name}</h1>
                                 <p className='italic text-muted-foreground'>
                                     "{selectedPet.shortDescription}"
                                 </p>
@@ -201,4 +201,3 @@ const PetProfilePage = () => {
 
 
 export default PetProfilePage;
-
