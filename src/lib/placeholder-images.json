@@ -1,0 +1,424 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-new-1",
+      "description": "Mulher abraçando um cachorro grande e fofo",
+      "imageUrl": "https://images.unsplash.com/photo-1729874585561-fda8e4cb5436?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx3b21hbiUyMGh1Z2dpbmclMjBkb2d8ZW58MHx8fHwxNzU5NzU0ODU5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman hugging dog"
+    },
+    {
+      "id": "hero-new-2",
+      "description": "Prédio de um crematório moderno",
+      "imageUrl": "https://i.imgur.com/7znGZLG.jpeg",
+      "imageHint": "crematorium building"
+    },
+    {
+      "id": "hero-new-3",
+      "description": "Mão plantando uma pequena árvore",
+      "imageUrl": "https://i.imgur.com/myUehDy.png",
+      "imageHint": "tree sapling"
+    },
+    {
+      "id": "hero-new-4",
+      "description": "Pessoa com um animal de estimação",
+      "imageUrl": "https://images.unsplash.com/photo-1535930891776-0c2dfb7dea1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjB3aXRoJTIwcGV0fGVufDB8fHx8MTc2MDQ1MjAwOXww&ixlib=rb-4.1.0&q=80&w=1920",
+      "imageHint": "person with pet"
+    },
+    {
+      "id": "hero-new-5",
+      "description": "Sala aconchegante",
+      "imageUrl": "https://images.unsplash.com/photo-1558882224-27addbce9933?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjb3p5JTIwcm9vbXxlbnwwfHx8fDE3NjA0NTIwNDF8MA&ixlib=rb-4.1.0&q=80&w=1920",
+      "imageHint": "cozy room"
+    },
+    {
+      "id": "all-pets-image",
+      "description": "Uma coleção de animais de estimação diferentes juntos",
+      "imageUrl": "https://i.imgur.com/XqWb2r0.png",
+      "imageHint": "animal collage"
+    },
+    {
+      "id": "hero-building",
+      "description": "Fachada do Crematório Pet Estrela",
+      "imageUrl": "https://images.unsplash.com/photo-1583307248967-16d27a149220?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxidWlsZGluZyUyMGV4dGVyaW9yfGVufDB8fHx8MTc1OTczMTM2MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "building exterior"
+    },
+    {
+      "id": "feature-1",
+      "description": "Urna decorativa",
+      "imageUrl": "https://images.unsplash.com/photo-1644902641390-5b7248baa98e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwZXQlMjB1cm58ZW58MHx8fHwxNzU5NzUxNzgwfDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "pet urn"
+    },
+    {
+      "id": "feature-2",
+      "description": "Plantio com QR Code",
+      "imageUrl": "https://images.unsplash.com/photo-1713981234047-520a91c89a64?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx0cmVlJTIwc2FwbGluZ3xlbnwwfHx8fDE3NTk2NjAzOTV8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "tree sapling"
+    },
+    {
+      "id": "feature-3",
+      "description": "Sala de velório",
+      "imageUrl": "https://images.unsplash.com/photo-1722591281350-872b6e937fdc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjYWxtJTIwcm9vbXxlbnwwfHx8fDE3NTk3MDUxNjJ8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "calm room"
+    },
+    {
+      "id": "testimonial-1",
+      "description": "Rosto de cliente 1",
+      "imageUrl": "https://images.unsplash.com/photo-1692736475357-7c18bfbb808b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx3b21hbiUyMHNtaWxpbmd8ZW58MHx8fHwxNzU5NzI0NTU2fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman smiling"
+    },
+    {
+      "id": "testimonial-2",
+      "description": "Rosto de cliente 2",
+      "imageUrl": "https://images.unsplash.com/photo-1560250097-0b93528c311a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTk2NzcyNjV8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "man portrait"
+    },
+    {
+      "id": "testimonial-3",
+      "description": "Rosto de cliente 3",
+      "imageUrl": "https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzbWlsaW5nJTIwcGVyc29ufGVufDB8fHx8MTc1OTczMzI2M3ww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "smiling person"
+    },
+    {
+      "id": "testimonial-4",
+      "description": "Rosto de cliente 4",
+      "imageUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzbWlsaW5nJTIwbWFufGVufDB8fHx8MTc2MTEyMjQwNnww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "smiling man"
+    },
+    {
+      "id": "testimonial-5",
+      "description": "Rosto de cliente 5",
+      "imageUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzbWlsaW5nJTIwd29tYW58ZW58MHx8fHwxNzYxMTIyNDA2fDA&ixlibrb-4.1.0&q=80&w=1080",
+      "imageHint": "smiling woman"
+    },
+    {
+      "id": "testimonial-6",
+      "description": "Rosto de cliente 6",
+      "imageUrl": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzbWlsaW5nJTIwbWFufGVufDB8fHx8MTc2MTEyMjQwNnww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "smiling man"
+    },
+    {
+      "id": "testimonial-7",
+      "description": "Rosto de cliente 7",
+      "imageUrl": "https://images.unsplash.com/photo-1554151228-14d9def656e4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzbWlsaW5nJTIwd29tYW58ZW58MHx8fHwxNzYxMTIyNDA2fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "smiling woman"
+    },
+    {
+      "id": "testimonial-8",
+      "description": "Rosto de cliente 8",
+      "imageUrl": "https://images.unsplash.com/photo-1583864697784-a0efc8379f70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzbWlsaW5nJTIwbWFufGVufDB8fHx8MTc2MTEyMjQwNnww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "smiling man"
+    },
+    {
+      "id": "testimonial-9",
+      "description": "Rosto de cliente 9",
+      "imageUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzbWlsaW5nJTIwd29tYW58ZW58MHx8fHwxNzYxMTIyNDA2fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "smiling woman"
+    },
+    {
+      "id": "testimonial-10",
+      "description": "Rosto de cliente 10",
+      "imageUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzbWlsaW5nJTIwbWFufGVufDB8fHx8MTc2MTEyMjQwNnww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "smiling man"
+    },
+    {
+      "id": "testimonial-11",
+      "description": "Rosto de cliente 11",
+      "imageUrl": "https://images.unsplash.com/photo-1557053910-d9df7a05cb33?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzbWlsaW5nJTIwd29tYW58ZW58MHx8fHwxNzYxMTIyNDA2fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "smiling woman"
+    },
+    {
+      "id": "memorial-1",
+      "description": "Pet Luna",
+      "imageUrl": "https://images.unsplash.com/photo-1633722715463-d30f4f325e24?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxnb2xkZW5lcn0w8b-4.1.0&q=80&w=1080",
+      "imageHint": "golden retriever"
+    },
+    {
+      "id": "memorial-2",
+      "description": "Pet Thor",
+      "imageUrl": "https://images.unsplash.com/photo-1568309386325-ef86f13ac533?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzaWFtZXNlJTIwY2F0fGVufDB8fHx8MTc1OTcxNDU1MXww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "siamese cat"
+    },
+    {
+      "id": "memorial-3",
+      "description": "Pet Mel",
+      "imageUrl": "https://images.unsplash.com/photo-1518619710118-6d895ce5ffb3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxtaXhlZC1icmVlZCUyMGRvZ3xlbnwwfHx8fDE3NTk3NTE3ODB8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "mixed-breed dog"
+    },
+    {
+      "id": "memorial-4",
+      "description": "Pet Bob",
+      "imageUrl": "https://images.unsplash.com/photo-1553698217-934b000f1f00?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwdWclMjBkb2d8ZW58MHx8fHwxNzU5NzUxMDA0fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "pug dog"
+    },
+    {
+      "id": "memorial-5",
+      "description": "Pet Nina",
+      "imageUrl": "https://images.unsplash.com/photo-1660983947114-d893fcf89c7a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwZXJzaWFuJTIwY2F0fGVufDB8fHx8MTc1OTczMTY1MHww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "persian cat"
+    },
+    {
+      "id": "memorial-6",
+      "description": "Pet Rocky",
+      "imageUrl": "https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZnJlbmNoJTIwYnVsbGRvZ3xlbnwwfHx8fDE3NTk2OTQ2NzZ8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "french bulldog"
+    },
+    {
+      "id": "memorial-7",
+      "description": "Pet Frida",
+      "imageUrl": "https://images.unsplash.com/photo-1604675223954-b1aabd668078?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8dGFiYnklMjBjYXR8ZW58MHx8fHwxNzU5NzQ3Njk1fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "tabby cat"
+    },
+    {
+      "id": "memorial-8",
+      "description": "Pet Zeca",
+      "imageUrl": "https://images.unsplash.com/photo-1692713456114-798f4e1ba740?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxsYWJyYWRvciUyMGRvZ3xlbnwwfHx8fDE3NTk3NTE3ODB8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "labrador dog"
+    },
+    {
+      "id": "memorial-gallery-luna-1",
+      "description": "Luna correndo no parque",
+      "imageUrl": "https://images.unsplash.com/photo-1583511655826-05700d52f4d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxnb2xkZW4lMjByZXRyaWV2ZXIlMjBydW5uaW5nfGVufDB8fHx8MTc2MTEwMzgzOHww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "golden retriever running"
+    },
+    {
+      "id": "memorial-gallery-luna-2",
+      "description": "Luna filhote",
+      "imageUrl": "https://images.unsplash.com/photo-1610609363103-12a8c39385b6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxnb2xkZW4lMjByZXRyaWV2ZXIlMjBwdXBweXxlbnwwfHx8fDE3NjExMDM4Mzh8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "golden retriever puppy"
+    },
+    {
+      "id": "memorial-gallery-luna-3",
+      "description": "Luna na praia",
+      "imageUrl": "https://images.unsplash.com/photo-1589947255203-088ab12e08b5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxnb2xkZW4lMjByZXRyaWV2ZXIlMjBiZWFjaHxlbnwwfHx8fDE3NjExMDM4Mzh8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "golden retriever beach"
+    },
+    {
+      "id": "memorial-gallery-luna-4",
+      "description": "Luna com a família",
+      "imageUrl": "https://images.unsplash.com/photo-1548682928-341a400a0684?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxnb2xkZW4lMjByZXRyaWV2ZXIlMjBmYW1pbHl8ZW58MHx8fHwxNzYxMTAzODM4fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "golden retriever family"
+    },
+    {
+      "id": "memorial-gallery-thor-1",
+      "description": "Thor dormindo na poltrona",
+      "imageUrl": "https://images.unsplash.com/photo-1596854407944-bf87f6fdd49e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzaWFtZXNlJTIwY2F0JTIwc2xlZXBpbmd8ZW58MHx8fHwxNzYxMTE5MTkxfDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "siamese cat sleeping"
+    },
+    {
+      "id": "memorial-gallery-thor-2",
+      "description": "Thor olhando pela janela",
+      "imageUrl": "https://images.unsplash.com/photo-1615497092-6d28227051a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzaWFtZXNlJTIwY2F0JTIwbG9va2luZyUyMHdpbmRvd3xlbnwwfHx8fDE3NjExMTkxOTF8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "siamese cat window"
+    },
+    {
+      "id": "memorial-gallery-thor-3",
+      "description": "Thor filhote",
+      "imageUrl": "https://images.unsplash.com/photo-1574158622682-e40e6984100d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzaWFtZXNlJTIwa2l0dGVufGVufDB8fHx8MTc2MTExOTE5MXww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "siamese kitten"
+    },
+    {
+      "id": "memorial-gallery-thor-4",
+      "description": "Close-up dos olhos azuis do Thor",
+      "imageUrl": "https://images.unsplash.com/photo-1529778873920-4da4926a72c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXQlMjBibHVlJTIwZXllc3xlbnwwfHx8fDE3NjExMTkxOTF8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "cat blue eyes"
+    },
+    {
+      "id": "memorial-gallery-mel-1",
+      "description": "Mel correndo na grama",
+      "imageUrl": "https://images.unsplash.com/photo-1594939525549-2f29b43aye36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtaXhlZC1icmVlZCUyMGRvZyUyMHJ1bm5pbmd8ZW58MHx8fHwxNzYxMTE5MTkxfDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "mixed-breed dog running"
+    },
+    {
+      "id": "memorial-gallery-mel-2",
+      "description": "Mel recebendo carinho",
+      "imageUrl": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtaXhlZC1icmVlZCUyMGRvZyUyMHBldHRpbmd8ZW58MHx8fHwxNzYxMTE5MTkxfDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "mixed-breed dog petting"
+    },
+    {
+      "id": "memorial-gallery-mel-3",
+      "description": "Mel com um brinquedo",
+      "imageUrl": "https://images.unsplash.com/photo-1585848970154-47f631245644?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtaXhlZC1icmVlZCUyMGRvZyUyMHRveXxlbnwwfHx8fDE3NjExMTkxOTF8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "mixed-breed dog toy"
+    },
+    {
+      "id": "memorial-gallery-mel-4",
+      "description": "Mel dormindo",
+      "imageUrl": "https://images.unsplash.com/photo-1541364983171-a8ba01e95cfc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtaXhlZC1icmVlZCUyMGRvZyUyMHNsZWVwaW5nfGVufDB8fHx8MTc2MTExOTE5MXww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "mixed-breed dog sleeping"
+    },
+    {
+      "id": "memorial-gallery-bob-1",
+      "description": "Bob com fantasia",
+      "imageUrl": "https://images.unsplash.com/photo-1587763213273-9a3bde5a643e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwdWclMjBkb2clMjBjb3N0dW1lfGVufDB8fHx8MTc2MTEyMDA0N3ww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "pug dog costume"
+    },
+    {
+      "id": "memorial-gallery-bob-2",
+      "description": "Bob com a língua para fora",
+      "imageUrl": "https://images.unsplash.com/photo-1575425186775-b8de9a427e67?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwdWclMjBkb2clMjB0b25ndWV8ZW58MHx8fHwxNzYxMTIwMDQ3fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "pug dog tongue"
+    },
+    {
+      "id": "memorial-gallery-bob-3",
+      "description": "Bob filhote",
+      "imageUrl": "https://images.unsplash.com/photo-1596796123498-9d414a38992a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwdWclMjBwdXBweXxlbnwwfHx8fDE3NjExMjAwNDd8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "pug puppy"
+    },
+    {
+      "id": "memorial-gallery-bob-4",
+      "description": "Bob dormindo e roncando",
+      "imageUrl": "https://images.unsplash.com/photo-1517519014922-787b214ceacb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwdWclMjBkb2clMjBzbGVlcGluZ3xlbnwwfHx8fDE3NjExMjAwNDd8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "pug dog sleeping"
+    },
+    {
+      "id": "memorial-gallery-nina-1",
+      "description": "Nina em uma almofada de veludo",
+      "imageUrl": "https://images.unsplash.com/photo-1628185440762-1b173c33ea1b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzaWFuJTIwY2F0JTIwY3VzaGlvbnxlbnwwfHx8fDE3NjExMjAxMjl8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "persian cat cushion"
+    },
+    {
+      "id": "memorial-gallery-nina-2",
+      "description": "Nina sendo escovada",
+      "imageUrl": "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXQlMjBicnVzaGluZ3xlbnwwfHx8fDE3NjExMjAxMjl8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "cat brushing"
+    },
+    {
+      "id": "memorial-gallery-nina-3",
+      "description": "Nina filhote",
+      "imageUrl": "https://images.unsplash.com/photo-1595433707842-08f969931709?crop=entropy&cs=tinyrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzaWFuJTIwa2l0dGVufGVufDB8fHx8MTc2MTEyMDEyOXww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "persian kitten"
+    },
+    {
+      "id": "memorial-gallery-nina-4",
+      "description": "Nina com um laço",
+      "imageUrl": "https://images.unsplash.com/photo-1596784589947-152e04a430b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzaWFuJTIwY2F0JTIwYm93fGVufDB8fHx8MTc2MTEyMDEyOXww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "persian cat bow"
+    },
+    {
+      "id": "memorial-gallery-rocky-1",
+      "description": "Rocky brincando de cabo de guerra",
+      "imageUrl": "https://images.unsplash.com/photo-1600360342930-e8e39a21531a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmcmVuY2glMjBidWxsZG9nJTIwcGxheWluZ3xlbnwwfHx8fDE3NjExMjAyMjZ8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "french bulldog playing"
+    },
+    {
+      "id": "memorial-gallery-rocky-2",
+      "description": "Rocky com orelhas de morcego",
+      "imageUrl": "https://images.unsplash.com/photo-1588057037747-7744353a2588?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmcmVuY2glMjBidWxsZG9nJTIwZWFyc3xlbnwwfHx8fDE3NjExMjAyMjZ8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "french bulldog ears"
+    },
+    {
+      "id": "memorial-gallery-rocky-3",
+      "description": "Rocky tirando uma soneca ao sol",
+      "imageUrl": "https://images.unsplash.com/photo-1601391523321-f063a890471b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmcmVuY2glMjBidWxsZG9nJTIwc2xlZXBpbmd8ZW58MHx8fHwxNzYxMTIwMjI2fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "french bulldog sleeping"
+    },
+    {
+      "id": "memorial-gallery-rocky-4",
+      "description": "Rocky filhote",
+      "imageUrl": "https://images.unsplash.com/photo-1559720448-6a3a49f57b54?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmcmVuY2glMjBidWxsZG9nJTIwcHVwcHl8ZW58MHx8fHwxNzYxMTIwMjI2fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "french bulldog puppy"
+    },
+    {
+      "id": "memorial-gallery-frida-1",
+      "description": "Frida explorando o jardim",
+      "imageUrl": "https://images.unsplash.com/photo-1573865526739-10659fec78a5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0YWJieSUyMGNhdCUyMGdhcmRlbnxlbnwwfHx8fDE3NjExMjAzMDJ8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "tabby cat garden"
+    },
+    {
+      "id": "memorial-gallery-frida-2",
+      "description": "Frida ronronando no colo",
+      "imageUrl": "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0YWJieSUyMGNhdCUyMGN1ZGRsaW5nfGVufDB8fHx8MTc2MTEyMDMwMnww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "tabby cat cuddling"
+    },
+    {
+      "id": "memorial-gallery-frida-3",
+      "description": "Frida filhote",
+      "imageUrl": "https://images.unsplash.com/photo-1570323312154-c9f138f2203b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0YWJieSUyMGtpdHRlbnxlbnwwfHx8fDE3NjExMjAzMDJ8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "tabby kitten"
+    },
+    {
+      "id": "memorial-gallery-frida-4",
+      "description": "Frida com um 'presente'",
+      "imageUrl": "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXQlMjB3aXRoJTIwYnV0dGVyZmx5fGVufDB8fHx8MTc2MTEyMDMwMnww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "cat with butterfly"
+    },
+    {
+      "id": "memorial-gallery-zeca-1",
+      "description": "Zeca brincando de buscar",
+      "imageUrl": "https://images.unsplash.com/photo-1585856243109-99fc289a4e4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxsYWJyYWRvciUyMGZldGNofGVufDB8fHx8MTc2MTEyMDM3MHww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "labrador fetch"
+    },
+    {
+      "id": "memorial-gallery-zeca-2",
+      "description": "Zeca nadando no lago",
+      "imageUrl": "https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxsYWJyYWRvciUyMHN3aW1taW5nfGVufDB8fHx8MTc2MTEyMDM3MHww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "labrador swimming"
+    },
+    {
+      "id": "memorial-gallery-zeca-3",
+      "description": "Zeca com a família",
+      "imageUrl": "https://images.unsplash.com/photo-1552053831-71594a27632d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxsYWJyYWRvciUyMGZhbWlseXxlbnwwfHx8fDE3NjExMjAzNzB8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "labrador family"
+    },
+    {
+      "id": "memorial-gallery-zeca-4",
+      "description": "Zeca filhote",
+      "imageUrl": "https://images.unsplash.com/photo-1594497675222-26a454b039b5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxsYWJyYWRvciUyMHB1cHByeXxlbnwwfHx8fDE3NjExMjAzNzB8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "labrador puppy"
+    },
+    {
+      "id": "about-team-1",
+      "description": "Membro da equipe 1",
+      "imageUrl": "https://images.unsplash.com/photo-1758876204244-930299843f07?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZnJpZW5kbHklMjBtYW58ZW58MHx8fHwxNzU5NzUxNzgwfDA&ixlibrb-4.1.0&q=80&w=1080",
+      "imageHint": "friendly man"
+    },
+    {
+      "id": "about-team-2",
+      "description": "Membro da equipe 2",
+      "imageUrl": "https://images.unsplash.com/photo-1604182459406-fefa32508ab0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmcmllbmRseSUyMHdvbWFufGVufDB8fHx8MTc1OTY3NjYwMnww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "friendly woman"
+    },
+    {
+      "id": "about-team-3",
+      "description": "Membro da equipe 3",
+      "imageUrl": "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwZXJzb24lMjBzbWlsaW5nfGVufDB8fHx8MTc1OTY2MDUwM3ww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "person smiling"
+    },
+    {
+      "id": "space-gallery-1",
+      "description": "Jardim memorial",
+      "imageUrl": "https://i.imgur.com/IZYbw7P.jpeg",
+      "imageHint": "memorial garden"
+    },
+    {
+      "id": "space-gallery-2",
+      "description": "Sala de cerimônia",
+      "imageUrl": "https://i.imgur.com/ola1OdW.jpeg",
+      "imageHint": "ceremony room"
+    },
+    {
+      "id": "space-gallery-3",
+      "description": "Recepção",
+      "imageUrl": "https://i.imgur.com/W616oG4.jpeg",
+      "imageHint": "reception area"
+    },
+    {
+      "id": "space-gallery-4",
+      "description": "Estrutura moderna",
+      "imageUrl": "https://i.imgur.com/7znGZLG.jpeg",
+      "imageHint": "building exterior"
+    },
+    {
+      "id": "space-video-thumb",
+      "description": "Thumbnail do vídeo",
+      "imageUrl": "https://images.unsplash.com/photo-1705747894563-f47ca490bca4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzZXJlbmUlMjBsYW5kc2NhcGV8ZW58MHx8fHwxNzU5NjU0MzUwfDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "serene landscape"
+    },
+    {
+      "id": "about-hero",
+      "description": "Homenagem a companheiros amados",
+      "imageUrl": "https://i.imgur.com/kSjV2Qx.jpeg",
+      "imageHint": "animal collage"
+    }
+  ]
+}

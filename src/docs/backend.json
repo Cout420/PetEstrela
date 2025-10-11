@@ -1,0 +1,98 @@
+{
+  "entities": {
+    "PetProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PetProfile",
+      "type": "object",
+      "description": "Represents a pet's profile for the memorial website.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the pet."
+        },
+        "tutors": {
+          "type": "string",
+          "description": "Name of the pet's owner(s)."
+        },
+        "animalType": {
+          "type": "string",
+          "description": "The type of animal (e.g., dog, cat)."
+        },
+        "sex": {
+          "type": "string",
+          "enum": ["Macho", "Fêmea"],
+          "description": "The sex of the pet."
+        },
+        "breed": {
+          "type": "string",
+          "description": "The breed of the pet."
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The birth date of the pet in ISO 8601 format."
+        },
+        "cremationDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date the pet was cremated in ISO 8601 format."
+        },
+        "tree": {
+            "type": "string",
+            "description": "The memorial tree planted for the pet."
+        },
+        "shortDescription": {
+          "type": "string",
+          "description": "A short description or farewell message for the pet."
+        },
+        "fullDescription": {
+          "type": "string",
+          "description": "A full description or memorial text for the pet."
+        },
+        "imageUrls": {
+          "type": "array",
+          "description": "An array of image URLs for the pet's gallery.",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "memorialCode": {
+          "type": "string",
+          "description": "A unique code for the memorial, e.g., #001"
+        }
+      },
+      "required": [
+        "name",
+        "tutors",
+        "animalType",
+        "sex",
+        "breed",
+        "birthDate",
+        "cremationDate",
+        "tree",
+        "shortDescription",
+        "fullDescription",
+        "imageUrls",
+        "memorialCode"
+      ]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/pet_profiles/{petProfileId}",
+        "definition": {
+          "entityName": "PetProfile",
+          "schema": {
+            "$ref": "#/backend/entities/PetProfile"
+          },
+          "description": "Stores pet profile information. This collection is publicly readable, but only writable by authenticated admin users."
+        }
+      }
+    ]
+  }
+}

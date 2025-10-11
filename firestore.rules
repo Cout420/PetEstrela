@@ -1,0 +1,65 @@
+/**
+ * @fileoverview Firestore Security Rules for Pet Memorial Profiles.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Each user has exclusive
+ * access to their own pet memorial profiles stored under their user ID.
+ *
+ * Data Structure:
+ * All pet memorial profile data is nested under `/users/{userId}/pet_memorial_profiles/{profileId}`.
+ *
+ * Key Security Decisions:
+ * - Users can only access and manage profiles associated with their own user ID.
+ * - The `list` operation is allowed, enabling users to view their own list of memorial profiles.
+ * - Data shape validation is relaxed for prototyping, focusing on ownership and relational integrity.
+ *
+ * Denormalization for Authorization:
+ * The authorization model relies on path-based ownership, eliminating the need
+ * for data denormalization. The `userId` parameter in the path is directly
+ * compared with the authenticated user's `uid`.
+ *
+ * Structural Segregation:
+ * All data is private and user-specific, eliminating the need for separate
+ * collections for public vs. private data.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Manages pet memorial profiles for a specific user.
+     * @path /users/{userId}/pet_memorial_profiles/{profileId}
+     * @allow (create) - Authenticated user with UID 'user123' can create a profile under /users/user123/pet_memorial_profiles/profile456.
+     * @allow (get, update, delete) - Authenticated user with UID 'user123' can get, update, or delete a profile under /users/user123/pet_memorial_profiles/profile456.
+     * @allow (list) - Authenticated user with UID 'user123' can list profiles under /users/user123/pet_memorial_profiles.
+     * @deny (create, get, update, delete, list) - Authenticated user with UID 'user456' cannot access profiles under /users/user123/pet_memorial_profiles.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/pet_memorial_profiles/{profileId} {
+      // Helper function to check if the authenticated user is the owner of the profile.
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // Helper function to check if the authenticated user is the owner of an existing profile.
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      // Allow get requests if the user is the owner.
+      allow get: if isOwner(userId);
+
+      // Allow list requests if the user is the owner.
+      allow list: if isOwner(userId);
+
+      // Allow create requests if the user is the owner and the profile's id matches the profileId.
+      allow create: if isOwner(userId) && request.resource.data.id == profileId;
+
+      // Allow update requests if the user is the owner and the profile exists, and the id is immutable.
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+
+      // Allow delete requests if the user is the owner and the profile exists.
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}

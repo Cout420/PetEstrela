@@ -1,0 +1,89 @@
+{
+  "entities": {
+    "PetMemorialProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PetMemorialProfile",
+      "type": "object",
+      "description": "Represents a pet's memorial profile, containing information and memories dedicated to the pet.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Pet Memorial Profile."
+        },
+        "petName": {
+          "type": "string",
+          "description": "The name of the pet."
+        },
+        "memorialCode": {
+          "type": "string",
+          "description": "A unique code associated with the pet's memorial (e.g., #001)."
+        },
+        "shortDescription": {
+          "type": "string",
+          "description": "A short, heartfelt description or farewell message for the pet."
+        },
+        "fullDescription": {
+          "type": "string",
+          "description": "A longer, more detailed remembrance text for the pet."
+        },
+        "cremationDate": {
+          "type": "string",
+          "description": "The date when the pet's cremation took place.",
+          "format": "date-time"
+        },
+        "petType": {
+          "type": "string",
+          "description": "The type of animal the pet was (e.g., 'Gato', 'Cão')."
+        },
+        "imageUrls": {
+          "type": "array",
+          "description": "Array of URLs pointing to images of the pet.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "petName",
+        "memorialCode",
+        "shortDescription",
+        "fullDescription",
+        "cremationDate",
+        "petType",
+        "imageUrls"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/pet_memorial_profiles/{profileId}",
+        "definition": {
+          "entityName": "PetMemorialProfile",
+          "schema": {
+            "$ref": "#/backend/entities/PetMemorialProfile"
+          },
+          "description": "Stores pet memorial profiles associated with a specific user. Only the authenticated user can create, read, update, or delete profiles under their ID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user who owns the pet memorial profiles."
+            },
+            {
+              "name": "profileId",
+              "description": "The unique identifier for the pet memorial profile."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage pet memorial profiles efficiently and securely. It leverages path-based ownership to ensure data privacy and simplifies security rule implementation. Since there are no roles or shared access to the profiles, we can use the user's ID to scope them. The 'pet_memorial_profiles' collection is structured under each user's document in the 'users' collection, ensuring that only the authenticated user can access and manage their respective pet memorial profiles. This eliminates the need for complex authorization logic or denormalization of data. The design prioritizes ease of implementation and scalability, adhering to the principle of Authorization Independence by directly associating the profiles with user IDs."
+  }
+}
